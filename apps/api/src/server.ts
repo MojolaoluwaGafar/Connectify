@@ -1,14 +1,33 @@
-import express from 'express'
+import "dotenv/config";
+import { createApp } from './app.js'
+import { env } from './config/env.js'
 
-const app = express()
-const port = Number(process.env.PORT) || 3001
+const app = createApp()
 
-app.use(express.json())
+const PORT = env.PORT;
 
-app.get('/health', (_request, response) => {
-  response.json({ status: 'ok' })
-})
+const startServer = async () => {
+  try {
+    
+  
+    app.listen(env.PORT, () => {
+      console.log(`Connecti API listening on http://localhost:${env.PORT}`)
+    })
+  } catch (error) {
+    console.error("Startup error:", error);
+    process.exit(1);
+  }
+};
 
-app.listen(port, () => {
-  console.log(`API running at http://localhost:${port}`)
-})
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+  process.exit(1);
+});
+
+startServer();
+

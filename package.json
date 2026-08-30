@@ -1,18 +1,24 @@
 {
   "name": "connect",
   "version": "0.1.0",
-  "description": "",
+  "description": "Connecti monorepo for the fullstack project",
   "private": true,
   "workspaces": [
     "apps/*",
+    "web/*",
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspaces --if-present",
+    "dev": "concurrently \"npm run dev -w @connecti/api\" \"npm run dev -w @connecti/web\"",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev:api": "npm run dev -w @connecti/api",
+    "dev:web": "npm run dev -w @connecti/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
   },
   "keywords": [],
   "author": "",
