@@ -1,62 +1,53 @@
-# Connecti
+﻿# Connecti
 
-Connecti is a collaborative full-stack project for the May 2026 cohort. It is
-an npm-workspaces monorepo with a Vite React frontend and a TypeScript Express
-API.
+Connecti is a monorepo for the May 2026 full-stack cohort project. The repo contains a Vite + React frontend and a TypeScript Express API.
 
 ## Repository map
 
 ```text
 apps/
-  web/
-    connectify/        Frontend application (do not change the built UI design)
-  api/                 TypeScript Express API
-packages/              Shared code when two or more apps need it
-docs/
-  architecture/        System and API decisions
-  collaboration/       Student workflow and ownership
-.github/               Repository templates and automation
+  web/                 Frontend application
+  api/                 Express + TypeScript API
+packages/             Shared packages when needed
 ```
 
-## Monorepo workflow
+## Local setup
 
-Use the root workspace scripts and keep every feature work scoped to one app or
-package:
+1. Install dependencies:
 
 ```powershell
 npm install
-npm run typecheck
-npm run build
+```
+
+2. Copy the API env template:
+
+```powershell
+copy apps\api\.env.example apps\api\.env
+```
+
+3. Update `apps/api/.env` with your local values, especially `MONGODB_URI` and JWT settings.
+
+4. Start the app in development mode:
+
+```powershell
 npm run dev
-# or run each app individually:
+```
+
+or run each app individually:
+
+```powershell
 npm run dev:api
 npm run dev:web
 ```
 
-## Git workflow for students
+## Current project status
 
-All student work happens from a feature branch created from `test`, and every
-student must push their branch and pull the latest `test` updates before opening
-or updating a PR.
+- Frontend: UI and demo auth flows are working in-browser using mock data fallback logic.
+- API: app shell, routing, health checks, and socket server scaffolding are in place.
+- Real backend features (auth, profiles, likes, matches, messages, preferences) are not fully implemented yet and still return 501 placeholders.
 
-```powershell
-git switch test
-git pull origin test
-git switch -c feature/your-task-name
-git push -u origin feature/your-task-name
-```
+## Important technical notes
 
-Before opening a PR, refresh with the latest `test` branch:
-
-```powershell
-git fetch origin
-git rebase origin/test
-```
-
-Do not merge directly to `main`. Open a pull request targeting `test`, and only
-merge after review and CI pass.
-
-Read [the contribution guide](./CONTRIBUTING.md) before making your first
-change. The backend contract is derived from the current web app in
-[`apps/web/connectify/src`](./apps/web/connectify/src) and documented in
-[`docs/architecture/frontend-derived-backend-contract.md`](./docs/architecture/frontend-derived-backend-contract.md).
+- The frontend API service should use the browser token store and perform redirect logic without calling React hooks from Axios interceptors.
+- Socket.IO connections should authenticate with a valid JWT token before accepting a connection from the frontend.
+- The project still relies on mock data for several demo flows until the backend modules are implemented.

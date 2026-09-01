@@ -1,7 +1,13 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import type { User, Profile } from '../../types/index';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 
-import * as api from '../../lib/mockApi';
+import { useApiMutation } from '../../hooks/useApiMutation';
+import * as authApi from '../../services/authApi';
+import type { User, Profile } from '../../types/index';
 import { AuthContext } from './authContext';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -9,50 +15,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // On first load, check for an existing "session" the same way a real app
-  // would check a cookie/JWT — here it's just localStorage.
-  // TODO: BACKEND — replace with a `GET /api/auth/me` call using the stored
-  // JWT/cookie to rehydrate the session.
   useEffect(() => {
     (async () => {
-      const session = api.getSession();
-      if (session) {
-        const current = await api.getCurrentUser(session.userId);
-        setUser(current);
-        if (current) {
-          const p = await api.getProfile(current.id);
-          setProfile(p);
+      try {
+        const session = await authApi.getSession();
+        if (!session) {
+          setUser(null);
+          setProfile(null);
+          return;
         }
+
+        const currentUser = await authApi.getCurrentUser(session.userId);
+        setUser(currentUser);
+
+        if (currentUser) {
+          const currentProfile = await authApi.getProfile(currentUser.id);
+          setProfile(currentProfile ?? null);
+        }
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     })();
   }, []);
 
-  async function refreshProfile() {
-    if (!user) return;
-    const p = await api.getProfile(user.id);
-    setProfile(p);
-  }
+  const loginMutation = useApiMutation(
+    async ({ email, password }: { email: string; password: string }) => {
+      const loggedInUser = await authApi.login(email, password);
+      const nextProfile = await authApi.getProfile(loggedInUser.id);
+      setUser(loggedInUser);
+      setProfile(nextProfile ?? null);
+      return loggedInUser;
+    },
+    'Unable to sign in',
+  );
 
-  async function login(email: string, password: string) {
-    const loggedInUser = await api.login(email, password);
-    setUser(loggedInUser);
-    const p = await api.getProfile(loggedInUser.id);
-    setProfile(p);
-  }
-
-  async function logout() {
-    await api.logout();
+  const logoutMutation = useApiMutation<undefined, void>(async () => {
+    await authApi.logout();
     setUser(null);
     setProfile(null);
-  }
+  }, 'Unable to sign out');
 
-  async function signup(fullName: string, email: string, password: string) {
-    await api.signUp(fullName, email, password);
-    // Note: no user/session yet — signUp only creates the account and sends
-    // a verification code. user stays null until verifyEmail() + login()
-    // (or setUserAfterVerification) run.
-  }
+  const signupMutation = useApiMutation(
+    async ({ fullName, email, password }: { fullName: string; email: string; password: string }) => {
+      await authApi.signUp(fullName, email, password);
+    },
+    'Unable to create account',
+  );
+
+  const refreshProfile = useCallback(async () => {
+    if (!user) return;
+    const nextProfile = await authApi.getProfile(user.id);
+    setProfile(nextProfile ?? null);
+  }, [user]);
+
+  const login = useCallback(
+    async (email: string, password: string) => {
+      await loginMutation.mutate({ email, password });
+    },
+    [loginMutation],
+  );
+
+  const logout = useCallback(async () => {
+    await logoutMutation.mutate(undefined);
+  }, [logoutMutation]);
+
+  const signup = useCallback(
+    async (fullName: string, email: string, password: string) => {
+      await signupMutation.mutate({ fullName, email, password });
+    },
+    [signupMutation],
+  );
 
   function setUserAfterVerification(u: User) {
     setUser(u);

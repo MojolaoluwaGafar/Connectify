@@ -7,7 +7,6 @@ import { useAuth } from '../../context/authContext/useAuth';
 import PasswordInput from '../../components/auth/PasswordInput';
 import { SparkleIcon, UsersIcon } from 'lucide-react';
 import { MessageIcon } from '../../components/auth/Icons';
-import { login } from '../../lib/mockApi';
 
 const SignupPage = () => {
   const navigate = useNavigate();

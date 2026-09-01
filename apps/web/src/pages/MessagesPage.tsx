@@ -18,9 +18,6 @@ const MessagesPage = () => {
   // State to track which conversation thread is currently active/selected
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
 
-  // State to hold all retrieved conversations for the logged-in user
-  const [conversations, setConversations] = useState<any[]>([]);
-
   // Effect hook: Loads user conversations and handles direct navigation payloads
   useEffect(() => {
     async function loadConversations() {
@@ -30,7 +27,6 @@ const MessagesPage = () => {
       try {
         // Fetch all message threads for the current user ID
         const data = await api.getConversations(user.id);
-        setConversations(data);
 
         // Check if navigation state contains a pre-selected user (e.g., clicking "Send Message" on a profile page)
         const selectedUser = location.state?.selectedUser;
