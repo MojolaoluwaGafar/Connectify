@@ -1,19 +1,15 @@
-import { useState } from 'react';
+import { useState, type InputHTMLAttributes } from "react";
 
-interface PasswordInputProps {
+interface PasswordInputProps
+  extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  placeholder?: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
 }
 
 const PasswordInput = ({
   label,
-  placeholder,
-  value,
-  onChange,
   error,
+  ...inputProps
 }: PasswordInputProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -25,24 +21,20 @@ const PasswordInput = ({
 
       <div className="relative">
         <input
-          type={showPassword ? 'text' : 'password'}
-          placeholder={placeholder}
-          value={value}
-          onChange={onChange}
+          {...inputProps}
+          type={showPassword ? "text" : "password"}
           className={`w-full rounded-xl border bg-white px-4 py-3.5 pr-12 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 ${
-            error ? 'border-red-500' : 'border-gray-300'
+            error ? "border-red-500" : "border-gray-300"
           }`}
         />
 
-        {/* Eye button */}
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          aria-label={showPassword ? 'Hide password' : 'Show password'}
+          aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? (
-            // Eye with slash
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -60,7 +52,6 @@ const PasswordInput = ({
               <line x1="3" y1="3" x2="21" y2="21" />
             </svg>
           ) : (
-            // Normal eye
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -79,7 +70,11 @@ const PasswordInput = ({
         </button>
       </div>
 
-      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
+      {error && (
+        <p className="mt-1.5 text-xs text-red-500">
+          {error}
+        </p>
+      )}
     </div>
   );
 };
