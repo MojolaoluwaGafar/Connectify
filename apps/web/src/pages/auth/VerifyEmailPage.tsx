@@ -2,10 +2,12 @@ import { SparkleIcon, UsersIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageIcon } from '../../components/auth/Icons';
-import * as api from '../../lib/mockApi';
-// import { useAuth } from '../../context/authContext/useAuth';
+
+// import * as api from '../../lib/mockApi';
+import { useAuth } from '../../context/authContext/useAuth';
 
 const VerifyEmailPage = () => {
+  const { verifyEmail, resendVerificationCode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -85,7 +87,7 @@ const VerifyEmailPage = () => {
     }
 
     try {
-      await api.verifyEmail(email, enteredCode);
+      await verifyEmail(email, enteredCode);
       navigate('/login', { state: { verified: true } });
     } catch (err) {
       setError(
@@ -97,21 +99,11 @@ const VerifyEmailPage = () => {
       setTimeout(() => inputRefs.current[0]?.focus(), 0);
     }
 
-    console.log(
-      '%c[Connectify Dev] Email verified successfully.',
-      'color:#059669;font-weight:bold;',
-    );
-
-    navigate('/login', {
-      state: {
-        verified: true,
-      },
-    });
   };
 
   const handleResend = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    await api.resendVerificationCode(email);
+   await resendVerificationCode(email);
     setCode(['', '', '', '', '', '']);
     setError('');
     setTimeout(() => inputRefs.current[0]?.focus(), 0);

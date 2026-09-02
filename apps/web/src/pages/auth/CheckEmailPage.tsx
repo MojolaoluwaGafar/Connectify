@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import {
@@ -13,25 +13,12 @@ const CheckEmailPage = () => {
 
   const email = location.state?.email || 'your email address';
 
-  const [resetCode, setResetCode] = useState('');
-
-  useEffect(() => {
-    const generatedCode = String(Math.floor(100000 + Math.random() * 900000));
-
-    setResetCode(generatedCode);
-
-    console.log(
-      '%c[Connectify Dev] Mock reset code:',
-      'color:#7c3aed;font-weight:bold;',
-      generatedCode,
-    );
-  }, []);
 
   const handleResetCode = () => {
     navigate('/reset-password', {
       state: {
         email,
-        resetCode,
+        
       },
     });
   };
@@ -102,7 +89,7 @@ const CheckEmailPage = () => {
             onClick={handleResetCode}
             className="w-full bg-[#6B30CE] hover:bg-[#5F2AB8] text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm shadow-purple-300"
           >
-            I have my reset code
+            I have my reset token
           </button>
 
           {/* Back to login */}
