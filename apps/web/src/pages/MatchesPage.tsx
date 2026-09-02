@@ -31,12 +31,12 @@ const Matches = () => {
       {/* Main matches container */}
       <div className="flex flex-col gap-6">
         {/* Page heading */}
-        <div className="w-full container mx-auto">
+        <div className="w-full container mx-auto translate-x-4 md:-translate-x-3">
           <h1 className="font-fraunces font-bold text-[28px] text-black">
             Your matches
           </h1>
 
-          <p className="text-[14px] md:text-[15px] font-geist text-[#655E75]">
+          <p className="text-[14px] md:text-[15px] font-geist text-[#655E75] ">
             People who liked you back - start a conversation!
           </p>
         </div>
@@ -48,9 +48,9 @@ const Matches = () => {
             <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed max-h-[55vh] my-4 md:my-2 rounded-2xl space-y-4 p-5 md:p-20">
               {/* Empty state icon */}
               <img
-                src="src/assets/ai-spark-icon.svg"
+                src="/ai-spark-icon.svg"
                 alt=""
-                className="w-12 shadow-2xl rounded-full"
+                className="size-15 rounded-full"
               />
 
               {/* Empty state text */}
@@ -60,7 +60,7 @@ const Matches = () => {
                 </h2>
 
                 <p className="font-geist text-[#655E75] mt-2">
-                  When you and someone else like each other, they'll show{' '}
+                  When you and someone else like each other, they'll show{" "}
                   <br className="hidden md:block" />
                   up here so you can start chatting.
                 </p>
@@ -69,7 +69,7 @@ const Matches = () => {
               {/* Discover people button */}
               <button
                 className="border border-[#655e7579] px-5 py-2 font-geist rounded-xl text-sm text-black font-semibold hover:bg-gray-100"
-                onClick={() => navigate('/home')}
+                onClick={() => navigate("/home")}
               >
                 Discover People
               </button>
@@ -79,12 +79,12 @@ const Matches = () => {
             matches.map((profile: DiscoverProfile) => (
               <div
                 key={profile.id}
-                className="bg-white rounded-[24px] overflow-hidden border border-[#EBEAED] shadow-sm flex flex-col"
+                className="bg-white rounded-[24px] overflow-hidden border border-[#EBEAED] shadow-sm flex flex-col md:-translate-x-15"
               >
                 {/* Profile image */}
                 <div className="w-full overflow-hidden">
                   <img
-                    src={profile.photoUrl ?? ''}
+                    src={profile.photoUrl ?? ""}
                     alt={profile.fullName}
                     className="w-full h-full object-cover block"
                   />
@@ -95,7 +95,7 @@ const Matches = () => {
                   {/* Profile avatar and name */}
                   <div className="flex items-center gap-3">
                     <img
-                      src={profile.photoUrl ?? ''}
+                      src={profile.photoUrl ?? ""}
                       alt={profile.fullName}
                       className="rounded-full w-8 h-8"
                     />
@@ -108,9 +108,9 @@ const Matches = () => {
                   {/* Profile location */}
                   <div className="flex items-center gap-1.5 text-[#655E75]">
                     <img
-                      src="src/assets/icon-map-pin.svg"
+                      src="/Vector.png"
                       alt="location icon"
-                      className="w-4 h-4"
+                      className="w-fit h-4"
                     />
 
                     <p className="text-[14px] font-geist font-medium">

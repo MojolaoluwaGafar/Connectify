@@ -22,5 +22,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "vector": "^0.0.4"
+  }
 }
