@@ -1,8 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import type { User, Profile } from '../../types/index';
+import { useEffect, useState, type ReactNode } from "react";
+import type { User, Profile } from "../../types/index";
 
-import * as api from '../../lib/mockApi';
-import { AuthContext } from './authContext';
+import * as api from "../../lib/mockApi";
+import { AuthContext } from "./authContext";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -53,6 +53,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // a verification code. user stays null until verifyEmail() + login()
     // (or setUserAfterVerification) run.
   }
+  async function verifyEmail(email: string, code: string) {
+    await api.verifyEmail(email, code);
+  }
+  async function resendVerificationCode(email: string) {
+    await api.resendVerificationCode(email);
+  }
+  async function resetPassword(
+    email: string,
+    token: string,
+    newPassword: string,
+  ) {
+    await api.resetPassword(email, token, newPassword);
+  }
+  async function requestPasswordReset(email: string) {
+    await api.requestPasswordReset(email);
+  }
 
   function setUserAfterVerification(u: User) {
     setUser(u);
@@ -68,6 +84,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         signup,
+        verifyEmail,
+        resendVerificationCode,
+        requestPasswordReset,
+        resetPassword,
         setUserAfterVerification,
       }}
     >

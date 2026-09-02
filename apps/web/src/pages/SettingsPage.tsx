@@ -1,12 +1,12 @@
 // import React from 'react'
 import { useState } from 'react';
 import { useAuth } from '../context/authContext/useAuth';
+import { useNavigate } from 'react-router-dom';
 
-// import { useNavigate } from "react-router-dom";
 
 const Settings = () => {
   //  navigation bar
-  //  const navigate = useNavigate();
+   const navigate = useNavigate();
 
   // NOTIFICATION SETTINGS
   const { logout } = useAuth();
@@ -41,9 +41,9 @@ const Settings = () => {
       setAccountDeleted(true);
 
       // takes you back to signup after deleting account
-      //   setTimeout(() => {
-      //   navigate("/signup");
-      // }, 2000);
+        setTimeout(() => {
+        navigate("/signup");
+      }, 2000);
     }
   };
 
@@ -52,9 +52,9 @@ const Settings = () => {
     setLoggedOut(true);
 
     // takes you back to signup after logging out
-    //    setTimeout(() => {
-    //   navigate("/signup");
-    // }, 2000);
+       setTimeout(() => {
+      navigate("/signup");
+    }, 2000);
   };
 
   return (

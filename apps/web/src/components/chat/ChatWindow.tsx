@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 import { useAuth } from '../../context/authContext/useAuth';
-import * as api from '../../lib/mockApi';
+import { socket } from '../../lib/socket';
 
 // TypeScript interface for component props
 interface ChatWindowProps {
@@ -24,82 +24,61 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   const selectedUser = conversation?.otherUser;
   const matchId = conversation?.matchId;
 
-  // Effect hook: Fired whenever matchId changes to fetch conversation history
   useEffect(() => {
-    async function loadMessages() {
-      // Clear messages if no match is selected
-      if (!matchId) {
-        setMessages([]);
-        return;
-      }
-
-      try {
-        // Fetch message list from mock API using matchId
-        const data = await api.getMessagesForMatch(matchId);
-        setMessages(data);
-      } catch (error) {
-        console.error('Failed to load messages:', error);
-      }
+    if (!matchId) {
+      setMessages([]);
+      setInputText('');
+      return;
     }
 
-    loadMessages();
-    // Reset input box when switching conversations
-    setInputText('');
-  }, [matchId]);
+    const handleIncomingMessage = (payload: any) => {
+      const conversationId = payload?.conversationId ?? payload?.matchId
+      if (conversationId !== matchId) {
+        return
+      }
 
-  // Form submission handler for sending messages and triggering bot replies
+      const nextMessage = {
+        id: payload?.id ?? `${conversationId}-${payload?.senderId ?? 'socket'}-${Date.now()}`,
+        matchId: conversationId,
+        senderId: String(payload?.senderId ?? ''),
+        text: payload?.content ?? payload?.text ?? '',
+        sentAt: payload?.createdAt ?? new Date().toISOString(),
+      }
+
+      setMessages((current) => {
+        const alreadyExists = current.some((message) => message.id === nextMessage.id)
+        return alreadyExists ? current : [...current, nextMessage]
+      })
+    }
+
+    socket.on('receive_message', handleIncomingMessage)
+    socket.on('new_message', handleIncomingMessage)
+
+    socket.emit('join_conversation', matchId)
+
+    return () => {
+      socket.emit('leave_conversation', matchId)
+      socket.off('receive_message', handleIncomingMessage)
+      socket.off('new_message', handleIncomingMessage)
+    }
+  }, [matchId])
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Guard clause: Prevent submission if text is empty or context missing
     if (!inputText.trim() || !selectedUser || !user || !matchId) {
       return;
     }
 
     const outboundText = inputText.trim();
-    // Optimistically clear input field
     setInputText('');
 
-    try {
-      // Send user's outbound message to the backend API
-      const newMessage = await api.sendMessage(matchId, user.id, outboundText);
-
-      // Append new message to state
-      setMessages((prev) => [...prev, newMessage]);
-
-      // Demo auto-reply feature for simulated/bot accounts
-      if (!api.isRealUser(selectedUser.id)) {
-        setTimeout(async () => {
-          // Pre-defined response bank for demo bots
-          const matchResponses = [
-            'That sounds amazing! Tell me more about it.',
-            'Haha totally agree! What are you up to this weekend?',
-            "Oh wow, I'm glad we share that in common!",
-            "Interesting point! Let's talk more about this soon.",
-            'I would love too',
-            'You have great Personality',
-            'I love You❤️',
-          ];
-
-          // Pick a random response from array
-          const randomQuote =
-            matchResponses[Math.floor(Math.random() * matchResponses.length)];
-
-          // Post bot reply via API
-          const reply = await api.sendMessage(
-            matchId,
-            selectedUser.id,
-            randomQuote,
-          );
-
-          // Append bot reply to messages state
-          setMessages((prev) => [...prev, reply]);
-        }, 1500); // 1.5 second delay simulation
-      }
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
-  };
+    socket.emit('send_message', {
+      conversationId: matchId,
+      senderId: Number(user.id),
+      content: outboundText,
+    })
+  }
 
   return (
     <div className="lg:flex">

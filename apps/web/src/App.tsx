@@ -1,3 +1,4 @@
+import { useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import DiscoveryPage from './pages/DiscoveryPage';
 import ProtectedRoutes from './layout/ProtectedRoutes';
@@ -14,7 +15,6 @@ import ProfileEditPage from './pages/ProfileEditPage';
 import { AuthGateProvider } from './context/authContext/useAuthGate';
 import LikesPage from './pages/LikesPage';
 import { useAuth } from './context/authContext/useAuth';
-import type { ReactNode } from 'react';
 import MessagesPage from './pages/MessagesPage';
 import SignupPage from './pages/auth/SignUpPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
@@ -26,11 +26,26 @@ import LandingPage from './pages/LandingPage';
 import GuestOnlyRoute from './layout/GuestOnlyRoutes';
 import { MatchesModal } from './components/MatchModal';
 import LikesProvider from './context/likeContext/LikesProvider';
+import { connectSocket, disconnectSocket } from './lib/socket';
 
 // Everything that needs to know "is someone logged in" (the auth gate modal,
 // the likes/matches state) lives inside AuthProvider so it can read that.
 function Providers({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user?.id) {
+      disconnectSocket();
+      return;
+    }
+
+    connectSocket(user.id);
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [user?.id]);
+
   return (
     <AuthGateProvider isAuthenticated={Boolean(user)}>
       <LikesProvider>
