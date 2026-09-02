@@ -44,7 +44,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
 
         {/* Location */}
         <p className=" flex items-center gap-2 mb-3 text-sm text-[#655E75] font-[inter]" >  <img src="/Vector.png" className="size-3" />{profile.location}</p>
-         {/* className="flex items-center gap-2" */}
+        
         {/* Bio */}
         <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
 

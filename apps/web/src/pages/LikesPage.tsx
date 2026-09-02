@@ -49,7 +49,7 @@ const LikesPage = () => {
                 : 'People you liked'}
             </h1>
 
-            <p className="mt-2 text-sm font-[inter]  tracking-normal leading-[100%] font-normal text-[19px] text-[#655E75] ">
+            <p className="mt-2 text-sm font-[inter]  tracking-normal leading-[100%] font-normal text-[15px] text-[#655E75] ">
               {tab === 'liked-you'
                 ? 'These people are interested in connecting with you.'
                 : "Profiles you've shown interest in."}
