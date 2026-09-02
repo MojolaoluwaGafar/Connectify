@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   loginSchema,
   type LoginInput,
-} from '../../../../../../Connecti/packages/shared/src/schemas/auth';
+} from '../../../../../packages/shared/src/schemas/auth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import Button from '../../components/ui/Button';

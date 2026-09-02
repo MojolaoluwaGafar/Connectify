@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   registerSchema,
   type RegisterInput,
-} from "../../../../../../Connecti/packages/shared/src/schemas/auth";
+} from '../../../../../packages/shared/src/schemas/auth';
 import { useState } from "react";
 
 const SignupPage = () => {
