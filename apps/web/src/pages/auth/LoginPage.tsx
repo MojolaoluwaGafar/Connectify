@@ -170,6 +170,7 @@ const LoginPage = () => {
             type="button"
             className="flex w-full h-12 items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-[15px] font-semibold text-gray-900 transition hover:bg-gray-50"
           >
+            <img src="../../../public/material-icon-theme_google.svg" alt="" />
             <span>Continue with Google</span>
           </button>
 

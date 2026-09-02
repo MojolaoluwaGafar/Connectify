@@ -42,15 +42,27 @@ export const ProfileCard = ({ profiles }: Props) => {
                   View Profile
                 </button>
                 <button
-                  className={`border border-stroke-primary px-3 py-1 text-sm text-white rounded-lg font-medium w-full ${
+                  className={`flex items-center justify-center gap-2 border border-stroke-primary px-3 py-1 text-sm text-white rounded-lg font-medium w-full  ${
                     likedIds.has(profile.id)
                       ? 'bg-gray-900'
                       : 'bg-theme hover:bg-purple-700'
                   }`}
+                  
                   onClick={() => toggleLike(profile)}
+                  
                 >
+                  <div className="w-fit">
+              <img
+                className="size-4"
+                src={
+                  likedIds.has(profile.id) ? '/vector.svg' : '/icon-heart.svg'
+                }
+                alt=""
+              />
+            </div>
                   {likedIds.has(profile.id) ? 'Liked' : 'Like'}
                 </button>
+                
               </div>
             </div>
           </div>
