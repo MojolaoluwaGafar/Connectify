@@ -28,7 +28,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
       </div>
       {/* Checkmark badge displayed when this profile is liked */}
       {likedIds.has(profile.id) && (
-        <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white px-3 py-2 shadow-md font-[Giest] tracking- leading-[100%]">
+        <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white px-3 py-2 shadow-md font-[inter] tracking- leading-[100%]">
           <img src="/check.svg" alt="Liked" className="h-4 w-4" />
 
           <span className="text-sm font-semibold text-theme">Liked</span>
@@ -38,15 +38,15 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
       {/* Profile information */}
       <div className="p-4">
         {/* Name and age */}
-        <h2 className="text-lg font-semibold text-[#1C1524]">
+        <h2 className="text-lg font-semibold text-[#1C1524] font-[fraunces]">
           {profile.fullName}, {profile.age}
         </h2>
 
         {/* Location */}
-        <p className="mt-1 text-sm text-[#655E75]">{profile.location}</p>
-
+        <p className=" flex items-center gap-2 mb-3 text-sm text-[#655E75] font-[inter]" >  <img src="/Vector.png" className="size-3" />{profile.location}</p>
+        
         {/* Bio */}
-        <p className="mt-3 text-sm leading-5 text-[#655E75]">{profile.bio}</p>
+        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
 
         {/* Profile actions */}
         <div className="mt-4 flex gap-2">

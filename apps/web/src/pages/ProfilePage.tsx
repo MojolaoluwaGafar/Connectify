@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
 
 import type { DiscoverProfile } from '../types/index';
-import * as api from '../lib/mockApi';
+import * as api from '../services/authApi';
 
 import { useAuthGate } from '../context/authContext/useAuthGate';
 import Chip from '../components/ui/Chip';
