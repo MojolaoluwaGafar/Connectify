@@ -29,10 +29,10 @@ export const ProfileCard = ({ profiles }: Props) => {
               <h2 className="font-fraunces text-black text-lg font-semibold">
                 {profile.fullName}, {profile.age}
               </h2>
-              <p className="flex items-center gap-2">
+              <p className="flex items-center gap-2  font-[inter] ">
                 <img src="/Vector.png" className="size-3" /> {profile.location}
               </p>
-              <p className="font-geist line-clamp-2">{profile.bio}</p>
+              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
 
               <div className="flex gap-2">
                 <button
@@ -42,15 +42,27 @@ export const ProfileCard = ({ profiles }: Props) => {
                   View Profile
                 </button>
                 <button
-                  className={`border border-stroke-primary px-3 py-1 text-sm text-white rounded-lg font-medium w-full ${
+                  className={`flex items-center justify-center gap-2 border border-stroke-primary px-3 py-1 text-sm text-white rounded-lg font-medium w-full  ${
                     likedIds.has(profile.id)
                       ? 'bg-gray-900'
                       : 'bg-theme hover:bg-purple-700'
                   }`}
+                  
                   onClick={() => toggleLike(profile)}
+                  
                 >
+                  <div className="w-fit">
+              <img
+                className="size-4"
+                src={
+                  likedIds.has(profile.id) ? '/vector.svg' : '/icon-heart.svg'
+                }
+                alt=""
+              />
+            </div>
                   {likedIds.has(profile.id) ? 'Liked' : 'Like'}
                 </button>
+                
               </div>
             </div>
           </div>

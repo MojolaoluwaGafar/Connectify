@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   loginSchema,
   type LoginInput,
-} from '../../../../../../Connecti/packages/shared/src/schemas/auth';
+} from '../../../../../packages/shared/src/schemas/auth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import Button from '../../components/ui/Button';
@@ -166,6 +166,7 @@ const LoginPage = () => {
             type="button"
             className="flex w-full h-12 items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-[15px] font-semibold text-gray-900 transition hover:bg-gray-50"
           >
+            <img src="../../../public/material-icon-theme_google.svg" alt="" />
             <span>Continue with Google</span>
           </button>
 

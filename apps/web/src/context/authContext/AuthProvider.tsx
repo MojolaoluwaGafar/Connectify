@@ -9,10 +9,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // On first load, check for an existing "session" the same way a real app
-  // would check a cookie/JWT — here it's just localStorage.
-  // TODO: BACKEND — replace with a `GET /api/auth/me` call using the stored
-  // JWT/cookie to rehydrate the session.
   useEffect(() => {
     (async () => {
       const session = api.getSession();
