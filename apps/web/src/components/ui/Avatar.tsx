@@ -23,7 +23,7 @@ export default function Avatar({ src, name, size = 40 }: AvatarProps) {
   return (
     <div
       style={{ width: size, height: size, fontSize: size * 0.4 }}
-      className="flex items-center justify-center rounded-full bg-brand-600 font-semibold text-white"
+      className="flex items-center justify-center rounded-full bg-theme font-semibold text-white"
     >
       {initial}
     </div>

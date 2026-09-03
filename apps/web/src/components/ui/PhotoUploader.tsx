@@ -36,7 +36,7 @@ export default function PhotoUploader({
         {/* Camera button */}
         <button
           onClick={() => inputRef.current?.click()}
-          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-pink-400 text-white shadow-sm transition hover:bg-theme-shade/200"
+          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full  bg-theme text-white shadow-sm transition hover:bg-theme-shade/200"
           aria-label="Change photo"
           type="button"
         >
