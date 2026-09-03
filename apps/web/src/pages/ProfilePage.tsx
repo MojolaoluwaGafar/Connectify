@@ -21,6 +21,7 @@ export default function ViewProfilePage() {
   const { requireAuth } = useAuthGate();
 
   const [target, setTarget] = useState<DiscoverProfile | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [suggestions, setSuggestions] = useState<DiscoverProfile[]>([]);
 
@@ -33,10 +34,10 @@ export default function ViewProfilePage() {
 
   useEffect(() => {
     if (!id) return;
-
+    setLoading(true)
     api.getProfileById(id).then(async (profile) => {
       setTarget(profile);
-
+setLoading(false)
       if (profile) {
         const res = await api.getDiscoverProfiles({
           excludeUserId: user?.id,
@@ -64,7 +65,14 @@ export default function ViewProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [likedIds]);
 
-  if (!target) {
+   if (loading)
+     return (
+       <div className="flex h-screen w-screen items-center justify-center">
+         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+       </div>
+     );
+
+  if (!target && !loading ) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <p className="font-display text-xl font-semibold text-ink-900">
@@ -80,8 +88,10 @@ export default function ViewProfilePage() {
       </div>
     );
   }
+  if (!target) return null;
 
-  const isLiked = likedIds.has(target.id);
+  
+  const isLiked = likedIds.has(target?.id || '') ?? 'false';
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -99,8 +109,8 @@ export default function ViewProfilePage() {
         {/* Profile image */}
         <div className="overflow-hidden rounded-3xl border border-stroke-primary shadow-sm">
           <img
-            src={target.photoUrl ?? ''}
-            alt={target.fullName}
+            src={target?.photoUrl ?? ''}
+            alt={target?.fullName}
             className="aspect-4/5 w-full object-cover"
           />
         </div>
@@ -112,17 +122,17 @@ export default function ViewProfilePage() {
           </p>
 
           <h1 className="font-display text-3xl font-semibold text-ink-900 sm:text-4xl">
-            {target.fullName}
-            {target.age ? `, ${target.age}` : ''}
-          </h1>
+            {target?.fullName}
+            {target?.age ? `, ${target.age}` : ''}
+          </h1> 
 
           <p className="mt-2 flex items-center gap-1.5 text-ink-500">
             <MapPin size={15} />
-            {target.location}
+            {target?.location}
           </p>
 
           {/* Occupation */}
-          {target.occupation && (
+          {target?.occupation && (
             <div className="mt-6 rounded-2xl bg-theme-shade/20 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-theme">
                 Works as
@@ -135,14 +145,14 @@ export default function ViewProfilePage() {
           )}
 
           {/* Interests */}
-          {target.interests.length > 0 && (
+          {target?.interests.length > 0 && (
             <div className="mt-6">
               <p className="text-xs font-semibold uppercase tracking-wide text-theme">
                 Interests
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {target.interests.map((interest) => (
+                {target?.interests.map((interest) => (
                   <Chip key={interest} label={interest} as="span" />
                 ))}
               </div>
@@ -156,7 +166,7 @@ export default function ViewProfilePage() {
             </p>
 
             <p className="mt-2 text-sm leading-relaxed text-ink-700">
-              {target.bio}
+              {target?.bio}
             </p>
           </div>
 
@@ -185,7 +195,7 @@ export default function ViewProfilePage() {
                 onClick={() =>
                   navigate('/messages', {
                     state: {
-                      openProfileId: target.id,
+                      openProfileId: target?.id,
                     },
                   })
                 }
@@ -230,9 +240,8 @@ export default function ViewProfilePage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
+    </div>)}
+
 
 // import { useEffect, useState } from 'react';
 // import { useNavigate, useParams, Link } from 'react-router-dom';
