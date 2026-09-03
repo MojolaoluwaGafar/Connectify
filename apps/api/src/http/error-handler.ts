@@ -5,6 +5,7 @@ import { ApiErrorEnvelopeSchema } from '@connecti/shared'
 
 import { env } from '../config/env.js'
 import { AppError } from '../core/errors/app-error.js'
+import { logger } from '../core/logger/logger.js'
 
 export const errorHandler: ErrorRequestHandler = (
   error,
@@ -42,7 +43,7 @@ export const errorHandler: ErrorRequestHandler = (
     return
   }
 
-  console.error({ requestId, error })
+  logger.error('Unhandled API error', { requestId, error })
   const payload = ApiErrorEnvelopeSchema.parse({
     error: {
       code: 'INTERNAL_ERROR',

@@ -1,25 +1,32 @@
-import { z } from 'zod'
+import { z } from "zod";
 
 export const registerSchema = z.object({
-  fullName : z.string({
-    message : 'Complete this field to continue'
+  fullName: z.string({
+    message: "Complete this field to continue",
   }),
-  email: z.email({ 
-    message: 'Complete this field to continue' }),
-  password: z.string({
-        message: 'Complete this field to continue',
-    }).min(8, {
-        message: 'Password must be at least 8 characters long',
-    }).regex(/[A-Z]/, {
-        message: 'Password must contain at least one uppercase letter',
-    }).regex(/[a-z]/, {
-        message: 'Password must contain at least one lowercase letter',
-    }).regex(/[!@#$%^&*(),.?":{}|<>]/, {
-        message: 'Password must contain at least one special character',
-    }).regex(/\d/, {
-      message: 'Password must contain at least one number',
+  email: z.email({
+    message: "Complete this field to continue",
+  }),
+  password: z
+    .string({
+      message: "Complete this field to continue",
+    })
+    .min(8, {
+      message: "Password must be at least 8 characters long",
+    })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      message: "Password must contain at least one lowercase letter",
+    })
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+      message: "Password must contain at least one special character",
+    })
+    .regex(/\d/, {
+      message: "Password must contain at least one number",
     }),
-})
+});
 
 export const verifyEmailSchema = z.object({
   code: z
@@ -31,36 +38,81 @@ export const verifyEmailSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.email({ message: 'Complete this field to continue' }),
+  email: z.email({ message: "Complete this field to continue" }),
   password: z
     .string({
-        message: 'Complete this field to continue',
+      message: "Complete this field to continue",
     })
     .min(8, {
-        message: 'Password must be at least 8 characters long',
+      message: "Password must be at least 8 characters long",
     })
     .regex(/[A-Z]/, {
-        message: 'Password must contain at least one uppercase letter',
+      message: "Password must contain at least one uppercase letter",
     })
     .regex(/[a-z]/, {
-        message: 'Password must contain at least one lowercase letter',
+      message: "Password must contain at least one lowercase letter",
     })
     .regex(/[!@#$%^&*(),.?":{}|<>]/, {
-        message: 'Password must contain at least one special character',
+      message: "Password must contain at least one special character",
     })
     .regex(/\d/, {
-        message: 'Password must contain at least one number',
+      message: "Password must contain at least one number",
     }),
-})
+});
 
 export const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
+export const resetPasswordSchema = z
+  .object({
+    email: z.email({
+      message: "Enter a valid email address",
+    }),
+    token: z
+      .string({
+        message: "Enter the reset code from your email",
+      })
+      .min(1, {
+        message: "Enter the reset code from your email",
+      }),
+    newPassword: z
+      .string({
+        message: "Enter your new password",
+      })
+      .min(8, {
+        message: "Password must be at least 8 characters long",
+      })
+      .regex(/[A-Z]/, {
+        message: "Password must contain at least one uppercase letter",
+      })
+      .regex(/[a-z]/, {
+        message: "Password must contain at least one lowercase letter",
+      })
+      .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+        message: "Password must contain at least one special character",
+      })
+      .regex(/\d/, {
+        message: "Password must contain at least one number",
+      }),
+    confirmPassword: z.string({
+      message: "Confirm your new password",
+    }),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+export const resendVerificationSchema = z.object({
+  email: z.email({
+    message: "Enter a valid email address",
+  }),
+});
 
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type VerifyCodeInput = z.infer<typeof verifyEmailSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
-
-

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import type { DiscoverProfile } from '../types';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
-
+import Icon from "../assets/search.svg";
 const PAGESIZE = 8;
 
 const DiscoveryPage = () => {
@@ -54,10 +54,14 @@ const DiscoveryPage = () => {
         Discover People
       </h1>
       <p>Find people who share your interests</p>
+       
 
       <main className="flex lg:flex-row flex-col-reverse gap-10 mt-5 w-full">
-        <div className="lg:w-3/4 space-y-4">
-          <input
+        <div className="lg:w-3/4 space-y-4" >
+         <div className="relative flex items-center gap-2 w-full">
+          <img className='absolute top-3 left-3' src={Icon} alt="search icon" /> 
+           <input
+        
             type="text"
             name="search"
             value={searchValue}
@@ -65,8 +69,10 @@ const DiscoveryPage = () => {
               setSearchValue(e.target.value);
             }}
             placeholder="Search by name or interests..."
-            className="outline-0 border border-stroke-primary placeholder:text-text-primary rounded-xl py-1.5 px-3 w-full lg:w-3/5"
-          ></input>
+            className="outline-0 border border-stroke-primary placeholder:text-text-primary rounded-[100px] py-1.5 px-9 w-full lg:w-3/5"
+          />
+          
+         </div>
 
           {profiles.length > 0 ? (
             <ProfileCard profiles={profiles} />

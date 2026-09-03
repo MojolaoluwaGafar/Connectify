@@ -1,19 +1,13 @@
-export type ApiError = Error & {
-  statusCode: number;
-  code: string;
-  details?: unknown;
-};
-
-export function AppError(
-  statusCode: number,
-  code: string,
-  message: string,
+export class AppError extends Error {
+  statusCode: number
+  code: string
   details?: unknown
-): ApiError {
-  return Object.assign(new Error(message), {
-    name: "ApiError",
-    statusCode,
-    code,
-    details,
-  });
+
+  constructor(statusCode: number, code: string, message: string, details?: unknown) {
+    super(message)
+    this.name = 'AppError'
+    this.statusCode = statusCode
+    this.code = code
+    this.details = details
+  }
 }

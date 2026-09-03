@@ -1,47 +1,13 @@
-import { Router } from 'express'
+import { Router } from "express";
+import { authMiddleware } from "../../core/middleware/auth.js";
+import { authController } from "./auth.controller.js";
 
-export const authRouter = Router()
+export const authRouter = Router();
 
-authRouter.post('/register', (_request, response) => {
-  response.status(501).json({
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Authentication routes are scheduled for the next backend milestone.',
-      requestId: _request.requestId,
-      details: {},
-    },
-  })
-})
-
-authRouter.post('/verify-email', (_request, response) => {
-  response.status(501).json({
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Email verification is scheduled for the next backend milestone.',
-      requestId: _request.requestId,
-      details: {},
-    },
-  })
-})
-
-authRouter.post('/login', (_request, response) => {
-  response.status(501).json({
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Login is scheduled for the next backend milestone.',
-      requestId: _request.requestId,
-      details: {},
-    },
-  })
-})
-
-authRouter.get('/me', (_request, response) => {
-  response.status(501).json({
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Session hydration is scheduled for the next backend milestone.',
-      requestId: _request.requestId,
-      details: {},
-    },
-  })
-})
+authRouter.post("/register", authController.register);
+authRouter.post("/verify-email", authController.verifyEmail);
+authRouter.post("/login", authController.login);
+authRouter.get("/me", authMiddleware, authController.getMe);
+authRouter.post("/forgot-password", authController.forgotPassword);
+authRouter.post("/reset-password", authController.resetPassword);
+authRouter.post("/resend-verification", authController.resendVerification);
