@@ -12,9 +12,25 @@ import { User } from '../../model/User.js'
 import jwt from 'jsonwebtoken'
 import { env } from '../../config/env.js'
 import type { JWTPayload } from '../../types/payload.js'
+import { ActivationTemplate } from '../../MailTemplates/Activate.js'
+import { SendEmail } from '../../utils/SendMail.js'
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
+}
+
+async function sendVerificationEmail(
+  email: string,
+  fullName: string,
+  verificationCode: string,
+) {
+  const firstName = fullName.trim().split(/\s+/)[0] || 'there'
+
+  await SendEmail({
+    to: email,
+    subject: 'Verify your Connectify account',
+    html: ActivationTemplate(firstName, verificationCode),
+  })
 }
 
 export async function registerUser(payload: unknown) {
@@ -55,6 +71,12 @@ export async function registerUser(payload: unknown) {
     verificationCode,
     verificationCodeExpires,
   })
+
+  await sendVerificationEmail(
+    newUser.email,
+    newUser.fullName,
+    verificationCode,
+  )
 
   return {
     id: newUser._id,
@@ -338,6 +360,12 @@ export async function resendVerificationCode(
   user.verificationCodeExpires = verificationCodeExpires
 
   await user.save()
+
+  await sendVerificationEmail(
+    user.email,
+    user.fullName,
+    verificationCode,
+  )
 
   // Development only: show new verification code in backend terminal
   console.log('====================================')
