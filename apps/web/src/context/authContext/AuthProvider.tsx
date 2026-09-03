@@ -13,7 +13,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       const session = api.getSession();
       if (session) {
-        const current = await api.getCurrentUser(session.userId);
+        const current = await api.getCurrentUser();
         setUser(current);
         if (current) {
           const p = await api.getProfile(current.id);
