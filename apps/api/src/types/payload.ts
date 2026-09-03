@@ -1,4 +1,4 @@
 export interface JWTPayload {
-    id: string,
-    role: string
+  id: string
+  role: string
 }
