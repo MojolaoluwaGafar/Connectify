@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import { useAuth } from '../context/authContext/useAuth';
 
-// import { useNavigate } from "react-router-dom";
+ import { useNavigate } from "react-router-dom";
 
 const Settings = () => {
   //  navigation bar
-  //  const navigate = useNavigate();
+    const navigate = useNavigate();
 
   // NOTIFICATION SETTINGS
   const { logout } = useAuth();
@@ -41,9 +41,9 @@ const Settings = () => {
       setAccountDeleted(true);
 
       // takes you back to signup after deleting account
-      //   setTimeout(() => {
-      //   navigate("/signup");
-      // }, 2000);
+         setTimeout(() => {
+         navigate("/signup");
+       }, 2000);
     }
   };
 
@@ -52,15 +52,15 @@ const Settings = () => {
     setLoggedOut(true);
 
     // takes you back to signup after logging out
-    //    setTimeout(() => {
-    //   navigate("/signup");
-    // }, 2000);
-  };
+        setTimeout(() => {
+        navigate("/signup");
+       }, 2000);
+     };
 
   return (
     <main
-      className="w-full mx-auto flex min-h-[831px] max-w[1440px] flex-col gap-8 
-          bg-white px-[240px] pb-[80px] pt-[48px] md:px-8 lg:px-[240px]"
+      className="max-w-full flex min-h-[831px] md:max-w-[1440px] flex-col gap-[15px] 
+          bg-white px-4 pb-[80px] pt-[48px] md:px-8 lg:px-[240px] "
     >
       {/* settings title section */}
       <section className="flex w-full flex-col gap-1">
@@ -140,7 +140,7 @@ const Settings = () => {
         </div>
 
         {/* New Matches */}
-        <div className="mt-5 flex items-center justify-between">
+        <div className="mt-5  flex items-center justify-between">
           <span className="text-[14px] text-[#6B6575]">New matches</span>
 
           <button
@@ -245,8 +245,8 @@ const Settings = () => {
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-5 flex h-[37px] w-[108px] items-center justify-center gap-2 rounded-[8px]
-  border border-[#1C152414] bg-white px-4 py-[10px] text-[#1C1524] text-[14px]"
+          className="flex h-[37px] w-[108px] items-center justify-center gap-2 rounded-[8px]
+          border border-[#1C152414] bg-white px-4 py-[10px] text-[#1C1524] text-[14px]"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -258,12 +258,13 @@ const Settings = () => {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            color="#ef4444"
           >
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" x2="9" y1="12" y2="12" />
           </svg>
-          <span>Log out</span>
+          <span className="text-[14px] text-[#ef4444]">Log out</span>
         </button>
 
         {loggedOut && (
