@@ -13,6 +13,7 @@ import jwt from 'jsonwebtoken'
 import { env } from '../../config/env.js'
 import type { JWTPayload } from '../../types/payload.js'
 
+
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
