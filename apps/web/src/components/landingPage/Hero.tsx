@@ -5,7 +5,7 @@ const Hero = () => {
   // Creates a navigation function so buttons can move the user to different routes
   const navigate = useNavigate();
   return (
-    <section className="w-full h-124.25 md:h-127 flex flex-col items-center gap-6 py-12 px-4 md:gap-5 md:pt-16 md:pr-8 md:pb-20 md:pl-8 bg-linear-to-b from-[#F5F3FF] to-white">
+    <section className="w-full h-124.25 md:h-127 md:w-full lg:w-full flex flex-col items-center gap-6 py-12 px-4 md:gap-5 md:pt-16 md:pr-8 md:pb-20 md:pl-8 bg-linear-to-b from-[#F5F3FF] to-white">
       {/* Background pill: contains the connection badge and its text */}
       <div className="relative w-55.25 h-6.75 flex items-center gap-1.5 py-1.5 px-4 rounded-[99px] bg-white md:h-7 md:rounded-full">
         {/* Overlay + shadow: recreates the subtle Figma shadow effect */}
