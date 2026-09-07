@@ -1,14 +1,11 @@
-// import React from 'react'
 import { useState } from 'react';
 import { useAuth } from '../context/authContext/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 
 const Settings = () => {
-  //  navigation bar
    const navigate = useNavigate();
 
-  // NOTIFICATION SETTINGS
   const { logout } = useAuth();
   const [newMatches, setNewMatches] = useState(() => {
     const savedMatches = localStorage.getItem("newMatches");
@@ -22,29 +19,22 @@ const Settings = () => {
     return savedMessages !== null ? JSON.parse(savedMessages) : true;
   });
 
-  // DELETE ACCOUNT MESSAGE
   const [accountDeleted, setAccountDeleted] = useState(false);
-
-  // LOG OUT MESSAGE
   const [loggedOut, setLoggedOut] = useState(false);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
-  // TOGGLE NEW MATCHES
   const handleDeleteAccount = () => {
     localStorage.removeItem("newMatches");
     localStorage.removeItem("newMessages");
 
     setDeleteModalOpen(false);
     setAccountDeleted(true);
-
-      // takes you back to signup after deleting account
         setTimeout(() => {
         navigate("/signup");
       }, 2000);
-    }
-  };
+    };
 
   const handleLogout = async () => {
     setLogoutModalOpen(false);
@@ -53,7 +43,6 @@ const Settings = () => {
 
     setLoggedOut(true);
 
-    // takes you back to signup after logging out
        setTimeout(() => {
       navigate("/signup");
     }, 2000);
@@ -65,7 +54,6 @@ const Settings = () => {
         className="w-full mx-auto flex min-h-[831px] max-w[1440px] flex-col gap-8 
           bg-white px-[240px] pb-[80px] pt-[48px] md:px-8 lg:px-[240px]"
       >
-        {/* settings title section */}
         <section className="flex w-full flex-col gap-1">
           <h1 className="font-serif text-[32px] font-bold leading-[38px] text-grey-900">
             Settings
@@ -75,12 +63,10 @@ const Settings = () => {
           </p>
         </section>
 
-        {/* Account card */}
         <section
           className="mx-auto mt-5 w-full max-w-[960px] 
              border border-[#1C152414] rounded-[16px] p-6 bg-white"
         >
-          {/* Account heading        */}
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +87,6 @@ const Settings = () => {
             </h2>
           </div>
 
-          {/* Email */}
           <div className="mt-5 flex items-center justify-between">
             <span className="text-[14px] text-[#6B6575]">Email</span>
 
@@ -110,7 +95,6 @@ const Settings = () => {
             </span>
           </div>
 
-          {/* change password */}
           <button
             type="button"
             className="mt-5 text-left text-[14px] font-medium text-purple-600 hover:underline"
@@ -119,11 +103,8 @@ const Settings = () => {
           </button>
         </section>
 
-        {/* Notifications card */}
         <section className="mx-auto mt-5 w-full max-w-[960px] rounded-[16px] border border-[#1C152414] bg-white p-6">
-          {/* Notifications heading */}
           <div className="flex items-center gap-2">
-            {/* Bell icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -144,7 +125,6 @@ const Settings = () => {
             </h2>
           </div>
 
-          {/* New Matches */}
           <div className="mt-5 flex items-center justify-between">
             <span className="text-[14px] text-[#6B6575]">New matches</span>
 
@@ -170,10 +150,8 @@ const Settings = () => {
             </button>
           </div>
 
-          {/* Divider */}
           <div className="my-5 h-px bg-[#1C152414]"></div>
 
-          {/* New messages */}
           <div className="flex items-center justify-between">
             <span className="text-[14px] text-[#6B6575]">New messages</span>
 
@@ -200,7 +178,6 @@ const Settings = () => {
           </div>
         </section>
 
-        {/* Danger Card */}
         <section className="mx-auto mt-5 w-full max-w-[960px] rounded-[16px] border border-[#FEE2E2] bg-[#FEF2F2] p-6">
           <div className="flex items-center gap-2 text-red-500">
             <svg
@@ -228,8 +205,6 @@ const Settings = () => {
             Deleting your account removes your profile and matches permanently.
           </p>
 
-          {/* Delete acct btn */}
-
           <button
             type="button"
             onClick={() => setDeleteModalOpen(true)}
@@ -246,7 +221,6 @@ const Settings = () => {
         </section>
 
         <section className="mx-auto mt-5 w-full max-w-[960px]">
-          {/* logout btn */}
           <button
             type="button"
             onClick={() => setLogoutModalOpen(true)}
