@@ -25,10 +25,21 @@ export const ProfileCard = ({ profiles }: Props) => {
                 className="object-cover"
               />
             </div>
+
+             {/* Checkmark badge displayed when this profile is liked */}
+      {likedIds.has(profile.id) && (
+        <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white px-3 py-2 shadow-md font-[inter] tracking- leading-[100%]">
+          <img src="/check.svg" alt="Liked" className="h-4 w-4" />
+
+          <span className="text-sm font-semibold text-theme">Liked</span>
+        </div>
+      )}
             <div className="p-3 space-y-2 text-sm">
               <h2 className="font-fraunces text-black text-lg font-semibold">
                 {profile.fullName}, {profile.age}
               </h2>
+
+              
               <p className="flex items-center gap-2  font-[inter] ">
                 <img src="/Vector.png" className="size-3" /> {profile.location}
               </p>

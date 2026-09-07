@@ -265,16 +265,29 @@ export default function Navbar({
           {/* Logout — only shown when logged in, on mobile there's no
               dropdown to hold it, so it goes at the bottom of the menu. */}
           {isLoggedIn && (
-            <div className="mt-4 border-t border-gray-100 px-6 pt-4">
+            <div className="border-t border-gray-100 py-1">
+               
               <button
                 onClick={() => {
                   setMobileOpen(false);
                   handleLogout();
                 }}
-                className="w-full text-left text-base font-medium text-gray-800"
-              >
+                 className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut size={16} />
+                
+               
                 Log out
               </button>
+              {/* <div className="border-t border-gray-100 py-1">
+                    <button
+                      onClick={handleLogout}
+                      // onClick={() => setProfileOpen(false)}
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut size={16} />
+                      Log out
+                    </button> */}
             </div>
           )}
         </div>

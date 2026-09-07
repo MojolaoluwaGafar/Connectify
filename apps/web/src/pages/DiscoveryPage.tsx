@@ -53,7 +53,7 @@ const DiscoveryPage = () => {
       <h1 className="font-fraunces font-semibold text-2xl text-black">
         Discover People
       </h1>
-      <p>Find people who share your interests</p>
+      <p >Find people who share your interests</p>
        
 
       <main className="flex lg:flex-row flex-col-reverse gap-10 mt-5 w-full">
@@ -69,7 +69,7 @@ const DiscoveryPage = () => {
               setSearchValue(e.target.value);
             }}
             placeholder="Search by name or interests..."
-            className="outline-0 border border-stroke-primary placeholder:text-text-primary rounded-[100px] py-1.5 px-9 w-full lg:w-3/5"
+            className="outline-0 border border-stroke-primary placeholder:text-text-primary rounded-[100px] font-giest py-1.5 px-9 w-full lg:w-3/5 leading-[100%] tracking-normal font-normal "
           />
           
          </div>
