@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-
 import type { DiscoverProfile } from '../../types';
 import { useLikes } from '../../context/likeContext/useLikes';
 
@@ -16,19 +15,19 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
 
   return (
     // Main profile card
-    <div className=" relative group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:-translate-y-1 hover:shadow-lg">
+    <div className=" relative group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm  hover:shadow-lg">
       {/* Profile image area */}
-      <div className="h-99 w-full overflow-hidden">
+      <div className="h-99 w-full overflow-hidden ">
         {/* Profile image */}
         <img
           src={profile.photoUrl ?? ''}
           alt={profile.fullName}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
         />
       </div>
       {/* Checkmark badge displayed when this profile is liked */}
       {likedIds.has(profile.id) && (
-        <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white px-3 py-2 shadow-md font-[inter] tracking- leading-[100%]">
+        <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white px-3 py-2 shadow-md font-[inter] tracking-light leading-[100%]">
           <img src="/check.svg" alt="Liked" className="h-4 w-4" />
 
           <span className="text-sm font-semibold text-theme">Liked</span>
@@ -46,7 +45,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
         <p className=" flex items-center gap-2 mb-3 text-sm text-[#655E75] font-[inter]" >  <img src="/Vector.png" className="size-3" />{profile.location}</p>
         
         {/* Bio */}
-        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
+        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2">{profile.bio}</p>
 
         {/* Profile actions */}
         <div className="mt-4 flex gap-2">

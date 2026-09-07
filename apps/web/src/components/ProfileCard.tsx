@@ -9,29 +9,32 @@ interface Props {
 export const ProfileCard = ({ profiles }: Props) => {
   const navigate = useNavigate();
   const { likedIds, toggleLike } = useLikes();
+  
+
+
   return (
-    <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4">
+    <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4 ">
       {profiles.map((profile, i) => {
         return (
           <div
             key={i}
             className=" border border-stroke-primary text-sm rounded-2xl overflow-hidden
-                "
+                relative  hover:shadow-lg "
           >
-            <div className="w-full">
+            <div className="w-full group overflow-hidden">
               <img
                 src={profile.photoUrl || ''}
                 alt={profile.fullName}
-                className="object-cover"
+                className="w-full object-cover transition-transform duration-300 group-hover:scale-110"
               />
             </div>
 
              {/* Checkmark badge displayed when this profile is liked */}
       {likedIds.has(profile.id) && (
-        <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white px-3 py-2 shadow-md font-[inter] tracking- leading-[100%]">
-          <img src="/check.svg" alt="Liked" className="h-4 w-4" />
+        <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white px-2 py-1 shadow-md font-[inter] tracking-tight leading-[100%]">
+          <img src="/check.svg" alt="Liked" className="h-3 w-3" />
 
-          <span className="text-sm font-semibold text-theme">Liked</span>
+          <span className="text-xs font-semibold text-theme">Liked</span>
         </div>
       )}
             <div className="p-3 space-y-2 text-sm">
@@ -43,7 +46,20 @@ export const ProfileCard = ({ profiles }: Props) => {
               <p className="flex items-center gap-2  font-[inter] ">
                 <img src="/Vector.png" className="size-3" /> {profile.location}
               </p>
-              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
+              <p className={`mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2`}>
+                {profile.bio}
+              </p>
+              {/* {profile.bio.length > 100 && (
+    <button
+      onClick={() =>
+        setReadMore(readMore === profile.id ? null : profile.id)
+      }
+      className="text-theme text-sm font-medium mt-1"
+    >
+      {readMore === profile.id ? 'Read less' : 'Read more'}
+    </button>
+  )} */}
+
 
               <div className="flex gap-2">
                 <button
