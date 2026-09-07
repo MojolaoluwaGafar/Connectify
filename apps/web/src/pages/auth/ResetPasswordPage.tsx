@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import {
+  resetPasswordSchema,
+  type ResetPasswordInput,
+} from '../../../../../packages/shared/src/schemas/auth';
+
+import { useAuth } from '../../context/authContext/useAuth';
+
 import {
   SparkleIcon,
   UsersIcon,
@@ -11,54 +21,49 @@ const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState(location.state?.email || '');
-  const [resetCode, setResetCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const { resetPassword } = useAuth();
+
+  const emailFromState = location.state?.email || '';
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [apiError, setApiError] = useState('');
 
-  const [errors, setErrors] = useState<{
-    email?: string;
-    resetCode?: string;
-    newPassword?: string;
-    confirmPassword?: string;
-  }>({});
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetPasswordInput>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: emailFromState,
+      token: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const submit = async (data: ResetPasswordInput) => {
+    try {
+      setApiError('');
 
-    const newErrors: typeof errors = {};
+      await resetPassword(
+        data.email,
+        data.token,
+        data.newPassword,
+      );
 
-    if (!email.trim() || !email.includes('@')) {
-      newErrors.email = 'Enter a valid email address.';
-    }
-
-    if (!resetCode.trim()) {
-      newErrors.resetCode = 'Enter the reset code from your email.';
-    }
-
-    if (!newPassword.trim()) {
-      newErrors.newPassword = 'Password must be at least 8 characters.';
-    } else if (newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters.';
-    }
-
-    if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Please confirm your new password.';
-    } else if (confirmPassword !== newPassword) {
-      newErrors.confirmPassword = 'Passwords do not match.';
-    }
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
       navigate('/login', {
         state: {
           passwordReset: true,
         },
       });
+    } catch (error) {
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong. Please try again.',
+      );
     }
   };
 
@@ -70,6 +75,7 @@ const ResetPasswordPage = () => {
 
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 sm:px-8 py-10 sm:py-12 bg-white">
         <div className="w-full max-w-110">
+
           {/* Logo */}
 
           <h1 className="text-2xl font-bold font-serif text-gray-900 mb-7">
@@ -83,12 +89,24 @@ const ResetPasswordPage = () => {
           </h2>
 
           <p className="text-sm sm:text-base text-gray-500 mb-7">
-            Enter the reset code we sent you along with your new password.
+            Enter the reset token we sent you along with your new password.
           </p>
 
           {/* Form */}
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form
+            onSubmit={handleSubmit(submit)}
+            className="space-y-4"
+            noValidate
+          >
+            {/* API Error */}
+
+            {apiError && (
+              <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+                {apiError}
+              </p>
+            )}
+
             {/* Email address */}
 
             <div>
@@ -102,56 +120,48 @@ const ResetPasswordPage = () => {
               <input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-
-                  setErrors((current) => ({
-                    ...current,
-                    email: undefined,
-                  }));
-                }}
+                autoComplete="email"
+                {...register('email')}
                 className={`w-full px-4 py-2.5 border rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  errors.email ? 'border-red-400' : 'border-gray-200'
+                  errors.email
+                    ? 'border-red-400'
+                    : 'border-gray-200'
                 }`}
               />
 
               {errors.email && (
-                <p className="mt-1.5 text-sm text-red-600">{errors.email}</p>
+                <p className="mt-1.5 text-sm text-red-600">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
-            {/* Reset code */}
+            {/* Reset token */}
 
             <div>
               <label
-                htmlFor="resetCode"
+                htmlFor="token"
                 className="block text-sm font-medium text-gray-900 mb-1.5"
               >
-                Reset code
+                Reset token
               </label>
 
               <input
-                id="resetCode"
+                id="token"
                 type="text"
-                value={resetCode}
-                onChange={(e) => {
-                  setResetCode(e.target.value);
-
-                  setErrors((current) => ({
-                    ...current,
-                    resetCode: undefined,
-                  }));
-                }}
-                placeholder="Paste the code from your email"
+                autoComplete="off"
+                placeholder="Paste the token from your email"
+                {...register('token')}
                 className={`w-full px-4 py-2.5 border rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  errors.resetCode ? 'border-red-400' : 'border-gray-200'
+                  errors.token
+                    ? 'border-red-400'
+                    : 'border-gray-200'
                 }`}
               />
 
-              {errors.resetCode && (
+              {errors.token && (
                 <p className="mt-1.5 text-sm text-red-600">
-                  {errors.resetCode}
+                  {errors.token.message}
                 </p>
               )}
             </div>
@@ -170,27 +180,26 @@ const ResetPasswordPage = () => {
                 <input
                   id="newPassword"
                   type={showPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => {
-                    setNewPassword(e.target.value);
-
-                    setErrors((current) => ({
-                      ...current,
-                      newPassword: undefined,
-                    }));
-                  }}
+                  autoComplete="new-password"
                   placeholder="At least 8 characters"
+                  {...register('newPassword')}
                   className={`w-full px-4 py-2.5 pr-11 border rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                    newPassword ? 'bg-blue-50/50' : 'bg-white'
-                  } ${
-                    errors.newPassword ? 'border-red-400' : 'border-gray-200'
+                    errors.newPassword
+                      ? 'border-red-400'
+                      : 'border-gray-200'
                   }`}
                 />
 
                 <button
                   type="button"
-                  onClick={() => setShowPassword((current) => !current)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() =>
+                    setShowPassword((current) => !current)
+                  }
+                  aria-label={
+                    showPassword
+                      ? 'Hide password'
+                      : 'Show password'
+                  }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? (
@@ -218,7 +227,7 @@ const ResetPasswordPage = () => {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573 3.007-9.963 7.178z"
                       />
                       <path
                         strokeLinecap="round"
@@ -232,7 +241,7 @@ const ResetPasswordPage = () => {
 
               {errors.newPassword && (
                 <p className="mt-1.5 text-sm text-red-600">
-                  {errors.newPassword}
+                  {errors.newPassword.message}
                 </p>
               )}
             </div>
@@ -250,16 +259,13 @@ const ResetPasswordPage = () => {
               <div className="relative">
                 <input
                   id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-
-                    setErrors((current) => ({
-                      ...current,
-                      confirmPassword: undefined,
-                    }));
-                  }}
+                  type={
+                    showConfirmPassword
+                      ? 'text'
+                      : 'password'
+                  }
+                  autoComplete="new-password"
+                  {...register('confirmPassword')}
                   className={`w-full px-4 py-2.5 pr-11 border rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                     errors.confirmPassword
                       ? 'border-red-400'
@@ -269,9 +275,15 @@ const ResetPasswordPage = () => {
 
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword((current) => !current)}
+                  onClick={() =>
+                    setShowConfirmPassword(
+                      (current) => !current,
+                    )
+                  }
                   aria-label={
-                    showConfirmPassword ? 'Hide password' : 'Show password'
+                    showConfirmPassword
+                      ? 'Hide password'
+                      : 'Show password'
                   }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
@@ -314,7 +326,7 @@ const ResetPasswordPage = () => {
 
               {errors.confirmPassword && (
                 <p className="mt-1.5 text-sm text-red-600">
-                  {errors.confirmPassword}
+                  {errors.confirmPassword.message}
                 </p>
               )}
             </div>
@@ -323,9 +335,12 @@ const ResetPasswordPage = () => {
 
             <button
               type="submit"
-              className="w-full bg-[#6B30CE] hover:bg-[#5F2AB8] text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm shadow-purple-300"
+              disabled={isSubmitting}
+              className="w-full bg-[#6B30CE] hover:bg-[#5F2AB8] text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm shadow-purple-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Reset password
+              {isSubmitting
+                ? 'Resetting password...'
+                : 'Reset password'}
             </button>
 
             {/* Back to login */}
@@ -333,7 +348,7 @@ const ResetPasswordPage = () => {
             <div className="text-center pt-1">
               <Link
                 to="/login"
-                className=" text-[#6B30CE] hover:text-[#5F2AB8] font-medium hover:underline"
+                className="text-[#6B30CE] hover:text-[#5F2AB8] font-medium hover:underline"
               >
                 Back to login
               </Link>
@@ -347,6 +362,7 @@ const ResetPasswordPage = () => {
       ========================== */}
 
       <div className="relative hidden overflow-hidden bg-linear-to-br from-[#7B39EA] via-[#6B30CE] to-[#5423A6] lg:flex lg:w-1/2">
+
         {/* White dotted pattern */}
 
         <div
@@ -361,6 +377,7 @@ const ResetPasswordPage = () => {
         {/* Promo content */}
 
         <div className="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
+
           {/* Sparkle icon */}
 
           <div className="mb-7">
@@ -382,9 +399,12 @@ const ResetPasswordPage = () => {
             relationships built around shared interests.
           </p>
 
-          {/* Feature 1 */}
+          {/* Features */}
 
           <div className="space-y-5">
+
+            {/* Feature 1 */}
+
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
                 <UsersIcon size={20} />
@@ -418,6 +438,7 @@ const ResetPasswordPage = () => {
                 Discover people near you and around the world
               </span>
             </div>
+
           </div>
         </div>
       </div>

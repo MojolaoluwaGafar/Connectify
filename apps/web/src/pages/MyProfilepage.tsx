@@ -10,7 +10,7 @@ import {
   Compass,
 } from 'lucide-react';
 
-import * as api from '../lib/mockApi';
+import * as api from '../services/authApi';
 import { useAuth } from '../context/authContext/useAuth';
 
 import Avatar from '../components/ui/Avatar';

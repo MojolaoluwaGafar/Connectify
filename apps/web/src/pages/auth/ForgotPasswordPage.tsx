@@ -3,27 +3,51 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MessageIcon } from '../../components/auth/Icons';
 
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordInput,
+} from '../../../../../packages/shared/src/schemas/auth';
+
+import { useAuth } from '../../context/authContext/useAuth';
+
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
+  const { requestPasswordReset } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  const [apiError, setApiError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ForgotPasswordInput>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
 
-    if (!email.trim() || !email.includes('@')) {
-      setError('Enter a valid email address.');
-      return;
+  const submit = async (data: ForgotPasswordInput) => {
+    try {
+      setApiError('');
+
+      await requestPasswordReset(data.email);
+
+      navigate('/check-email', {
+        state: {
+          email: data.email,
+        },
+      });
+    } catch (error) {
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong. Please try again.',
+      );
     }
-
-    setError('');
-
-    navigate('/check-email', {
-      state: {
-        email,
-      },
-    });
   };
 
   return (
@@ -34,6 +58,7 @@ const ForgotPasswordPage = () => {
 
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 sm:px-8 py-10 sm:py-12 bg-white">
         <div className="w-full max-w-110">
+
           {/* Logo */}
 
           <h1 className="text-2xl font-bold font-serif text-gray-900 mb-7">
@@ -55,7 +80,19 @@ const ForgotPasswordPage = () => {
 
           {/* Form */}
 
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          <form
+            onSubmit={handleSubmit(submit)}
+            noValidate
+            className="space-y-4"
+          >
+            {/* API error */}
+
+            {apiError && (
+              <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+                {apiError}
+              </p>
+            )}
+
             {/* Email address */}
 
             <div>
@@ -69,28 +106,29 @@ const ForgotPasswordPage = () => {
               <input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError('');
-                }}
                 placeholder="name@gmail.com"
                 autoComplete="email"
+                {...register('email')}
                 className={`w-full px-4 py-2.5 border rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  error ? 'border-red-400' : 'border-gray-200'
+                  errors.email ? 'border-red-400' : 'border-gray-200'
                 }`}
               />
 
-              {error && <p className="mt-1.5 text-sm text-red-600">{error}</p>}
+              {errors.email && (
+                <p className="mt-1.5 text-sm text-red-600">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             {/* Send reset link */}
 
             <button
               type="submit"
-              className="w-full bg-[#6B30CE] hover:bg-[#5F2AB8] text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm shadow-purple-300"
+              disabled={isSubmitting}
+              className="w-full bg-[#6B30CE] hover:bg-[#5F2AB8] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm shadow-purple-300"
             >
-              Send reset link
+              {isSubmitting ? 'Sending...' : 'Send reset link'}
             </button>
           </form>
 
@@ -113,6 +151,7 @@ const ForgotPasswordPage = () => {
       ========================== */}
 
       <div className="relative hidden overflow-hidden bg-linear-to-br from-[#7B39EA] via-[#6B30CE] to-[#5423A6] lg:flex lg:w-1/2">
+
         {/* White dotted pattern */}
 
         <div
@@ -127,13 +166,10 @@ const ForgotPasswordPage = () => {
         {/* Promo content */}
 
         <div className="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
-          {/* Sparkle icon */}
 
           <div className="mb-7">
             <SparkleIcon size={32} />
           </div>
-
-          {/* Heading */}
 
           <h2 className="mb-5 font-serif text-3xl font-bold leading-tight">
             Real connections,
@@ -141,17 +177,12 @@ const ForgotPasswordPage = () => {
             real people.
           </h2>
 
-          {/* Description */}
-
           <p className="mb-9 max-w-md text-base leading-relaxed text-purple-100">
             Join thousands of people who found genuine friendships and
             relationships built around shared interests.
           </p>
 
-          {/* Features */}
-
           <div className="space-y-5">
-            {/* Feature 1 */}
 
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
@@ -163,8 +194,6 @@ const ForgotPasswordPage = () => {
               </span>
             </div>
 
-            {/* Feature 2 */}
-
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
                 <MessageIcon size={20} />
@@ -175,8 +204,6 @@ const ForgotPasswordPage = () => {
               </span>
             </div>
 
-            {/* Feature 3 */}
-
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
                 <SparkleIcon size={20} />
@@ -186,6 +213,7 @@ const ForgotPasswordPage = () => {
                 Discover people near you and around the world
               </span>
             </div>
+
           </div>
         </div>
       </div>
