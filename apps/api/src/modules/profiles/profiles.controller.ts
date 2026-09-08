@@ -9,7 +9,7 @@ export const profilesController = {
     const data = request.body
     if (!request.user) {
   return response.status(401).json({
-    message: 'Authentication required',
+    message: 'Authentication required', 
   })
 }
     const userId = request.user.id
