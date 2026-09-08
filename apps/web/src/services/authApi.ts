@@ -63,12 +63,13 @@ export async function logout(): Promise<void> {
 
 export async function getCurrentUser(): Promise<User | null> {
   const { data } = await api.get('/api/v1/auth/me');
-  const user = data?.user ?? data?.data?.user ?? data;
+  const user = data?.user ?? data?.data?.user ?? data?.data ?? data;
 
   return (user as User | null) ?? null;
 }
 
 export async function getProfile(userId: string): Promise<Profile | null> {
+  if (!userId) return null;
   const { data } = await api.get(`/api/v1/profiles/${userId}`);
   const profile = data?.profile ?? data?.data?.profile ?? data;
   return (profile as Profile | null) ?? null;
