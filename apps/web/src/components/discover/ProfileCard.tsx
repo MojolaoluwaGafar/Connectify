@@ -21,7 +21,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
       <div className="h-99 w-full overflow-hidden">
         {/* Profile image */}
         <img
-          src={profile.photoUrl ?? ''}
+          src={profile.profilePicture ?? ''}
           alt={profile.fullName}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
@@ -45,8 +45,8 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
         {/* Location */}
         <p className=" flex items-center gap-2 mb-3 text-sm text-[#655E75] font-[inter]" >  <img src="/Vector.png" className="size-3" />{profile.location}</p>
         
-        {/* Bio */}
-        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
+        {/* about */}
+        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.about}</p>
 
         {/* Profile actions */}
         <div className="mt-4 flex gap-2">

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { DiscoverProfile } from '../../types/index';
-import * as api from '../../lib/mockApi';
+import * as api from '../../services/authApi';
 import { useAuth } from '../authContext/useAuth';
 import { LikesContext } from './likeContext';
 
@@ -45,7 +45,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
   // Liking and un-liking both go through here. Liking someone now always
-  // unlocks messaging with them (see mockApi.canMessage) — if it also
+  // unlocks messaging with them — if it also
   // happens to be a mutual like, the bigger "It's a Match!" modal takes
   // priority over the smaller "You liked them" one.
   async function toggleLike(profile: DiscoverProfile) {

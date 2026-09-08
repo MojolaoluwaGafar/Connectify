@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import ConversationList from '../components/chat/ConversationalList';
 import ChatWindow from '../components/chat/ChatWindow';
 import { useAuth } from '../context/authContext/useAuth';
-import * as api from '../lib/mockApi';
+import * as api from '../services/authApi';
 
 const MessagesPage = () => {
   const { user } = useAuth();

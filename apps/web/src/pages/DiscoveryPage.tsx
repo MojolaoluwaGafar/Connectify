@@ -1,42 +1,76 @@
-// import { mockProfiles } from '../data/mockProfile';
-import * as api from '../lib/mockApi';
+import * as api from '../services/authApi';
 import { ProfileCard } from '../components/ProfileCard';
 import FilterProfiles from '../components/FilterProfiles';
 import EmptyProfile from '../components/EmptyProfile';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DiscoverProfile } from '../types';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
 import Icon from "../assets/search.svg";
+import { useAuth } from '../context/authContext/useAuth';
 const PAGESIZE = 8;
+const NEARBY_RADIUS_KM = 25;
 
 const DiscoveryPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [tab, setTab] = useState<'all' | 'new' | 'near-me'>('all');
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
 
   const [profiles, setProfiles] = useState<DiscoverProfile[]>([]);
+  const [total, setTotal] = useState(0);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState('');
+  const fetchedLocation = useRef(false);
 
   useEffect(() => {
+    if (fetchedLocation.current) return;
+
+    fetchedLocation.current = true;
+
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      () => setLocationError('Allow location access to find people near you.'),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'near-me' && !location) return;
+
     const getProfiles = async () => {
-      const result = await api.getDiscoverProfiles({
-        search: searchValue,
-        tab,
-        page,
-        pageSize: PAGESIZE,
-        excludeUserId: '',
-      });
+      try {
+        const result = await api.getDiscoverProfiles({
+          search: searchValue,
+          tab,
+          page,
+          pageSize: PAGESIZE,
+          excludeUserId: user?.id,
+          ...(tab === 'near-me' && location
+            ? { lat: location.lat, lng: location.lng, radius: NEARBY_RADIUS_KM }
+            : {}),
+        });
 
-      console.log(result);
-
-      setProfiles(result.items);
+        setProfiles(result.items);
+        setTotal(result.total);
+      } catch {
+        setProfiles([]);
+        setTotal(0);
+      }
     };
 
     getProfiles();
-  }, [searchValue, tab, page]);
-
-  const total = 20;
+  }, [searchValue, tab, page, user?.id, location]);
 
   const totalPages = Math.ceil(total / PAGESIZE);
 
@@ -54,6 +88,9 @@ const DiscoveryPage = () => {
         Discover People
       </h1>
       <p>Find people who share your interests</p>
+      {tab === 'near-me' && locationError && (
+        <p className="mt-2 text-sm text-red-600">{locationError}</p>
+      )}
        
 
       <main className="flex lg:flex-row flex-col gap-10 mt-5 w-full">

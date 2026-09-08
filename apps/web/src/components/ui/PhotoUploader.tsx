@@ -3,13 +3,13 @@ import { Camera } from 'lucide-react';
 import Avatar from './Avatar';
 
 interface PhotoUploaderProps {
-  photoUrl: string | null;
+  profilePicture: string | null;
   name: string;
   onChange: (dataUrl: string) => void;
 }
 
 export default function PhotoUploader({
-  photoUrl,
+  profilePicture,
   name,
   onChange,
 }: PhotoUploaderProps) {
@@ -30,7 +30,7 @@ export default function PhotoUploader({
   return (
     <div className="flex flex-col items-center rounded-2xl border border-stroke-primary bg-white p-6 text-center">
       <div className="relative">
-        <Avatar src={photoUrl} name={name || 'Your name'} size={104} />
+        <Avatar src={profilePicture} name={name || 'Your name'} size={104} />
 
         <button
           onClick={() => inputRef.current?.click()}
@@ -51,7 +51,7 @@ export default function PhotoUploader({
         onClick={() => inputRef.current?.click()}
         className="mt-4 rounded-lg bg-theme-shade/20 px-4 py-2 text-xs font-semibold text-theme transition hover:bg-theme-shade/20"
       >
-        {photoUrl ? 'Change photo' : 'Choose photo'}
+        {profilePicture ? 'Change photo' : 'Choose photo'}
       </button>
 
       <input
