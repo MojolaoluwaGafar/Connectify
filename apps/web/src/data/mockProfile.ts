@@ -1,5 +1,4 @@
 // TODO: BACKEND — this file simulates the `profiles` collection in MongoDB.
-// Replace `getAllProfiles()` calls in mockApi.ts with a real
 // `GET /api/profiles` request once Express + Mongo are wired up.
 
 import type { DiscoverProfile } from '../types';

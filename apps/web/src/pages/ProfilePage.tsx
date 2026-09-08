@@ -248,7 +248,6 @@ setLoading(false)
 // import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
 
 // import type { DiscoverProfile } from '../types';
-// import * as api from '../lib/mockApi';
 
 // import { useAuth } from '../context/authContext/useAuth';
 // import { useLikes } from '../context/likeContext/LikeContext';

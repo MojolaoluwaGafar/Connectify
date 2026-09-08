@@ -3,7 +3,7 @@ import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '../../context/authContext/useAuth';
-import * as api from '../../lib/mockApi';
+import * as api from '../../services/authApi';
 
 // TypeScript interface for component props
 interface ConversationListProps {

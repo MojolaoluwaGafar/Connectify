@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import * as api from '../lib/mockApi';
+import * as api from '../services/authApi';
 import { useAuth } from '../context/authContext/useAuth';
 import type { Gender } from '../types';
 import PhotoUploader from '../components/ui/PhotoUploader';

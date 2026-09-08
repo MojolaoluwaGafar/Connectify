@@ -1,5 +1,4 @@
-// import { mockProfiles } from '../data/mockProfile';
-import * as api from '../lib/mockApi';
+import * as api from '../services/authApi';
 import { ProfileCard } from '../components/ProfileCard';
 import FilterProfiles from '../components/FilterProfiles';
 import EmptyProfile from '../components/EmptyProfile';

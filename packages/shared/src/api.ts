@@ -20,7 +20,6 @@ export const ProfileSchema = z.object({
   bio: z.string(),
   interests: z.array(z.string()),
   photoUrl: z.string().url().nullable(),
-  isComplete: z.boolean(),
 })
 
 export const DiscoverProfileSchema = ProfileSchema.extend({

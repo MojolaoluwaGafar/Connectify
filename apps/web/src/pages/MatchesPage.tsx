@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import * as api from "../lib/mockApi";
+import * as api from "../services/authApi";
 import { useAuth } from "../context/authContext/useAuth";
 import type { DiscoverProfile } from "../types";
 
