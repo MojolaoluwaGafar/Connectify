@@ -20,7 +20,7 @@ export const ProfileCard = ({ profiles }: Props) => {
           >
             <div className="w-full">
               <img
-                src={profile.photoUrl || ''}
+                src={profile.profilePicture || ''}
                 alt={profile.fullName}
                 className="object-cover"
               />
@@ -32,7 +32,7 @@ export const ProfileCard = ({ profiles }: Props) => {
               <p className="flex items-center gap-2  font-[inter] ">
                 <img src="/Vector.png" className="size-3" /> {profile.location}
               </p>
-              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
+              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.about}</p>
 
               <div className="flex gap-2">
                 <button

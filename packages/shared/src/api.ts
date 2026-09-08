@@ -17,9 +17,9 @@ export const ProfileSchema = z.object({
   gender: GenderSchema.nullable(),
   location: z.string(),
   occupation: z.string(),
-  bio: z.string(),
-  interests: z.array(z.string()),
-  photoUrl: z.string().url().nullable(),
+  about: z.string(),
+  interest: z.array(z.string()),
+  profilePicture: z.string().url().nullable(),
 })
 
 export const DiscoverProfileSchema = ProfileSchema.extend({

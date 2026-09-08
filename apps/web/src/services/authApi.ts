@@ -107,6 +107,9 @@ export async function getDiscoverProfiles(filters: {
   page?: number;
   pageSize?: number;
   excludeUserId?: string;
+  lat?: number;
+  lng?: number;
+  radius?: number;
 }): Promise<{
   items: DiscoverProfile[];
   total: number;
