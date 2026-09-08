@@ -25,7 +25,7 @@ export const ProfileCard = ({ profiles }: Props) => {
               <img
                 src={profile.photoUrl || ''}
                 alt={profile.fullName}
-                className="w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                className="w-full object-cover transition-transform duration-300 group-hover:scale-108"
               />
             </div>
 
@@ -37,33 +37,23 @@ export const ProfileCard = ({ profiles }: Props) => {
           <span className="text-xs font-semibold text-theme">Liked</span>
         </div>
       )}
-            <div className="p-3 space-y-2 text-sm">
-              <h2 className="font-fraunces text-black text-lg font-semibold">
-                {profile.fullName}, {profile.age}
-              </h2>
+            {/* Profile information */}
+      <div className="p-4">
+        {/* Name and age */}
+        <h2 className="text-lg font-semibold text-[#1C1524] font-[fraunces]">
+          {profile.fullName}, {profile.age}
+        </h2>
 
-              
-              <p className="flex items-center gap-2  font-[inter] ">
-                <img src="/Vector.png" className="size-3" /> {profile.location}
-              </p>
-              <p className={`mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2`}>
-                {profile.bio}
-              </p>
-              {/* {profile.bio.length > 100 && (
-    <button
-      onClick={() =>
-        setReadMore(readMore === profile.id ? null : profile.id)
-      }
-      className="text-theme text-sm font-medium mt-1"
-    >
-      {readMore === profile.id ? 'Read less' : 'Read more'}
-    </button>
-  )} */}
+        {/* Location */}
+        <p className=" flex items-center gap-2 mb-3 text-sm text-[#655E75] font-[inter]" ><img src="/Vector.png" className="size-3" />{profile.location}</p>
+        
+        {/* Bio */}
+        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2">{profile.bio}</p>
 
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-4">
                 <button
-                  className="border border-stroke-primary px-3 py-1 text-xs rounded-lg font-medium text-black w-full"
+                  className="border border-stroke-primary px-3 py-1 text-xs rounded-lg font-medium text-black w-full font-inter"
                   onClick={() => navigate(`/profile/${profile.userId}`)}
                 >
                   View Profile
@@ -80,7 +70,7 @@ export const ProfileCard = ({ profiles }: Props) => {
                 >
                   <div className="w-fit">
               <img
-                className="size-4"
+                className="size-4 font-[inter]"
                 src={
                   likedIds.has(profile.id) ? '/vector.svg' : '/icon-heart.svg'
                 }
