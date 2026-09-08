@@ -217,7 +217,7 @@ erDiagram
     USERS ||--o{ MEDIA : uploads
 
     USERS { uuid id PK string email string status datetime created_at }
-    PROFILES { uuid user_id PK string display_name string bio string avatar_media_id datetime updated_at }
+    PROFILES { uuid user_id PK string display_name string about string avatar_media_id datetime updated_at }
     CONNECTIONS { uuid id PK uuid requester_id uuid recipient_id string status datetime created_at datetime updated_at }
     CONVERSATIONS { uuid id string kind datetime created_at datetime updated_at }
     CONVERSATION_MEMBERS { uuid conversation_id PK uuid user_id PK datetime last_read_at }

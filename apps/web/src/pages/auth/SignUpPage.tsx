@@ -6,7 +6,6 @@ import { useAuth } from "../../context/authContext/useAuth";
 import PasswordInput from "../../components/auth/PasswordInput";
 import { SparkleIcon, UsersIcon } from "lucide-react";
 import { MessageIcon } from "../../components/auth/Icons";
-// import { login } from '../../lib/mockApi';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -36,7 +35,7 @@ const SignupPage = () => {
   const submit = async (data: RegisterInput) => {
     try {
       await signup(data.fullName, data.email, data.password);
-      console.log(data);
+      // console.log(data);
       navigate("/verify-email", {
         state: { email: data.email },
       });
@@ -53,20 +52,11 @@ const SignupPage = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* =========================
-          LEFT SIDE - SIGN UP FORM
-      ========================== */}
-
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 sm:px-8 py-10 sm:py-12 bg-white">
         <div className="w-full max-w-110">
-          {/* Logo */}
-
           <h1 className="text-2xl font-bold font-serif text-gray-900 mb-7">
             Connectify
           </h1>
-
-          {/* Heading */}
-
           <h2 className="text-2xl sm:text-3xl font-bold font-serif text-gray-900 mb-2">
             Create your account
           </h2>
@@ -75,11 +65,7 @@ const SignupPage = () => {
             Join thousands of people finding real connections on Connectify.
           </p>
 
-          {/* Form */}
-
           <form onSubmit={handleSubmit(submit)} noValidate>
-            {/* Full Name */}
-
             <Input
               label="Full Name"
               type="text"
@@ -90,8 +76,6 @@ const SignupPage = () => {
               <h1 className="text-red-500">{errors.fullName.message}</h1>
             )}
 
-            {/* Email */}
-
             <Input
               label="Email address"
               type="email"
@@ -101,8 +85,6 @@ const SignupPage = () => {
             {errors.email && (
               <h1 className="text-red-500">{errors.email.message}</h1>
             )}
-
-            {/* Password */}
 
             <PasswordInput
               label="Password"
@@ -119,8 +101,6 @@ const SignupPage = () => {
               </p>
             )}
 
-            {/* Create account */}
-
             <Button
               type="submit"
               className="mt-1.5 w-full bg-[#6B30CE] hover:bg-[#5F2AB8]"
@@ -129,15 +109,11 @@ const SignupPage = () => {
             </Button>
           </form>
 
-          {/* OR divider */}
-
           <div className="my-6 flex items-center gap-3 text-xs font-semibold tracking-wide text-gray-400">
             <span className="h-px flex-1 bg-gray-200" />
             OR
             <span className="h-px flex-1 bg-gray-200" />
           </div>
-
-          {/* Google button */}
 
           <button
             type="button"

@@ -32,7 +32,7 @@ export default function ProfileCard({
           }`}
         >
           <img
-            src={profile.photoUrl ?? ''}
+            src={profile.profilePicture ?? ''}
             alt={profile.fullName}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
@@ -65,9 +65,9 @@ export default function ProfileCard({
           </p>
         </button>
 
-        {/* Bio */}
+        {/* about */}
         <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-500">
-          {profile.bio}
+          {profile.about}
         </p>
 
         {/* Buttons */}
