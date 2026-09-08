@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createProfile, getUser } from '../services/api';
 
-import * as api from '../lib/mockApi';
+
 import { useAuth } from '../context/authContext/useAuth';
 import type { Gender } from '../types';
 import PhotoUploader from '../components/ui/PhotoUploader';
@@ -17,24 +18,25 @@ interface FieldErrors {
   age?: string;
   gender?: string;
   location?: string;
-  bio?: string;
-  interests?: string;
+  about?: string;
+  interest?: string;
 }
 
 export default function ProfileEditPage() {
   const { user, profile, refreshProfile } = useAuth();
+
   const navigate = useNavigate();
 
   const isCreating = !profile;
 
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
-  const [gender, setGender] = useState<Gender | ''>('');
+  const [gender, setGender] = useState<Gender | null>(null);
   const [location, setLocation] = useState('');
   const [occupation, setOccupation] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
-  const [bio, setBio] = useState('');
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [about, setBio] = useState('');
+  const [profilePicture, setPhotoUrl] = useState<string | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -47,9 +49,9 @@ export default function ProfileEditPage() {
       setGender(profile.gender ?? '');
       setLocation(profile.location);
       setOccupation(profile.occupation);
-      setInterests(profile.interests);
-      setBio(profile.bio);
-      setPhotoUrl(profile.photoUrl);
+      setInterests(profile.interest);
+      setBio(profile.about);
+      setPhotoUrl(profile.profilePicture);
     } else if (user) {
       setFullName(user.fullName);
     }
@@ -84,12 +86,12 @@ export default function ProfileEditPage() {
       next.location = 'Location is required.';
     }
 
-    if (bio.trim().length < 10) {
-      next.bio = 'Write at least 10 characters so people know who you are.';
+    if (about.trim().length < 10) {
+      next.about = 'Write at least 10 characters so people know who you are.';
     }
 
     if (interests.length === 0) {
-      next.interests = 'Pick at least one interest.';
+      next.interest = 'Pick at least one interest.';
     }
 
     setFieldErrors(next);
@@ -97,25 +99,32 @@ export default function ProfileEditPage() {
     return Object.keys(next).length === 0;
   }
 
-  async function handleSave() {
+  async function handleSave(e: MouseEvent<HTMLButtonElement>) {
+    console.log("btn clicked");
+    
+    e.preventDefault()
     if (!user) return;
 
     setApiError('');
 
     if (!validate()) return;
 
+    if (!gender) return;
+
     setIsSaving(true);
 
+    
+
     try {
-      await api.saveProfile(user.id, {
-        fullName: fullName.trim(),
-        age: age ? Number(age) : null,
-        gender: gender || null,
+      await createProfile({
+        fullName: fullName.trim() || "",
+        age: Number(age),
+        gender: gender,
         location: location.trim(),
         occupation: occupation.trim(),
-        interests,
-        bio: bio.trim(),
-        photoUrl,
+        interest: interests,
+        about: about.trim(),
+        profilePicture: profilePicture,
       });
 
       await refreshProfile();
@@ -139,7 +148,7 @@ export default function ProfileEditPage() {
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-        <PhotoUploader photoUrl={photoUrl} name={fullName} onChange={setPhotoUrl} />
+        <PhotoUploader profilePicture={profilePicture} name={fullName} onChange={setPhotoUrl} />
 
         <div className="space-y-6">
           <Section title="Basic information">
@@ -165,7 +174,7 @@ export default function ProfileEditPage() {
 
               <Select
                 label="Gender"
-                value={gender}
+                value={gender ?? ""}
                 onChange={(e) => setGender(e.target.value as Gender)}
                 error={fieldErrors.gender}
               >
@@ -207,21 +216,21 @@ export default function ProfileEditPage() {
               ))}
             </div>
 
-            {fieldErrors.interests && (
+            {fieldErrors.interest && (
               <p className="mt-2 text-xs font-medium text-red-600">
-                {fieldErrors.interests}
+                {fieldErrors.interest}
               </p>
             )}
           </Section>
 
           <Section title="About you">
             <TextArea
-              placeholder="Write a short bio about yourself (at least 10 characters)"
-              value={bio}
+              placeholder="Write a short about about yourself (at least 10 characters)"
+              value={about}
               onChange={(e) => setBio(e.target.value.slice(0, 200))}
               maxLength={200}
               rows={4}
-              error={fieldErrors.bio}
+              error={fieldErrors.about}
             />
           </Section>
 

@@ -358,7 +358,7 @@ export async function saveProfile(
       data.age &&
       data.gender &&
       data.location &&
-      data.bio,
+      data.about,
   );
 
   const profile: Profile = {

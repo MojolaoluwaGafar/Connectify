@@ -1,3 +1,14 @@
+import { profile, Profile } from "../../model/profile.js"
+
+export async function createProfile(userId: string, data: profile) {
+  console.log(data)
+  const { fullName, gender, interest, occupation, about, age, location, profilePicture} = data
+  const newProfile = await Profile.create( {
+      userId, fullName, gender, interest, occupation, about, age, location, profilePicture
+    })
+ return newProfile
+}
+
 export async function listProfiles(_query: unknown) {
   return {
     message: 'Profile discovery is scheduled for the next backend milestone.',
@@ -21,3 +32,4 @@ export async function getCurrentProfile(_userId: string | undefined) {
     userId: _userId,
   }
 }
+

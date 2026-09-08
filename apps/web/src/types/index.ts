@@ -23,14 +23,26 @@ export interface User {
 export interface Profile {
   userId: string;
   fullName: string;
-  age: number | null;
-  gender: Gender | null;
+  age: number;
+  gender: Gender;
   location: string;
   occupation: string;
-  bio: string;
-  interests: string[];
-  photoUrl: string | null;
-  isComplete: boolean;
+  about: string;
+  interest: string[];
+  profilePicture: string | null;
+  
+}
+export interface ICreateProfile {
+  
+  fullName: string;
+  age: number;
+  gender: Gender;
+  location: string;
+  occupation: string;
+  about: string;
+  interest: string[];
+  profilePicture: string | null;
+  
 }
 
 export interface DiscoverProfile extends Profile {

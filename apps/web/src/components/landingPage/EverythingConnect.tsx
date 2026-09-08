@@ -64,7 +64,7 @@ const EverythingConnect = () => {
             <div className="w-full h-18 md:w-129.5 md:h-10">
               <p className="m-0 w-full h-18 font-['Inter'] font-normal text-[20px] leading-7.5 text-[#6B6178] md:w-129.5 md:h-10 md:text-[14px] md:leading-5">
                 Set up your profile in minutes. Add your interests, photos and a
-                short bio to let others know who you are.
+                short about to let others know who you are.
               </p>
             </div>
           </div>

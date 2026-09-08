@@ -109,7 +109,7 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                   <div className="flex gap-3">
                     {/* User Profile Avatar */}
                     <img
-                      src={person.photoUrl || ''}
+                      src={person.profilePicture || ''}
                       alt={person.fullName}
                       className="rounded-full w-12 h-12 object-cover"
                     />

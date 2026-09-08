@@ -2,7 +2,33 @@ import type { Request, Response } from 'express'
 
 import * as profilesService from './profiles.service.js'
 
+
 export const profilesController = {
+  create: async (request:Request, response:Response) => {
+    // console.log(data)
+    const data = request.body
+    if (!request.user) {
+  return response.status(401).json({
+    message: 'Authentication required',
+  })
+}
+    const userId = request.user.id
+   try {
+     const createdProfile = await profilesService.createProfile(userId, data)
+    response.status(201).json({
+     success: true,
+     message: "Profile Created",
+     profile: createdProfile
+    })
+   } catch (error) {
+    console.error(error)
+    response.status(500).json({
+      success:false,
+      message: error
+    })
+   }
+  },
+  
   list: async (request: Request, response: Response) => {
     await profilesService.listProfiles(request.query)
     response.status(501).json({
