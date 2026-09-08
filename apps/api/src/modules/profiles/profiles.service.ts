@@ -3,21 +3,23 @@ export async function listProfiles(_query: unknown) {
     message: 'Profile discovery is scheduled for the next backend milestone.',
     status: 'not_implemented',
     query: _query,
-  }
+  };
 }
 
 export async function getProfileById(_profileId: string) {
   return {
-    message: 'Public profile reads are scheduled for the next backend milestone.',
+    message:
+      'Public profile reads are scheduled for the next backend milestone.',
     status: 'not_implemented',
     profileId: _profileId,
-  }
+  };
 }
 
 export async function getCurrentProfile(_userId: string | undefined) {
   return {
-    message: 'Editable profile reads are scheduled for the next backend milestone.',
+    message:
+      'Editable profile reads are scheduled for the next backend milestone.',
     status: 'not_implemented',
     userId: _userId,
-  }
+  };
 }

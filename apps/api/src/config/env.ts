@@ -25,6 +25,16 @@ const environmentSchema = z.object({
   CLOUD_NAME: z.string().optional().default(''),
   CLOUDINARY_API_KEY: z.string().optional().default(''),
   CLOUDINARY_API_SECRET: z.string().optional().default(''),
+  BREVO_API_KEY: z.string().trim().optional().default(''),
+  EMAIL_FROM: z.string().trim().optional().default(''),
+  APP_EMAIL: z.string().trim().optional().default(''),
+  APP_PASSWORD: z.string().optional().default(''),
+  SMTP_HOST: z.string().trim().default('smtp.gmail.com'),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_SECURE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
 })
 
 const parsedEnvironment = environmentSchema.parse(process.env)
