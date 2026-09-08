@@ -9,20 +9,23 @@ interface Props {
 export const ProfileCard = ({ profiles }: Props) => {
   const navigate = useNavigate();
   const { likedIds, toggleLike } = useLikes();
+  
+
+
   return (
-    <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4">
+    <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4 ">
       {profiles.map((profile, i) => {
         return (
           <div
             key={i}
             className=" border border-stroke-primary text-sm rounded-2xl overflow-hidden
-                "
+                relative  hover:shadow-lg "
           >
-            <div className="w-full">
+            <div className="w-full group overflow-hidden">
               <img
                 src={profile.profilePicture || ''}
                 alt={profile.fullName}
-                className="object-cover"
+                className="w-full object-cover transition-transform duration-300 group-hover:scale-108"
               />
             </div>
             <div className="p-3 space-y-2 text-sm">
@@ -32,11 +35,11 @@ export const ProfileCard = ({ profiles }: Props) => {
               <p className="flex items-center gap-2  font-[inter] ">
                 <img src="/Vector.png" className="size-3" /> {profile.location}
               </p>
-              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.about}</p>
+              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-4">
                 <button
-                  className="border border-stroke-primary px-3 py-1 text-xs rounded-lg font-medium text-black w-full"
+                  className="border border-stroke-primary px-3 py-1 text-xs rounded-lg font-medium text-black w-full font-inter"
                   onClick={() => navigate(`/profile/${profile.userId}`)}
                 >
                   View Profile
@@ -53,7 +56,7 @@ export const ProfileCard = ({ profiles }: Props) => {
                 >
                   <div className="w-fit">
               <img
-                className="size-4"
+                className="size-4 font-[inter]"
                 src={
                   likedIds.has(profile.id) ? '/vector.svg' : '/icon-heart.svg'
                 }
