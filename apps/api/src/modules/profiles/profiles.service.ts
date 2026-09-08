@@ -94,19 +94,24 @@ function formatDiscoveryResult(items: Array<Record<string, any>>, total: number,
   }
 }
 
-export async function getProfileById(_profileId: string) {
-  return {
-    message: 'Public profile reads are scheduled for the next backend milestone.',
-    status: 'not_implemented',
-    profileId: _profileId,
-  }
+export async function getProfileById(userId: string) {
+  if (!mongoose.isValidObjectId(userId)) return null
+
+  const item = await Profile.findOne({ userId: new mongoose.Types.ObjectId(userId) }).lean()
+  return item ? formatProfile(item) : null
 }
 
-export async function getCurrentProfile(_userId: string | undefined) {
+export async function getCurrentProfile(userId: string | undefined) {
+  if (!userId) return null
+  return getProfileById(userId)
+}
+
+function formatProfile(item: Record<string, any>) {
   return {
-    message: 'Editable profile reads are scheduled for the next backend milestone.',
-    status: 'not_implemented',
-    userId: _userId,
+    ...item,
+    userId: String(item.userId),
+    interest: item.interests ?? [],
+    isComplete: true,
   }
 }
 

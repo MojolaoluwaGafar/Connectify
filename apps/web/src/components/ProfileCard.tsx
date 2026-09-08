@@ -28,14 +28,28 @@ export const ProfileCard = ({ profiles }: Props) => {
                 className="w-full object-cover transition-transform duration-300 group-hover:scale-108"
               />
             </div>
-            <div className="p-3 space-y-2 text-sm">
-              <h2 className="font-fraunces text-black text-lg font-semibold">
-                {profile.fullName}, {profile.age}
-              </h2>
-              <p className="flex items-center gap-2  font-[inter] ">
-                <img src="/Vector.png" className="size-3" /> {profile.location}
-              </p>
-              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
+
+             {/* Checkmark badge displayed when this profile is liked */}
+      {likedIds.has(profile.id) && (
+        <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white px-2 py-1 shadow-md font-[inter] tracking-tight leading-[100%]">
+          <img src="/check.svg" alt="Liked" className="h-3 w-3" />
+
+          <span className="text-xs font-semibold text-theme">Liked</span>
+        </div>
+      )}
+            {/* Profile information */}
+      <div className="p-4">
+        {/* Name and age */}
+        <h2 className="text-lg font-semibold text-[#1C1524] font-[fraunces]">
+          {profile.fullName}, {profile.age}
+        </h2>
+
+        {/* Location */}
+        <p className=" flex items-center gap-2 mb-3 text-sm text-[#655E75] font-[inter]" ><img src="/Vector.png" className="size-3" />{profile.location}</p>
+        
+        {/* Bio */}
+        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2">{profile.bio}</p>
+
 
               <div className="flex gap-2 mt-4">
                 <button
