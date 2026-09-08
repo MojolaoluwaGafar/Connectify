@@ -55,12 +55,12 @@ export async function registerUser(payload: unknown) {
   )
 
   // Development only: show verification code in backend terminal
-  console.log('====================================')
-  console.log('📧 VERIFICATION CODE')
-  console.log(`Email: ${data.email}`)
-  console.log(`Code: ${verificationCode}`)
-  console.log('Expires: 10 minutes')
-  console.log('====================================')
+  // console.log('====================================')
+  // console.log('📧 VERIFICATION CODE')
+  // console.log(`Email: ${data.email}`)
+  // console.log(`Code: ${verificationCode}`)
+  // console.log('Expires: 10 minutes')
+  // console.log('====================================')
 
   const newUser = await User.create({
     fullName: data.fullName,
