@@ -1,6 +1,7 @@
 ﻿import axios, { type AxiosError } from 'axios';
 
 import { clearAuth, getAuthToken } from '../utils/authToken';
+import type { ICreateProfile } from '../types';
 
 const redirectToLogin = () => {
   if (typeof window === 'undefined') return;
@@ -57,4 +58,11 @@ export { PublicApi };
 
 export function isAxiosError(error: unknown): error is AxiosError {
   return (error as AxiosError).isAxiosError === true;
+}
+export const getUser = async ()=>{
+  return await api.get("/api/v1/auth/me") 
+}
+
+export const  createProfile = async (data: ICreateProfile)=>{
+ return await api.post("/api/v1/profiles/createProfile", data)
 }

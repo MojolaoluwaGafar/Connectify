@@ -3,7 +3,6 @@ import { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageIcon } from '../../components/auth/Icons';
 
-// import * as api from '../../lib/mockApi';
 import { useAuth } from '../../context/authContext/useAuth';
 
 const VerifyEmailPage = () => {

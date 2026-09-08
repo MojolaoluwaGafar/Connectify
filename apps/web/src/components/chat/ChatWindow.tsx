@@ -98,7 +98,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
 
             {/* Recipient Photo */}
             <img
-              src={selectedUser?.photoUrl}
+              src={selectedUser?.profilePicture}
               alt={selectedUser?.fullName}
               className="rounded-full w-10 h-10 object-cover"
             />
