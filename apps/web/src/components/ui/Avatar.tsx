@@ -4,8 +4,6 @@ interface AvatarProps {
   size?: number;
 }
 
-// Shows the user's photo if they have one, otherwise falls back to a
-// colored circle with their initial — matches the "D" avatar in the design.
 export default function Avatar({ src, name, size = 40 }: AvatarProps) {
   const initial = name.trim().charAt(0).toUpperCase() || '?';
 
@@ -23,7 +21,7 @@ export default function Avatar({ src, name, size = 40 }: AvatarProps) {
   return (
     <div
       style={{ width: size, height: size, fontSize: size * 0.4 }}
-      className="flex items-center justify-center rounded-full bg-brand-600 font-semibold text-white"
+      className="flex items-center justify-center rounded-full bg-theme font-semibold text-white"
     >
       {initial}
     </div>

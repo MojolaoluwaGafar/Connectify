@@ -1,17 +1,18 @@
 interface Props {
   tab: 'all' | 'new' | 'near-me';
+  className?: string;
   setTab: React.Dispatch<React.SetStateAction<'all' | 'new' | 'near-me'>>;
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const FilterProfiles = ({ tab, setTab, setPage }: Props) => {
+const FilterProfiles = ({ tab, setTab, setPage, className }: Props) => {
   function handleFilter(value: 'all' | 'new' | 'near-me') {
     setTab(value);
     setPage(1);
   }
   return (
     <>
-      <div className="flex gap-2 items-center">
+      <div className={`flex gap-2 items-center font-geist ${className}`}>
         <button
           className={`px-3 py-1 border rounded-2xl border-stroke-primary text-black ${tab === 'all' ? 'bg-theme text-white' : ''}`}
           onClick={() => handleFilter('all')}

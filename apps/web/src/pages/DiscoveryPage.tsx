@@ -56,7 +56,7 @@ const DiscoveryPage = () => {
       <p>Find people who share your interests</p>
        
 
-      <main className="flex lg:flex-row flex-col-reverse gap-10 mt-5 w-full">
+      <main className="flex lg:flex-row flex-col gap-10 mt-5 w-full">
         <div className="lg:w-3/4 space-y-4" >
          <div className="relative flex items-center gap-2 w-full">
           <img className='absolute top-3 left-3' src={Icon} alt="search icon" /> 
@@ -73,15 +73,17 @@ const DiscoveryPage = () => {
           />
           
          </div>
+          <FilterProfiles className="lg:hidden" setTab={setTab} tab={tab} setPage={setPage} />
 
           {profiles.length > 0 ? (
             <ProfileCard profiles={profiles} />
           ) : (
             <EmptyProfile />
           )}
+           <Pagination page={page} totalPages={totalPages} onChange={setPage} /> 
         </div>
         <div className="space-y-6 lg:w-1/4">
-          <FilterProfiles setTab={setTab} tab={tab} setPage={setPage} />
+          <FilterProfiles className="hidden lg:flex" setTab={setTab} tab={tab} setPage={setPage} />
           <div className="border rounded-2xl p-4 text-sm space-y-3">
             <div className="flex justify-between ">
               <h2 className="font-fraunces font-semibold text-black">
@@ -102,6 +104,32 @@ const DiscoveryPage = () => {
                 </button>
               </div>
             </div>
+            <div className="flex gap-3 items-center">
+              <img className="size-10" src="/Avatar.png"></img>
+              <div className="grow">
+                <h2 className="text-black text-md">Sarah, 26</h2>
+                <p>London, UK</p>
+              </div>
+              <div>
+                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-medium text-black">
+                  View
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-3 items-center">
+              <img className="size-10" src="/Avatar.png"></img>
+              <div className="grow">
+                <h2 className="text-black text-md">Sarah, 26</h2>
+                <p>London, UK</p>
+              </div>
+              <div>
+                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-medium text-black">
+                  View
+                </button>
+              </div>
+            </div>
+            
+            
           </div>
 
           <div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl">
@@ -124,7 +152,7 @@ const DiscoveryPage = () => {
           </div>
         </div>
       </main>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+     
     </div>
   );
 };
