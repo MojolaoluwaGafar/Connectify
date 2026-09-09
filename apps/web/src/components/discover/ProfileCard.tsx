@@ -20,7 +20,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
       <div className="h-70 w-99 overflow-hidden lg:h-99 lg:w-full ">
         {/* Profile image */}
         <img
-          src={profile.photoUrl ?? ''}
+          src={profile.profilePicture ?? ''}
           alt={profile.fullName}
           className="h-70 w-99 object-cover  transition-transform duration-300 group-hover:scale-105 lg:h-full lg:w-99 lg:group-hover:scale-108"
         />

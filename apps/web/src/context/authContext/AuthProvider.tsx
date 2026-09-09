@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { User, Profile } from "../../types/index";
 
-import * as api from "../../lib/mockApi";
+import * as api from "../../services/authApi";
 import { AuthContext } from "./authContext";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -11,7 +11,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const session = api.getSession();
+      const session = await api.getSession();
       if (session) {
         const current = await api.getCurrentUser();
         setUser(current);

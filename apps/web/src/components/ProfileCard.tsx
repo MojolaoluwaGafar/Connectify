@@ -23,7 +23,7 @@ export const ProfileCard = ({ profiles }: Props) => {
           >
             <div className="w-full group overflow-hidden">
               <img
-                src={profile.photoUrl || ''}
+                src={profile.profilePicture || ''}
                 alt={profile.fullName}
                 className="w-full object-cover transition-transform duration-300 group-hover:scale-108"
               />

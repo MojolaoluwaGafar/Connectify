@@ -109,7 +109,7 @@ setLoading(false)
         {/* Profile image */}
         <div className="overflow-hidden rounded-3xl border border-stroke-primary shadow-sm">
           <img
-            src={target?.photoUrl ?? ''}
+            src={target?.profilePicture ?? ''}
             alt={target?.fullName}
             className="aspect-4/5 w-full object-cover"
           />
@@ -166,7 +166,7 @@ setLoading(false)
             </p>
 
             <p className="mt-2 text-sm leading-relaxed text-ink-700">
-              {target?.bio}
+              {target?.about}
             </p>
           </div>
 
@@ -248,7 +248,6 @@ setLoading(false)
 // import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
 
 // import type { DiscoverProfile } from '../types';
-// import * as api from '../lib/mockApi';
 
 // import { useAuth } from '../context/authContext/useAuth';
 // import { useLikes } from '../context/likeContext/LikeContext';
@@ -347,7 +346,7 @@ setLoading(false)
 //           style={{ borderColor: '#ddd6fe' }}
 //         >
 //           <img
-//             src={target.photoUrl ?? ''}
+//             src={target.profilePicture ?? ''}
 //             alt={target.fullName}
 //             className="aspect-4/5 w-full object-cover"
 //           />
@@ -404,7 +403,7 @@ setLoading(false)
 //             </p>
 
 //             <p className="mt-2 text-sm leading-relaxed text-[#3f3550]">
-//               {target.bio}
+//               {target.about}
 //             </p>
 //           </div>
 

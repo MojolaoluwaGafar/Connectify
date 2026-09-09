@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import * as api from "../lib/mockApi";
+import * as api from "../services/authApi";
 import { useAuth } from "../context/authContext/useAuth";
 import type { DiscoverProfile } from "../types";
 
@@ -106,7 +106,7 @@ const Matches = () => {
                 {/* Profile image */}
                 <div className="w-full overflow-hidden">
                   <img
-                    src={profile.photoUrl ?? ""}
+                    src={profile.profilePicture ?? ""}
                     alt={profile.fullName}
                     className="w-full h-full object-cover block"
                   />
@@ -117,7 +117,7 @@ const Matches = () => {
                   {/* Profile avatar and name */}
                   <div className="flex items-center gap-3">
                     <img
-                      src={profile.photoUrl ?? ""}
+                      src={profile.profilePicture ?? ""}
                       alt={profile.fullName}
                       className="rounded-full w-8 h-8"
                     />
@@ -140,10 +140,10 @@ const Matches = () => {
                     </p>
                   </div>
 
-                  {/* Profile bio */}
+                  {/* Profile about */}
                   <div className="mt-1">
                     <p className="text-sm font-geist text-[#655E75] line-clamp-2">
-                      {profile.bio}
+                      {profile.about}
                     </p>
                   </div>
 
