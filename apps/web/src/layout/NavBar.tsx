@@ -122,7 +122,7 @@ export default function Navbar({
     // "relative" here lets the mobile dropdown below position itself
     // relative to this header instead of the whole page
     <header className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white">
-      <div className="mx-auto flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           to={isLoggedIn ? "/home" : "/"}
@@ -339,6 +339,15 @@ export default function Navbar({
                 <LogOut size={18} />
                 Log out
               </button>
+              {/* <div className="border-t border-gray-100 py-1">
+                    <button
+                      onClick={handleLogout}
+                      // onClick={() => setProfileOpen(false)}
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut size={16} />
+                      Log out
+                    </button> */}
             </div>
           )}
         </div>

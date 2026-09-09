@@ -52,26 +52,12 @@ export const profilesController = {
       ? request.params.profileId[0] ?? ''
       : request.params.profileId ?? ''
 
-    await profilesService.getProfileById(profileId)
-    response.status(501).json({
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Public profile reads are scheduled for the next backend milestone.',
-        requestId: request.requestId,
-        details: {},
-      },
-    })
+    const profile = await profilesService.getProfileById(profileId)
+    response.status(200).json({ profile })
   },
 
   getMe: async (request: Request, response: Response) => {
-    await profilesService.getCurrentProfile(request.user?.id)
-    response.status(501).json({
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Editable profile reads are scheduled for the next backend milestone.',
-        requestId: request.requestId,
-        details: {},
-      },
-    })
+    const profile = await profilesService.getCurrentProfile(request.user?.id)
+    response.status(200).json({ profile })
   },
 }

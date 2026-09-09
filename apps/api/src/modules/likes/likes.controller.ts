@@ -34,4 +34,8 @@ export const likesController = {
       },
     })
   },
+
+  likedByMe: async (_request: Request, response: Response) => {
+    response.status(200).json({ items: [] })
+  },
 }
