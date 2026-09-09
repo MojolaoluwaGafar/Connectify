@@ -75,7 +75,7 @@ stateDiagram-v2
 
 1. An account cannot create a session until its email is verified.
 2. A profile is complete only when it has: full name, age 18–100, gender,
-   location, a bio of at least 10 characters, and one or more interests.
+   location, a about of at least 10 characters, and one or more interests.
 3. A like is directed: `actor -> target`. A duplicate active like is
    idempotent.
 4. A match is the mutual-like state, not a separate client-created resource.
@@ -145,7 +145,7 @@ page-based response until the frontend migrates to cursor pagination:
 ```
 
 Profile photos accept JPEG or PNG only and have a 5 MB maximum, matching the
-uploader UI. The backend returns a public-safe `photoUrl`, never storage keys
+uploader UI. The backend returns a public-safe `profilePicture`, never storage keys
 or signed URLs.
 
 ### Likes, matches, and conversations
@@ -196,7 +196,7 @@ erDiagram
     USERS ||--|| NOTIFICATION_PREFERENCES : configures
 
     USERS { uuid id PK string email string password_hash boolean email_verified_at datetime created_at }
-    PROFILES { uuid user_id PK string full_name int age string gender string location string occupation string bio string photo_url boolean is_complete }
+    PROFILES { uuid user_id PK string full_name int age string gender string location string occupation string about string photo_url boolean is_complete }
     LIKES { uuid id PK uuid actor_id uuid target_id string status datetime created_at datetime revoked_at }
     CONVERSATIONS { uuid id PK string kind uuid user_low_id uuid user_high_id datetime matched_at datetime closed_at }
     CONVERSATION_MEMBERS { uuid conversation_id PK uuid user_id PK datetime last_read_at }
@@ -211,7 +211,7 @@ Required constraints:
 - unique active directed like on `(actor_id, target_id)`;
 - unique direct conversation on the canonical `(user_low_id, user_high_id)`;
 - message sender must be a conversation member;
-- profile age range `18..100` and bio length `10..200`.
+- profile age range `18..100` and about length `10..200`.
 
 ## 5. Backend module plan
 

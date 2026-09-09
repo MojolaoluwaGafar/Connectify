@@ -1,80 +1,62 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
 
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import { useAuth } from '../../context/authContext/useAuth';
-import PasswordInput from '../../components/auth/PasswordInput';
-import { SparkleIcon, UsersIcon } from 'lucide-react';
-import { MessageIcon } from '../../components/auth/Icons';
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import { useAuth } from "../../context/authContext/useAuth";
+import PasswordInput from "../../components/auth/PasswordInput";
+import { SparkleIcon, UsersIcon } from "lucide-react";
+import { MessageIcon } from "../../components/auth/Icons";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  registerSchema,
+  type RegisterInput,
+} from '../../../../../packages/shared/src/schemas/auth';
+import { useState } from "react";
 
 const SignupPage = () => {
   const navigate = useNavigate();
   const { signup } = useAuth();
+  const [signupError, setSignupError] = useState("");
 
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+    },
+  });
 
-  const [errors, setErrors] = useState<{
-    fullName?: string;
-    email?: string;
-    password?: string;
-  }>({});
+  const submit = async (data: RegisterInput) => {
+    try {
+      await signup(data.fullName, data.email, data.password);
+      // console.log(data);
+      navigate("/verify-email", {
+        state: { email: data.email },
+      });
+    } catch (error) {
+      console.error("User not Created", error);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const newErrors: typeof errors = {};
-
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Enter your full name.';
-    }
-
-    if (!email.trim() || !email.includes('@')) {
-      newErrors.email = 'Enter a valid email address.';
-    }
-
-    if (!password) {
-      newErrors.password = 'Password must be at least 8 characters.';
-    } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters.';
-    }
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      try {
-        await signup(fullName, email, password);
-        // await login(email, password);
-        // AuthProvider.login sets user/profile on success — navigate wherever
-        // your app takes a logged-in user, e.g.:
-        // navigate('/home');
-        navigate('/verify-email', { state: { email } });
-      } catch (err) {
-        setErrors({
-          email: err instanceof Error ? err.message : 'Something went wrong.',
-        });
+      if (error instanceof Error) {
+        setSignupError(error.message);
+      } else {
+        setSignupError("Something went wrong. Please try again.");
       }
     }
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* =========================
-          LEFT SIDE - SIGN UP FORM
-      ========================== */}
-
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 sm:px-8 py-10 sm:py-12 bg-white">
         <div className="w-full max-w-110">
-          {/* Logo */}
-
           <h1 className="text-2xl font-bold font-serif text-gray-900 mb-7">
             Connectify
           </h1>
-
-          {/* Heading */}
-
           <h2 className="text-2xl sm:text-3xl font-bold font-serif text-gray-900 mb-2">
             Create your account
           </h2>
@@ -83,63 +65,41 @@ const SignupPage = () => {
             Join thousands of people finding real connections on Connectify.
           </p>
 
-          {/* Form */}
-
-          <form onSubmit={handleSubmit} noValidate>
-            {/* Full Name */}
-
+          <form onSubmit={handleSubmit(submit)} noValidate>
             <Input
               label="Full Name"
               type="text"
               placeholder="e.g John Doe"
-              value={fullName}
-              onChange={(e) => {
-                setFullName(e.target.value);
-
-                setErrors((current) => ({
-                  ...current,
-                  fullName: undefined,
-                }));
-              }}
-              error={errors.fullName}
+              {...register("fullName")}
             />
-
-            {/* Email */}
+            {errors.fullName && (
+              <h1 className="text-red-500">{errors.fullName.message}</h1>
+            )}
 
             <Input
               label="Email address"
               type="email"
               placeholder="name@gmail.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-
-                setErrors((current) => ({
-                  ...current,
-                  email: undefined,
-                }));
-              }}
-              error={errors.email}
+              {...register("email")}
             />
-
-            {/* Password */}
+            {errors.email && (
+              <h1 className="text-red-500">{errors.email.message}</h1>
+            )}
 
             <PasswordInput
               label="Password"
-              placeholder="At least 8 characters"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-
-                setErrors((current) => ({
-                  ...current,
-                  password: undefined,
-                }));
-              }}
-              error={errors.password}
+              type="password"
+              placeholder="******"
+              {...register("password")}
             />
-
-            {/* Create account */}
+            {errors.password && (
+              <h1 className="text-red-500">{errors.password.message}</h1>
+            )}
+            {signupError && (
+              <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+                {signupError}
+              </p>
+            )}
 
             <Button
               type="submit"
@@ -149,15 +109,11 @@ const SignupPage = () => {
             </Button>
           </form>
 
-          {/* OR divider */}
-
           <div className="my-6 flex items-center gap-3 text-xs font-semibold tracking-wide text-gray-400">
             <span className="h-px flex-1 bg-gray-200" />
             OR
             <span className="h-px flex-1 bg-gray-200" />
           </div>
-
-          {/* Google button */}
 
           <button
             type="button"
@@ -175,7 +131,7 @@ const SignupPage = () => {
           {/* Login link */}
 
           <p className="mt-6 text-center text-sm text-gray-500">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <Link
               to="/login"
               className="font-semibold text-[#6B30CE] hover:text-[#5F2AB8] hover:underline"
@@ -197,8 +153,8 @@ const SignupPage = () => {
           className="absolute inset-0 opacity-20"
           style={{
             backgroundImage:
-              'radial-gradient(circle, white 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
+              "radial-gradient(circle, white 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
           }}
         />
 

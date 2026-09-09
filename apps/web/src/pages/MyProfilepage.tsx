@@ -79,7 +79,7 @@ export default function MyProfilePage() {
           <div className="-mt-12 flex items-end justify-between">
             <div className="rounded-full border-4 border-white">
               <Avatar
-                src={profile.photoUrl}
+                src={profile.profilePicture}
                 name={profile.fullName}
                 size={96}
               />
@@ -114,22 +114,22 @@ export default function MyProfilePage() {
             )}
           </div>
 
-          {profile.interests.length > 0 && (
+          {(profile.interest ?? profile.interests ?? []).length > 0 && (
             <div className="mt-5 flex flex-wrap gap-2">
-              {profile.interests.map((i) => (
+              {(profile.interest ?? profile.interests ?? []).map((i) => (
                 <Chip key={i} label={i} as="span" />
               ))}
             </div>
           )}
 
-          {profile.bio && (
+          {profile.about && (
             <div className="mt-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-theme">
                 About me
               </p>
 
               <p className="mt-1.5 text-sm leading-relaxed text-[#3f3550]">
-                {profile.bio}
+                {profile.about}
               </p>
             </div>
           )}

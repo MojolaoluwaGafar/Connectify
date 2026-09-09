@@ -1,4 +1,11 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import {
+  loginSchema,
+  type LoginInput,
+} from '../../../../../packages/shared/src/schemas/auth';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import Button from '../../components/ui/Button';
@@ -14,45 +21,40 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const [loginError, setLoginError] = useState('');
+
   const showVerifiedMessage = location.state?.verified === true;
 
   const showPasswordResetMessage = location.state?.passwordReset === true;
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-  const [errors, setErrors] = useState<{
-    email?: string;
-    password?: string;
-  }>({});
+  const submit = async (data: LoginInput) => {
+    try {
+      setLoginError('');
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+      await login(data.email, data.password);
 
-    const newErrors: typeof errors = {};
-
-    if (!email.trim()) {
-      newErrors.email = 'Enter your email address.';
-    }
-
-    if (!password) {
-      newErrors.password = 'Enter your password.';
-    }
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      try {
-        await login(email, password);
-        navigate('/home', { replace: true });
-      } catch (err) {
-        setErrors({
-          email:
-            err instanceof Error ? err.message : 'Invalid email or password.',
-        });
-      }
+      navigate('/home', { replace: true });
+    } catch (error) {
+      setLoginError(
+        error instanceof Error
+          ? error.message
+          : 'Incorrect email or password.',
+      );
     }
   };
+
   return (
     <div className="min-h-screen flex">
       {/* =========================
@@ -61,6 +63,7 @@ const LoginPage = () => {
 
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 sm:px-8 py-10 sm:py-12 bg-white">
         <div className="w-full max-w-110">
+
           {/* Logo */}
 
           <h1 className="text-2xl font-bold font-serif text-gray-900 mb-7">
@@ -99,23 +102,24 @@ const LoginPage = () => {
 
           {/* Login form */}
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit(submit)} noValidate>
+
+            {/* API error */}
+
+            {loginError && (
+              <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+                {loginError}
+              </p>
+            )}
+
             {/* Email */}
 
             <Input
               label="Email address"
               type="email"
               placeholder="name@gmail.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-
-                setErrors((current) => ({
-                  ...current,
-                  email: undefined,
-                }));
-              }}
-              error={errors.email}
+              {...register('email')}
+              error={errors.email?.message}
             />
 
             {/* Password */}
@@ -123,16 +127,8 @@ const LoginPage = () => {
             <PasswordInput
               label="Password"
               placeholder="Enter your password"
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setPassword(e.target.value);
-
-                setErrors((current) => ({
-                  ...current,
-                  password: undefined,
-                }));
-              }}
-              error={errors.password}
+              {...register('password')}
+              error={errors.password?.message}
             />
 
             {/* Forgot password */}
@@ -170,6 +166,7 @@ const LoginPage = () => {
             type="button"
             className="flex w-full h-12 items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-[15px] font-semibold text-gray-900 transition hover:bg-gray-50"
           >
+            <img src="../../../public/material-icon-theme_google.svg" alt="" />
             <span>Continue with Google</span>
           </button>
 
@@ -192,6 +189,7 @@ const LoginPage = () => {
       ========================== */}
 
       <div className="relative hidden overflow-hidden bg-linear-to-br from-[#7B39EA] via-[#6B30CE] to-[#5423A6] lg:flex lg:w-1/2">
+
         {/* White dotted pattern */}
 
         <div
@@ -206,6 +204,7 @@ const LoginPage = () => {
         {/* Promo content */}
 
         <div className="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
+
           {/* Sparkle icon */}
 
           <div className="mb-7">
@@ -227,9 +226,12 @@ const LoginPage = () => {
             relationships built around shared interests.
           </p>
 
-          {/* Feature 1 */}
+          {/* Features */}
 
           <div className="space-y-5">
+
+            {/* Feature 1 */}
+
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
                 <UsersIcon size={20} />
@@ -263,6 +265,7 @@ const LoginPage = () => {
                 Discover people near you and around the world
               </span>
             </div>
+
           </div>
         </div>
       </div>
