@@ -106,7 +106,7 @@ const DiscoveryPage = () => {
               setSearchValue(e.target.value);
             }}
             placeholder="Search by name or interests..."
-            className="outline-0 border border-stroke-primary placeholder:text-text-primary rounded-[100px] py-1.5 px-9 w-full lg:w-3/5"
+            className="  mb-4 outline-0 border border-stroke-primary placeholder:text-text-primary rounded-[100px] font-giest py-1.5 px-9 w-full lg:w-3/5 leading-[100%] tracking-normal font-normal "
           />
           
          </div>
