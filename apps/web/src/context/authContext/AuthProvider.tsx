@@ -1,8 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react";
-import type { User, Profile } from "../../types/index";
+import { useEffect, useState, type ReactNode } from 'react';
+import type { User, Profile } from '../../types/index';
 
-import * as api from "../../lib/mockApi";
-import { AuthContext } from "./authContext";
+import * as api from '../../services/authApi';
+import { AuthContext } from './authContext';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -11,16 +11,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const session = api.getSession();
-      if (session) {
-        const current = await api.getCurrentUser();
-        setUser(current);
-        if (current) {
-          const p = await api.getProfile(current.id);
-          setProfile(p);
+      try {
+        const session = await api.getSession();
+        if (session) {
+          const current = await api.getCurrentUser();
+          setUser(current);
+
+          if (current?.id) {
+            const p = await api.getProfile(current.id);
+            setProfile(p);
+          }
         }
+      } catch (err) {
+        // No valid session, or the request failed — treat as logged out
+        // rather than hanging on the loading screen.
+        console.error('Failed to restore session:', err);
+        setUser(null);
+        setProfile(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     })();
   }, []);
 

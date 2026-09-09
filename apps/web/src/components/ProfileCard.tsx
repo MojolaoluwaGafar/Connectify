@@ -15,14 +15,13 @@ export const ProfileCard = ({ profiles }: Props) => {
         return (
           <div
             key={i}
-            className=" border border-stroke-primary text-sm rounded-2xl overflow-hidden
-                "
+            className=" border border-stroke-primary text-sm rounded-2xl overflow-hidden"
           >
-            <div className="w-full">
+            <div className="w-full bg-gray-100 h-64 flex justify-center items-center">
               <img
-                src={profile.photoUrl || ''}
+                src={profile.profilePicture || '/profile-picture.png'}
                 alt={profile.fullName}
-                className="object-cover"
+                className={`object-cover ${profile.profilePicture ? '' : 'size-32'}`}
               />
             </div>
             <div className="p-3 space-y-2 text-sm">
@@ -32,7 +31,9 @@ export const ProfileCard = ({ profiles }: Props) => {
               <p className="flex items-center gap-2  font-[inter] ">
                 <img src="/Vector.png" className="size-3" /> {profile.location}
               </p>
-              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">{profile.bio}</p>
+              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">
+                {profile.about}
+              </p>
 
               <div className="flex gap-2">
                 <button
@@ -47,22 +48,21 @@ export const ProfileCard = ({ profiles }: Props) => {
                       ? 'bg-gray-900'
                       : 'bg-theme hover:bg-purple-700'
                   }`}
-                  
                   onClick={() => toggleLike(profile)}
-                  
                 >
                   <div className="w-fit">
-              <img
-                className="size-4"
-                src={
-                  likedIds.has(profile.id) ? '/vector.svg' : '/icon-heart.svg'
-                }
-                alt=""
-              />
-            </div>
+                    <img
+                      className="size-4"
+                      src={
+                        likedIds.has(profile.id)
+                          ? '/vector.svg'
+                          : '/icon-heart.svg'
+                      }
+                      alt=""
+                    />
+                  </div>
                   {likedIds.has(profile.id) ? 'Liked' : 'Like'}
                 </button>
-                
               </div>
             </div>
           </div>
