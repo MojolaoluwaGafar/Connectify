@@ -48,7 +48,7 @@ export const ProfileCard = ({ profiles }: Props) => {
         <p className=" flex items-center gap-2 mb-3 text-sm text-[#655E75] font-[inter]" ><img src="/Vector.png" className="size-3" />{profile.location}</p>
         
         {/* Bio */}
-        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2">{profile.bio}</p>
+        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2">{profile.about}</p>
 
 
               <div className="flex gap-2 mt-4">
