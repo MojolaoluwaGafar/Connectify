@@ -71,7 +71,7 @@ const DiscoveryPage = () => {
   !profile.occupation?.trim();
 
   return (
-    <div className="w-10/12 mx-auto container py-10 text-text-primary">
+    <div className="w-10/12 mx-auto container py-5 lg:py-10 text-text-primary ">
       <h1 className="font-fraunces font-semibold text-2xl text-black">
         Discover People
       </h1>
@@ -109,7 +109,7 @@ const DiscoveryPage = () => {
           ) : (
             <EmptyProfile />
           )}
-           <Pagination page={page} totalPages={totalPages} onChange={setPage} /> 
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} /> 
         </div>
         <div className="space-y-9 lg:w-1/4 ">
           <FilterProfiles className="hidden lg:flex" setTab={setTab} tab={tab} setPage={setPage} />
