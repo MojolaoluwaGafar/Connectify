@@ -77,16 +77,13 @@ export async function getMyProfile(): Promise<Profile | null> {
 }
 
 export async function saveProfile(
-  userId: string,
   data: Omit<Profile, 'userId' | 'isComplete'>,
 ): Promise<Profile> {
-  const { data: response } = await api.post('/api/v1/profiles/me/profile', {
-    userId,
+  const { data: response } = await api.post('/api/v1/profiles/createProfile', {
     ...data,
   });
 
-  const profile = response?.profile ?? response?.data?.profile ?? response;
-  return profile as Profile;
+  return response?.data as Profile;
 }
 
 export async function getProfileById(

@@ -49,6 +49,7 @@ export const profilesController = {
     try {
       const result = await profilesService.listProfiles(
         request.query as Record<string, unknown>,
+        request.user.id,
       );
       response
         .status(200)
@@ -71,8 +72,8 @@ export const profilesController = {
       ? (request.params.profileId[0] ?? '')
       : (request.params.profileId ?? '');
 
-    const profile = await profilesService.getProfileById(profileId);
-    response.status(200).json({ profile });
+    const data = await profilesService.getProfileById(profileId);
+    response.status(200).json({ data });
   },
 
   getMe: async (request: Request, response: Response) => {

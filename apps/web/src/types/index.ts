@@ -32,14 +32,14 @@ export interface Profile {
   interest?: string[];
   interests?: string[];
   profilePicture: string | null;
-  locationCoords?: {
-    type: 'Point';
-    coordinates: [number, number];
-  };
-  
+  //   locationCoords?: {
+  //     type: 'Point';
+  //     coordinates: [number, number];
+  //   };
+  //   isComplete: boolean;
+  // }
 }
 export interface ICreateProfile {
-  
   fullName: string;
   age: number;
   gender: Gender;
@@ -52,7 +52,6 @@ export interface ICreateProfile {
     type: 'Point';
     coordinates: [number, number];
   };
-  
 }
 
 export interface DiscoverProfile extends Profile {
