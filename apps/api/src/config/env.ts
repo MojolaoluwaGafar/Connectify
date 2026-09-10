@@ -33,6 +33,7 @@ const environmentSchema = z.object({
   EMAIL_FROM: z.string().trim().optional().default(''),
   APP_EMAIL: z.string().trim().optional().default(''),
   APP_PASSWORD: z.string().optional().default(''),
+  GOOGLE_CLIENT_ID: z.string().trim().optional().default(''),
   SMTP_HOST: z.string().trim().default('smtp.gmail.com'),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_SECURE: z

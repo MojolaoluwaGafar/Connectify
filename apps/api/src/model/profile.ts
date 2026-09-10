@@ -14,6 +14,7 @@ export interface profile extends Document {
     type: "Point";
     coordinates: [number, number];
   };
+  isComplete:boolean
 }
 
 const ProfileSchema: Schema = new Schema({
@@ -64,7 +65,7 @@ const ProfileSchema: Schema = new Schema({
   gender: {
     type: String,
     required: true,
-    enum: ["male", "female", "non-binary", "prefer not to say"],
+    enum: ["male", "female", "non-binary", "prefer-not-to-say"],
   },
 
   interests: {
@@ -82,6 +83,11 @@ const ProfileSchema: Schema = new Schema({
     type: String,
     default: null,
   },
+  isComplete:{
+    type: Boolean,
+    default: false
+
+  }
 });
 
 ProfileSchema.index({ locationCoords: "2dsphere" });

@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt'
+import { OAuth2Client } from 'google-auth-library'
 import {
   registerSchema,
   verifyEmailSchema,
@@ -14,6 +15,8 @@ import { env } from '../../config/env.js'
 import type { JWTPayload } from '../../types/payload.js'
 import { ActivationTemplate } from '../../MailTemplates/Activate.js'
 import { SendEmail } from '../../utils/SendMail.js'
+
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID)
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -146,7 +149,17 @@ export async function loginUser(payload: unknown) {
 
   const user = await User.findOne({ email: data.email })
 
+  // Check if the user exists first
   if (!user) {
+    throw new AppError(
+      401,
+      'INVALID_CREDENTIALS',
+      'Invalid email or password',
+    )
+  }
+
+  // Google-only users don't have a password
+  if (!user.password) {
     throw new AppError(
       401,
       'INVALID_CREDENTIALS',
@@ -378,5 +391,124 @@ export async function resendVerificationCode(
   return {
     message:
       'If an account with that email exists, a verification code has been sent.',
+  }
+}
+
+export async function googleLogin(payload: unknown) {
+  const { idToken } = payload as { idToken?: string }
+
+  if (!idToken) {
+    throw new AppError(
+      400,
+      'GOOGLE_TOKEN_REQUIRED',
+      'Google ID token is required',
+    )
+  }
+
+  if (!env.GOOGLE_CLIENT_ID) {
+    throw new Error('Google Client ID is not configured')
+  }
+
+  let ticket
+
+  try {
+    ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: env.GOOGLE_CLIENT_ID,
+    })
+  } catch {
+    throw new AppError(
+      401,
+      'INVALID_GOOGLE_TOKEN',
+      'Invalid Google authentication token',
+    )
+  }
+
+  const googlePayload = ticket.getPayload()
+
+  if (!googlePayload) {
+    throw new AppError(
+      401,
+      'INVALID_GOOGLE_TOKEN',
+      'Unable to read Google authentication data',
+    )
+  }
+
+  const {
+    sub: googleId,
+    email,
+    name,
+    email_verified,
+  } = googlePayload
+
+  if (!googleId || !email || !name) {
+    throw new AppError(
+      400,
+      'INVALID_GOOGLE_ACCOUNT',
+      'Google account information is incomplete',
+    )
+  }
+
+  if (!email_verified) {
+    throw new AppError(
+      403,
+      'GOOGLE_EMAIL_NOT_VERIFIED',
+      'Google email is not verified',
+    )
+  }
+
+  // 1. Check if this Google account already exists
+  let user = await User.findOne({ googleId })
+
+  // 2. If not found, check whether the email already exists
+  if (!user) {
+    user = await User.findOne({ email: email.toLowerCase() })
+
+    // Existing normal account
+    if (user) {
+      user.googleId = googleId
+      user.isEmailVerified = true
+
+      await user.save()
+    }
+
+    // Completely new Google account
+    if (!user) {
+      user = await User.create({
+        fullName: name,
+        email: email.toLowerCase(),
+        googleId,
+        role: 'user',
+        isEmailVerified: true,
+      })
+    }
+  }
+
+  if (!env.JWT_SECRET_KEY) {
+    throw new Error('JWT secret is not configured')
+  }
+
+  // Create Connectify's own JWT
+  const token = jwt.sign(
+    {
+      id: user._id.toString(),
+      role: user.role,
+    },
+    env.JWT_SECRET_KEY,
+    {
+      expiresIn:
+        env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+    },
+  )
+
+  return {
+    token,
+    user: {
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+    },
   }
 }

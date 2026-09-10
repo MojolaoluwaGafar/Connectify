@@ -1,41 +1,61 @@
-import { useEffect, useState, type ReactNode } from "react";
-import type { User, Profile } from "../../types/index";
+import { useEffect, useState, type ReactNode } from 'react';
+import type { User, Profile } from '../../types/index';
 
-import * as api from "../../services/authApi";
-import { AuthContext } from "./authContext";
+import * as api from '../../services/authApi';
+import { AuthContext } from './authContext';
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
 
   useEffect(() => {
     (async () => {
-      const session = await api.getSession();
-      if (session) {
-        const current = await api.getCurrentUser();
-        setUser(current);
-        if (current) {
-          const p = await api.getProfile(current.id);
-          setProfile(p);
+      try {
+        const session = await api.getSession();
+        if (session) {
+          const current = await api.getCurrentUser();
+          setUser(current);
+
+          if (current?.id) {
+            const p = await api.getMyProfile();
+            setProfile(p);
+          }
         }
+      } catch (err) {
+        // No valid session, or the request failed — treat as logged out
+        // rather than hanging on the loading screen.
+        console.error('Failed to restore session:', err);
+        setUser(null);
+        setProfile(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     })();
   }, []);
 
   async function refreshProfile() {
     if (!user) return;
-    const p = await api.getProfile(user.id);
+    const p = await api.getMyProfile();
     setProfile(p);
   }
 
   async function login(email: string, password: string) {
     const loggedInUser = await api.login(email, password);
     setUser(loggedInUser);
-    const p = await api.getProfile(loggedInUser.id);
+    const p = await api.getMyProfile();
     setProfile(p);
   }
+  async function googleLogin(idToken: string) {
+  const loggedInUser = await api.googleLogin(idToken);
+
+  setUser(loggedInUser);
+
+  const p = await api.getMyProfile();
+  setProfile(p);
+}
 
   async function logout() {
     await api.logout();
@@ -79,12 +99,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshProfile,
         login,
         logout,
+        googleLogin,
         signup,
         verifyEmail,
         resendVerificationCode,
         requestPasswordReset,
         resetPassword,
         setUserAfterVerification,
+        
       }}
     >
       {children}

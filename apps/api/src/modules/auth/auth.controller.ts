@@ -69,4 +69,13 @@ export const authController = {
       requestId: request.requestId,
     });
   },
+
+  googleLogin: async (request: Request, response: Response) =>{
+      const result = await authService.googleLogin(request.body);
+      response.status(200).json({
+      message: "Login successful",
+      data: result,
+    
+    });
+  }
 };
