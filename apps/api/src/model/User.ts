@@ -1,17 +1,18 @@
 import mongoose, { Document, Schema } from "mongoose";
-import validator, { isLowercase } from "validator";
-import { minLength } from "zod";
+import validator from "validator";
+
 
 export interface User extends Document {
   fullName: string;
   email: string;
-  password: string;
+  password?: string;
   role: string;
   isEmailVerified: boolean;
   verificationCode?: string;
   verificationCodeExpires?: Date;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
+  googleId?: string;
 }
 
 const UserSchema: Schema = new Schema({
@@ -29,7 +30,7 @@ const UserSchema: Schema = new Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
     minLength: 8,
   },
   role: {
@@ -58,6 +59,10 @@ const UserSchema: Schema = new Schema({
   passwordResetExpires: {
     type: Date,
   },
+  googleId: {
+    type: String,
+    required: false
+  }
 });
 
 export const User = mongoose.model<User>("User", UserSchema);

@@ -1,7 +1,7 @@
 const EmptyProfile = () => {
   return (
     <>
-      <div className="border border-stroke-primary h-56 rounded-xl flex justify-center items-center field-sizing-fixed flex-col gap-2">
+      <div className="border border-stroke-primary h-56 rounded-xl flex justify-center items-center field-sizing-fixed flex-col gap-2 text-center px-8 md:px-0">
         <div className="p-3 bg-theme-shade/10 rounded-full">
           <img src="/icon-users.png" className="size-6" />
         </div>

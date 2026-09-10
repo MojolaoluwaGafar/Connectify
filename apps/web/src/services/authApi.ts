@@ -57,19 +57,32 @@ export async function login(email: string, password: string): Promise<User> {
   return user as User;
 }
 
+export async function googleLogin(idToken: string): Promise<User> {
+  const { data } = await PublicApi.post('/api/v1/auth/google', {
+    idToken,
+  });
+
+  const user = data?.user ?? data?.data?.user ?? data;
+  const token = data?.token ?? data?.data?.token;
+
+  if (token) {
+    setAuthToken(token);
+  }
+
+  return user as User;
+}
 export async function logout(): Promise<void> {
   clearAuth();
 }
 
 export async function getCurrentUser(): Promise<User | null> {
   const { data } = await api.get('/api/v1/auth/me');
-
   return (data?.data as User | null) ?? null;
 }
 export async function getProfile(userId: string): Promise<Profile | null> {
   if (!userId) return null;
   const { data } = await api.get(`/api/v1/profiles/${userId}`);
-  console.log(data);
+  console.log('getProfile data:', data);
   return (data?.data as Profile | null) ?? null;
 }
 export async function getMyProfile(): Promise<Profile | null> {
@@ -92,8 +105,8 @@ export async function getProfileById(
   profileId: string,
 ): Promise<DiscoverProfile | null> {
   const { data } = await api.get(`/api/v1/profiles/${profileId}`);
-  const profile = data?.profile ?? data?.data?.profile ?? data;
-  return (profile as DiscoverProfile | null) ?? null;
+  return (data?.data as DiscoverProfile | null) ?? null;
+  // return (profile as DiscoverProfile | null) ?? null;
 }
 
 export async function getDiscoverProfiles(filters: {

@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -11,13 +12,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   registerSchema,
   type RegisterInput,
-} from '../../../../../packages/shared/src/schemas/auth';
-import { useState } from "react";
+} from "../../../../../packages/shared/src/schemas/auth";
+import { useState, useRef } from "react";
 
 const SignupPage = () => {
   const navigate = useNavigate();
-  const { signup } = useAuth();
+  const { signup, googleLogin } = useAuth();
+
   const [signupError, setSignupError] = useState("");
+
+  const googleContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -35,7 +39,7 @@ const SignupPage = () => {
   const submit = async (data: RegisterInput) => {
     try {
       await signup(data.fullName, data.email, data.password);
-      // console.log(data);
+
       navigate("/verify-email", {
         state: { email: data.email },
       });
@@ -50,6 +54,22 @@ const SignupPage = () => {
     }
   };
 
+  const handleGoogleLogin = () => {
+    setSignupError("");
+
+    const googleButton =
+      googleContainerRef.current?.querySelector(
+        'div[role="button"]',
+      ) as HTMLElement | null;
+
+    if (!googleButton) {
+      setSignupError("Google authentication is still loading. Please try again.");
+      return;
+    }
+
+    googleButton.click();
+  };
+
   return (
     <div className="min-h-screen flex">
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 sm:px-8 py-10 sm:py-12 bg-white">
@@ -57,6 +77,7 @@ const SignupPage = () => {
           <h1 className="text-2xl font-bold font-serif text-gray-900 mb-7">
             Connectify
           </h1>
+
           <h2 className="text-2xl sm:text-3xl font-bold font-serif text-gray-900 mb-2">
             Create your account
           </h2>
@@ -72,8 +93,11 @@ const SignupPage = () => {
               placeholder="e.g John Doe"
               {...register("fullName")}
             />
+
             {errors.fullName && (
-              <h1 className="text-red-500">{errors.fullName.message}</h1>
+              <h1 className="text-red-500">
+                {errors.fullName.message}
+              </h1>
             )}
 
             <Input
@@ -82,8 +106,11 @@ const SignupPage = () => {
               placeholder="name@gmail.com"
               {...register("email")}
             />
+
             {errors.email && (
-              <h1 className="text-red-500">{errors.email.message}</h1>
+              <h1 className="text-red-500">
+                {errors.email.message}
+              </h1>
             )}
 
             <PasswordInput
@@ -92,9 +119,13 @@ const SignupPage = () => {
               placeholder="******"
               {...register("password")}
             />
+
             {errors.password && (
-              <h1 className="text-red-500">{errors.password.message}</h1>
+              <h1 className="text-red-500">
+                {errors.password.message}
+              </h1>
             )}
+
             {signupError && (
               <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
                 {signupError}
@@ -115,20 +146,65 @@ const SignupPage = () => {
             <span className="h-px flex-1 bg-gray-200" />
           </div>
 
-          <button
-            type="button"
-            className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-[15px] font-semibold text-gray-900 transition hover:bg-gray-50"
-          >
-            <img
-              src="https://www.google.com/favicon.ico"
-              alt="Google"
-              className="h-5 w-5"
-            />
+          {/* GOOGLE LOGIN */}
+          <div className="relative h-12 w-full">
 
-            <span>Continue with Google</span>
-          </button>
+          
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="absolute inset-0 z-0 flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-[15px] font-semibold text-gray-900 transition hover:bg-gray-50"
+            >
+              <img
+                src="https://www.google.com/favicon.ico"
+                alt="Google"
+                className="h-5 w-5"
+              />
 
-          {/* Login link */}
+              <span>Continue with Google</span>
+            </button>
+
+            {/* GOOGLE AUTH BUTTON */}
+            <div
+              ref={googleContainerRef}
+              className="absolute left-0 top-0 z-10 h-12 w-full overflow-hidden opacity-0"
+            >
+              <GoogleLogin
+                width="100%"
+                onSuccess={async (credentialResponse) => {
+                  try {
+                    if (!credentialResponse.credential) {
+                      throw new Error(
+                        "Google did not return an ID token.",
+                      );
+                    }
+
+                    await googleLogin(
+                      credentialResponse.credential,
+                    );
+
+                    navigate("/");
+                  } catch (error) {
+                    console.error(
+                      "Google login failed:",
+                      error,
+                    );
+
+                    setSignupError(
+                      error instanceof Error
+                        ? error.message
+                        : "Google login failed. Please try again.",
+                    );
+                  }
+                }}
+                onError={() => {
+                  setSignupError(
+                    "Google login failed. Please try again.",
+                  );
+                }}
+              />
+            </div>
+          </div>
 
           <p className="mt-6 text-center text-sm text-gray-500">
             Already have an account?{" "}
@@ -142,12 +218,8 @@ const SignupPage = () => {
         </div>
       </div>
 
-      {/* =========================
-          RIGHT SIDE - PROMO PANEL
-      ========================== */}
-
+      {/* RIGHT SIDE */}
       <div className="relative hidden overflow-hidden bg-linear-to-br from-[#7B39EA] via-[#6B30CE] to-[#5423A6] lg:flex lg:w-1/2">
-        {/* White dotted pattern */}
 
         <div
           className="absolute inset-0 opacity-20"
@@ -158,16 +230,11 @@ const SignupPage = () => {
           }}
         />
 
-        {/* Promo content */}
-
         <div className="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
-          {/* Sparkle icon */}
 
           <div className="mb-7">
             <SparkleIcon size={32} />
           </div>
-
-          {/* Heading */}
 
           <h2 className="mb-5 font-serif text-3xl font-bold leading-tight">
             Real connections,
@@ -175,17 +242,12 @@ const SignupPage = () => {
             real people.
           </h2>
 
-          {/* Description */}
-
           <p className="mb-9 max-w-md text-base leading-relaxed text-purple-100">
             Join thousands of people who found genuine friendships and
             relationships built around shared interests.
           </p>
 
-          {/* Features */}
-
           <div className="space-y-5">
-            {/* Feature 1 */}
 
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
@@ -197,8 +259,6 @@ const SignupPage = () => {
               </span>
             </div>
 
-            {/* Feature 2 */}
-
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
                 <MessageIcon size={20} />
@@ -209,8 +269,6 @@ const SignupPage = () => {
               </span>
             </div>
 
-            {/* Feature 3 */}
-
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
                 <SparkleIcon size={20} />
@@ -220,6 +278,7 @@ const SignupPage = () => {
                 Discover people near you and around the world
               </span>
             </div>
+
           </div>
         </div>
       </div>

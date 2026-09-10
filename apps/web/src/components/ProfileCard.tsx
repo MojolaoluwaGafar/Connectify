@@ -9,8 +9,6 @@ interface Props {
 export const ProfileCard = ({ profiles }: Props) => {
   const navigate = useNavigate();
   const { likedIds, toggleLike } = useLikes();
-  
-
 
   return (
     <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4 ">
@@ -18,50 +16,62 @@ export const ProfileCard = ({ profiles }: Props) => {
         return (
           <div
             key={i}
-            className=" border border-stroke-primary text-sm rounded-2xl overflow-hidden relative"
+            className="group relative overflow-hidden rounded-2xl border border-stroke-primary text-sm shadow-sm transition-all duration-300 hover:shadow-lg"
           >
-            <div className="w-full bg-gray-100 h-64 flex justify-center items-center">
+            {/* IMAGE */}
+            <div className="flex h-80 w-full items-center justify-center overflow-hidden bg-gray-100">
               <img
                 src={profile.profilePicture || '/profile-picture.png'}
                 alt={profile.fullName}
-                className={`object-cover ${profile.profilePicture ? '' : 'size-32'}`}
+                className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+                  profile.profilePicture
+                    ? ''
+                    : 'size-32 w-auto h-auto object-contain'
+                }`}
               />
             </div>
-            <div className="p-3 space-y-2 text-sm h-45">
-              <h2 className="font-fraunces text-black text-lg font-semibold">
+
+            {/* TEXT */}
+            <div className="relative h-45 space-y-2 p-3 text-sm transition-transform duration-300 ease-out group-hover:-translate-y-0.5">
+              <h2 className="truncate font-fraunces text-lg font-semibold text-black">
                 {profile.fullName}, {profile.age}
               </h2>
-              <p className="flex items-center gap-2  font-[inter] ">
-                <img src="/Vector.png" className="size-3" /> {profile.location}
+
+              <p className="flex items-center gap-2 truncate font-[inter]">
+                <img src="/Vector.png" className="size-3 shrink-0" />
+                {profile.location}
               </p>
-              <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist]">
+
+              <p className="mt-3 line-clamp-2 font-[geist] text-[15px] leading-5 text-[#655E75]">
                 {profile.about}
               </p>
 
-              <div className="flex gap-2 justify-between w-full px-3  absolute left-0 bottom-2">
+              <div className="absolute bottom-2 left-0 flex w-full justify-between gap-2 px-3">
                 <button
-                  className="border border-stroke-primary px-3 py-1 text-xs rounded-lg font-medium text-black w-full font-inter"
+                  className="w-full rounded-lg border border-stroke-primary px-3 py-1 text-xs font-inter font-medium text-black"
                   onClick={() => navigate(`/profile/${profile.userId}`)}
                 >
                   View Profile
                 </button>
+
                 <button
-                  className={`flex items-center justify-center gap-2 border border-stroke-primary px-3 py-1 text-sm text-white rounded-lg font-medium w-full  ${
+                  className={`flex w-full items-center justify-center gap-2 rounded-lg border border-stroke-primary px-3 py-1 text-sm font-medium text-white ${
                     likedIds.has(profile.id)
                       ? 'bg-gray-900'
                       : 'bg-theme hover:bg-purple-700'
                   }`}
                   onClick={() => toggleLike(profile)}
                 >
-                  <div className="w-fit">
-              <img
-                className="size-4"
-                src={
-                  likedIds.has(profile.id) ? '/vector.svg' : '/icon-heart.svg'
-                }
-                alt=""
-              />
-            </div>
+                  <img
+                    className="size-4"
+                    src={
+                      likedIds.has(profile.id)
+                        ? '/vector.svg'
+                        : '/icon-heart.svg'
+                    }
+                    alt=""
+                  />
+
                   {likedIds.has(profile.id) ? 'Liked' : 'Like'}
                 </button>
               </div>

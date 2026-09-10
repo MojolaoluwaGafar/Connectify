@@ -1,23 +1,19 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from 'react';
-import { useNavigate } from 'react-router-dom';
-import { createProfile } from '../services/api';
+import { useEffect, useState, type MouseEvent, type ReactNode, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { saveProfile } from "../services/authApi";
+import ProfilePreviewModal from "../components/profilePreviewModal";
 
-import { useAuth } from '../context/authContext/useAuth';
-import type { Gender } from '../types';
-import PhotoUploader from '../components/ui/PhotoUploader';
-import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
-import { INTEREST_OPTIONS } from '../data/mockProfile';
-import { NIGERIA_STATES } from '../data/nigeriaStates';
-import TextArea from '../components/ui/TextArea';
-import Chip from '../components/ui/Chip';
-import Button from '../components/ui/Button';
+
+import { useAuth } from "../context/authContext/useAuth";
+import type { Gender } from "../types";
+import PhotoUploader from "../components/ui/PhotoUploader";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
+import { INTEREST_OPTIONS } from "../data/mockProfile";
+import TextArea from "../components/ui/TextArea";
+import Chip from "../components/ui/Chip";
+import Button from "../components/ui/Button";
+import { NIGERIA_STATES } from "../data/nigeriaStates";
 
 interface FieldErrors {
   fullName?: string;
@@ -29,32 +25,35 @@ interface FieldErrors {
 }
 
 export default function ProfileEditPage() {
-  const { user, profile, refreshProfile, isLoading: isAuthLoading } = useAuth();
-
-  console.log('profile from context:', profile);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const { user, profile, refreshProfile } = useAuth();
 
   const navigate = useNavigate();
 
   const isCreating = !profile;
 
-  const [fullName, setFullName] = useState('');
-  const [age, setAge] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [age, setAge] = useState("");
   const [gender, setGender] = useState<Gender | null>(null);
-  const [location, setLocation] = useState('');
-  const [occupation, setOccupation] = useState('');
+  const [location, setLocation] = useState("");
+  const [occupation, setOccupation] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
-  const [about, setBio] = useState('');
+  const [about, setBio] = useState("");
   const [profilePicture, setPhotoUrl] = useState<string | null>(null);
+  const [locationCoords, setLocationCoords] = useState<{
+    type: "Point";
+    coordinates: [number, number];
+  }>();
 
   const [isSaving, setIsSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [apiError, setApiError] = useState('');
+  const [apiError, setApiError] = useState("");
 
   useEffect(() => {
     if (profile) {
       setFullName(profile.fullName);
-      setAge(profile.age ? String(profile.age) : '');
-      setGender(profile.gender ?? null);
+      setAge(profile.age ? String(profile.age) : "");
+      setGender(profile.gender ?? "");
       setLocation(profile.location);
       setOccupation(profile.occupation);
       setInterests(profile.interest ?? profile.interests ?? []);
@@ -89,31 +88,31 @@ export default function ProfileEditPage() {
     const next: FieldErrors = {};
 
     if (fullName.trim().length < 2) {
-      next.fullName = 'Enter your full name.';
+      next.fullName = "Enter your full name.";
     }
 
     const ageNum = Number(age);
 
     if (!age) {
-      next.age = 'Age is required.';
+      next.age = "Age is required.";
     } else if (!Number.isInteger(ageNum) || ageNum < 18 || ageNum > 100) {
-      next.age = 'Enter an age between 18 and 100.';
+      next.age = "Enter an age between 18 and 100.";
     }
 
     if (!gender) {
-      next.gender = 'Select a gender.';
+      next.gender = "Select a gender.";
     }
 
     if (!location.trim()) {
-      next.location = 'Location is required.';
+      next.location = "Location is required.";
     }
 
     if (about.trim().length < 10) {
-      next.about = 'Write at least 10 characters so people know who you are.';
+      next.about = "Write at least 10 characters so people know who you are.";
     }
 
     if (interests.length === 0) {
-      next.interest = 'Pick at least one interest.';
+      next.interest = "Pick at least one interest.";
     }
 
     setFieldErrors(next);
@@ -125,7 +124,7 @@ export default function ProfileEditPage() {
     e.preventDefault();
     if (!user) return;
 
-    setApiError('');
+    setApiError("");
 
     if (!validate()) return;
 
@@ -134,8 +133,28 @@ export default function ProfileEditPage() {
     setIsSaving(true);
 
     try {
-      await createProfile({
-        fullName: fullName.trim() || '',
+      let nextLocationCoords = locationCoords;
+
+      if (navigator.geolocation) {
+        const position = await new Promise<GeolocationPosition | null>(
+          (resolve) => {
+            navigator.geolocation.getCurrentPosition(resolve, () =>
+              resolve(null),
+            );
+          },
+        );
+
+        if (position) {
+          nextLocationCoords = {
+            type: "Point",
+            coordinates: [position.coords.longitude, position.coords.latitude],
+          };
+          setLocationCoords(nextLocationCoords);
+        }
+      }
+
+      await saveProfile({
+        fullName: fullName.trim() || "",
         age: Number(age),
         gender: gender,
         location: location.trim(),
@@ -146,31 +165,23 @@ export default function ProfileEditPage() {
       });
 
       await refreshProfile();
-      navigate('/profile');
+      navigate("/profile");
     } catch {
-      setApiError('Could not save your profile. Please try again.');
+      setApiError("Could not save your profile. Please try again.");
     } finally {
       setIsSaving(false);
     }
   }
 
-  if (isAuthLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="font-display text-3xl font-semibold text-ink-900">
-        {isCreating ? 'Complete your profile' : 'Edit your profile'}
+        {isCreating ? "Complete your profile" : "Edit your profile"}
       </h1>
       <p className="mt-1 text-ink-500">
         {isCreating
-          ? 'Tell people a little about yourself so they can find you'
-          : 'Keep your profile up to date to get better matches'}
+          ? "Tell people a little about yourself so they can find you"
+          : "Keep your profile up to date to get better matches"}
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
@@ -292,14 +303,17 @@ export default function ProfileEditPage() {
 
           <div className="flex gap-3">
             <Button size="lg" onClick={handleSave} isLoading={isSaving}>
-              {isCreating ? 'Save Profile and continue' : 'Save Changes'}
+              {isCreating ? "Save Profile and continue" : "Save Changes"}
+            </Button>
+            <Button type="button" onClick={() => setIsPreviewOpen(true)}>
+              Preview Profile
             </Button>
 
             {!isCreating && (
               <Button
                 size="lg"
                 variant="ghost"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate("/profile")}
               >
                 Cancel
               </Button>
@@ -307,9 +321,23 @@ export default function ProfileEditPage() {
           </div>
         </div>
       </div>
+
+      <ProfilePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        fullName={fullName}
+        age={age}
+        gender={gender ?? ""}
+        location={location}
+        occupation={occupation}
+        interests={interests}
+        about={about}
+        profilePicture={profilePicture}
+      />
     </div>
   );
 }
+
 
 function Section({
   title,

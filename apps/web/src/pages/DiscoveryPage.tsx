@@ -12,7 +12,7 @@ const PAGESIZE = 8;
 
 const DiscoveryPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [tab, setTab] = useState<'all' | 'new' | 'near-me'>('all');
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
@@ -26,6 +26,7 @@ const DiscoveryPage = () => {
     let cancelled = false;
 
     const getProfiles = async () => {
+    
       try {
         setIsLoading(true);
         setDiscoveryError('');
@@ -63,9 +64,14 @@ const DiscoveryPage = () => {
   }, [searchValue, tab, page, user?.id]);
 
   const totalPages = Math.ceil(total / PAGESIZE);
+  const showCompleteProfileCard =
+  !profile ||
+  !profile.isComplete ||
+  !profile.profilePicture ||
+  !profile.occupation?.trim();
 
   return (
-    <div className="w-10/12 mx-auto container py-10 text-text-primary">
+    <div className="w-10/12 mx-auto container py-5 lg:py-10 text-text-primary ">
       <h1 className="font-fraunces font-semibold text-2xl text-black">
         Discover People
       </h1>
@@ -74,8 +80,9 @@ const DiscoveryPage = () => {
         <p className="mt-2 text-sm text-red-600">{discoveryError}</p>
       )}
 
-      <main className="flex lg:flex-row flex-col-reverse gap-10 mt-5 w-full">
+      <main className="flex lg:flex-row flex-col gap-10 mt-5 w-full">
         <div className="lg:w-3/4 space-y-4">
+          <FilterProfiles className="lg:hidden" setTab={setTab} tab={tab} setPage={setPage} />
           <div className="relative flex items-center gap-2 w-full">
             <img
               className="absolute top-3 left-3"
@@ -103,39 +110,67 @@ const DiscoveryPage = () => {
           ) : (
             <EmptyProfile />
           )}
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} /> 
         </div>
-        <div className="space-y-6 lg:w-1/4">
-          <FilterProfiles setTab={setTab} tab={tab} setPage={setPage} />
-          <div className="border rounded-2xl p-4 text-sm space-y-3">
+        <div className="space-y-9 lg:w-1/4 ">
+          <FilterProfiles className="hidden lg:flex" setTab={setTab} tab={tab} setPage={setPage} />
+          <div className="border rounded-2xl p-4 text-sm space-y-3 border-stroke-primary">
             <div className="flex justify-between ">
-              <h2 className="font-fraunces font-semibold text-black">
+              <h2 className="font-fraunces font-semibold font-600 text-[16px] text-black">
                 Who liked you
               </h2>
-              <p>See All</p>
+              <p className="font-geist text-[#7C3AED] font-semibold text-[12px] font-600">See All</p>
             </div>
 
-            <div className="flex gap-3 items-center">
+            <div className="flex gap-3 items-center font-geist">
               <img className="size-10" src="/Avatar.png"></img>
               <div className="grow">
-                <h2 className="text-black text-md">Sarah, 26</h2>
-                <p>London, UK</p>
+                <h2 className="text-black text-md font-semibold font-600 text-[14px]">Sarah, 26</h2>
+                <p className="font-400 font-regular text-[12px]">London, UK</p>
               </div>
               <div>
-                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-medium text-black">
+                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-semibold text-black text-[12px] font-600">
                   View
                 </button>
               </div>
             </div>
+            <div className="flex gap-3 items-center font-geist">
+              <img className="size-10" src="/Avatar.svg"></img>
+              <div className="grow">
+                <h2 className="text-black text-md font-semibold font-600 text-[14px]">Sarah, 26</h2>
+                <p className="font-400 font-regular text-[12px]"
+                >Lagos, Nigeria</p>
+              </div>
+              <div>
+                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-semibold text-[12px] font-600 text-black">
+                  View
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-3 items-center font-geist">
+              <img className="size-10" src="/Avatar (1).svg"></img>
+              <div className="grow">
+                <h2 className="text-black text-md font-semibold font-600 text-[14px]">Theresa, 53</h2>
+                <p className="font-400 font-regular text-[12px]">Berlin, Germany</p>
+              </div>
+              <div>
+                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-semibold text-[12px] font-600 text-black">
+                  View
+                </button>
+              </div>
+            </div>
+            
+            
           </div>
 
-          <div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl">
+          {showCompleteProfileCard && (<div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl">
             <div className="p-3 bg-theme-shade rounded-full size-fit flex items-center justify-center">
-              <img src="/camera.svg" />
+              <img src="/sparkles (1).svg"/>
             </div>
-            <h2 className="font-fraunces text-lg font-semibold">
+            <h2 className="font-fraunces text-lg font-semibold leading-[100%]">
               Complete your profile
             </h2>
-            <p>
+            <p className="font-geist text-[12px] font-light leading-[18px]">
               Find out who matches you by going to settings. Profiles with
               photos get 3x more matches!
             </p>
@@ -145,10 +180,9 @@ const DiscoveryPage = () => {
             >
               Update Profile
             </button>
-          </div>
+          </div>)}
         </div>
-      </main>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      </main>  
     </div>
   );
 };
