@@ -8,7 +8,7 @@ interface NavbarProps {
   userInitial?: string; // e.g. "M" for the avatar circle
   userName?: string;
   email?: string;
-  profileImage?: string; // URL of the user's profile image
+  profileImage?: string | null; // URL of the user's profile image
 }
 
 // Links shown when the user is logged out (public/landing navbar).

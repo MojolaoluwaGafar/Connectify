@@ -18,7 +18,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         userInitial={user?.fullName[0]}
         userName={user?.fullName}
         email={user?.email}
-        profileImage={profile?.profileImageUrl}
+        profileImage={profile?.profilePicture}
       />
 
       <main>

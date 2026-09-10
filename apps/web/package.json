@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "echo Type checking web"
+    "typecheck": "tsc -b"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.1",
