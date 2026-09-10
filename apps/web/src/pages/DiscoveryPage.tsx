@@ -65,7 +65,7 @@ const DiscoveryPage = () => {
   const totalPages = Math.ceil(total / PAGESIZE);
 
   return (
-    <div className="w-10/12 mx-auto container py-10 text-text-primary">
+    <div className="w-10/12 mx-auto container py-5 lg:py-10 text-text-primary ">
       <h1 className="font-fraunces font-semibold text-2xl text-black">
         Discover People
       </h1>
@@ -74,9 +74,11 @@ const DiscoveryPage = () => {
         <p className="mt-2 text-sm text-red-600">{discoveryError}</p>
       )}
 
-      <main className="flex lg:flex-row flex-col-reverse gap-10 mt-5 w-full">
+      <main className="flex lg:flex-row flex-col gap-10 mt-5 w-full">
         <div className="lg:w-3/4 space-y-4" >
+         <FilterProfiles className=" lg:hidden" setTab={setTab} tab={tab} setPage={setPage} />
          <div className="relative flex items-center gap-2 w-full">
+
           <img className='absolute top-3 left-3' src={Icon} alt="search icon" /> 
            <input
         
@@ -89,6 +91,7 @@ const DiscoveryPage = () => {
             placeholder="Search by name or interests..."
             className="  mb-4 outline-0 border border-stroke-primary placeholder:text-text-primary rounded-[100px] font-giest py-1.5 px-9 w-full lg:w-3/5 leading-[100%] tracking-normal font-normal "
           />
+
           
          </div>
 
