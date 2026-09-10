@@ -8,6 +8,7 @@ interface NavbarProps {
   userInitial?: string; // e.g. "M" for the avatar circle
   userName?: string;
   email?: string;
+  profileImage?: string; // URL of the user's profile image
 }
 
 // Links shown when the user is logged out (public/landing navbar).
@@ -33,6 +34,7 @@ export default function Navbar({
   userInitial,
   userName,
   email,
+  profileImage,
 }: NavbarProps) {
   // Controls whether the mobile full-width menu is open
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -172,9 +174,17 @@ export default function Navbar({
                 onClick={() => setProfileOpen((o) => !o)}
                 className="flex items-center gap-1 rounded-full"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-sm font-medium text-white">
-                  {userInitial}
-                </span>
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt="Profile"
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-sm font-medium text-white">
+                    {userInitial}
+                  </span>
+                )}
                 <ChevronDown size={16} className="text-gray-500" />
               </button>
               {/* Dropdown menu — only rendered when profileOpen is true */}
