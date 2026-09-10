@@ -119,7 +119,7 @@ const DiscoveryPage = () => {
           )}
            <Pagination page={page} totalPages={totalPages} onChange={setPage} /> 
         </div>
-        <div className="space-y-10 lg:w-1/4 ">
+        <div className="space-y-8 lg:w-1/4 ">
           <FilterProfiles className="hidden lg:flex" setTab={setTab} tab={tab} setPage={setPage} />
           <div className="border rounded-2xl p-4 text-sm space-y-3 border-stroke-primary">
             <div className="flex justify-between ">
