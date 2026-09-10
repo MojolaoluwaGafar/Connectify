@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useState, type MouseEvent, type ReactNode, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveProfile } from "../services/authApi";
 import ProfilePreviewModal from "../components/profilePreviewModal";
@@ -13,6 +13,7 @@ import { INTEREST_OPTIONS } from "../data/mockProfile";
 import TextArea from "../components/ui/TextArea";
 import Chip from "../components/ui/Chip";
 import Button from "../components/ui/Button";
+import { NIGERIA_STATES } from "../data/nigeriaStates";
 
 interface FieldErrors {
   fullName?: string;
@@ -170,14 +171,6 @@ export default function ProfileEditPage() {
     } finally {
       setIsSaving(false);
     }
-  }
-
-  if (isAuthLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
-      </div>
-    );
   }
 
   return (

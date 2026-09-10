@@ -26,6 +26,7 @@ const DiscoveryPage = () => {
     let cancelled = false;
 
     const getProfiles = async () => {
+    
       try {
         setIsLoading(true);
         setDiscoveryError('');
