@@ -1,7 +1,12 @@
-import { useEffect, useState, type MouseEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createProfile } from '../services/api';
-
 
 import { useAuth } from '../context/authContext/useAuth';
 import type { Gender } from '../types';
@@ -9,6 +14,7 @@ import PhotoUploader from '../components/ui/PhotoUploader';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import { INTEREST_OPTIONS } from '../data/mockProfile';
+import { NIGERIA_STATES } from '../data/nigeriaStates';
 import TextArea from '../components/ui/TextArea';
 import Chip from '../components/ui/Chip';
 import Button from '../components/ui/Button';
@@ -23,7 +29,9 @@ interface FieldErrors {
 }
 
 export default function ProfileEditPage() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, isLoading: isAuthLoading } = useAuth();
+
+  console.log('profile from context:', profile);
 
   const navigate = useNavigate();
 
@@ -37,10 +45,6 @@ export default function ProfileEditPage() {
   const [interests, setInterests] = useState<string[]>([]);
   const [about, setBio] = useState('');
   const [profilePicture, setPhotoUrl] = useState<string | null>(null);
-  const [locationCoords, setLocationCoords] = useState<{
-    type: 'Point';
-    coordinates: [number, number];
-  }>();
 
   const [isSaving, setIsSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -50,17 +54,30 @@ export default function ProfileEditPage() {
     if (profile) {
       setFullName(profile.fullName);
       setAge(profile.age ? String(profile.age) : '');
-      setGender(profile.gender ?? '');
+      setGender(profile.gender ?? null);
       setLocation(profile.location);
       setOccupation(profile.occupation);
       setInterests(profile.interest ?? profile.interests ?? []);
       setBio(profile.about);
       setPhotoUrl(profile.profilePicture);
-      setLocationCoords(profile.locationCoords);
     } else if (user) {
       setFullName(user.fullName);
     }
   }, [profile, user]);
+
+  // If a profile was saved before locations were restricted to Nigerian
+  // states, its stored value won't match any option below and the select
+  // would silently show as unselected. Keep it as an extra option so the
+  // user's existing choice stays visible until they pick a real state.
+  const locationOptions = useMemo(() => {
+    if (
+      location &&
+      !NIGERIA_STATES.includes(location as (typeof NIGERIA_STATES)[number])
+    ) {
+      return [location, ...NIGERIA_STATES];
+    }
+    return NIGERIA_STATES;
+  }, [location]);
 
   function toggleInterest(label: string) {
     setInterests((prev) =>
@@ -117,24 +134,8 @@ export default function ProfileEditPage() {
     setIsSaving(true);
 
     try {
-      let nextLocationCoords = locationCoords;
-
-      if (navigator.geolocation) {
-        const position = await new Promise<GeolocationPosition | null>((resolve) => {
-          navigator.geolocation.getCurrentPosition(resolve, () => resolve(null));
-        });
-
-        if (position) {
-          nextLocationCoords = {
-            type: 'Point',
-            coordinates: [position.coords.longitude, position.coords.latitude],
-          };
-          setLocationCoords(nextLocationCoords);
-        }
-      }
-
       await createProfile({
-        fullName: fullName.trim() || "",
+        fullName: fullName.trim() || '',
         age: Number(age),
         gender: gender,
         location: location.trim(),
@@ -142,7 +143,6 @@ export default function ProfileEditPage() {
         interests,
         about: about.trim(),
         profilePicture: profilePicture,
-        locationCoords: nextLocationCoords,
       });
 
       await refreshProfile();
@@ -152,6 +152,14 @@ export default function ProfileEditPage() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+      </div>
+    );
   }
 
   return (
@@ -166,7 +174,11 @@ export default function ProfileEditPage() {
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-        <PhotoUploader profilePicture={profilePicture} name={fullName} onChange={setPhotoUrl} />
+        <PhotoUploader
+          profilePicture={profilePicture}
+          name={fullName}
+          onChange={setPhotoUrl}
+        />
 
         <div className="space-y-6">
           <Section title="Basic information">
@@ -192,7 +204,7 @@ export default function ProfileEditPage() {
 
               <Select
                 label="Gender"
-                value={gender ?? ""}
+                value={gender ?? ''}
                 onChange={(e) => setGender(e.target.value as Gender)}
                 error={fieldErrors.gender}
               >
@@ -203,13 +215,19 @@ export default function ProfileEditPage() {
                 <option value="prefer-not-to-say">Prefer not to say</option>
               </Select>
 
-              <Input
+              <Select
                 label="Location"
-                placeholder="your country or city"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 error={fieldErrors.location}
-              />
+              >
+                <option value="">Select your state</option>
+                {locationOptions.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </Select>
             </div>
           </Section>
 

@@ -85,8 +85,7 @@ export async function saveProfile(
     ...data,
   });
 
-  const profile = response?.profile ?? response?.data?.profile ?? response;
-  return profile as Profile;
+  return response?.data as Profile;
 }
 
 export async function getProfileById(
