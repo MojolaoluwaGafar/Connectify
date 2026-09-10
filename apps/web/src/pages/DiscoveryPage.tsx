@@ -24,6 +24,7 @@ const DiscoveryPage = () => {
   const [locationError, setLocationError] = useState('');
   const fetchedLocation = useRef(false);
 
+
   useEffect(() => {
     if (fetchedLocation.current) return;
 
@@ -49,6 +50,7 @@ const DiscoveryPage = () => {
     if (tab === 'near-me' && !location) return;
 
     const getProfiles = async () => {
+    
       try {
         const result = await api.getDiscoverProfiles({
           search: searchValue,
@@ -66,6 +68,8 @@ const DiscoveryPage = () => {
       } catch {
         setProfiles([]);
         setTotal(0);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -111,11 +115,12 @@ const DiscoveryPage = () => {
           
          </div>
 
-          {profiles.length > 0 ? (
+          { profiles.length > 0 ? (
             <ProfileCard profiles={profiles} />
           ) : (
             <EmptyProfile />
           )}
+
         </div>
         <div className="space-y-6 lg:w-1/4">
           <FilterProfiles setTab={setTab} tab={tab} setPage={setPage} />
