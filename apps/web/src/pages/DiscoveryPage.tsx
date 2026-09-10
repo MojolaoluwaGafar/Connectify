@@ -12,7 +12,7 @@ const PAGESIZE = 8;
 
 const DiscoveryPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [tab, setTab] = useState<'all' | 'new' | 'near-me'>('all');
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
@@ -63,6 +63,11 @@ const DiscoveryPage = () => {
   }, [searchValue, tab, page, user?.id]);
 
   const totalPages = Math.ceil(total / PAGESIZE);
+  const showCompleteProfileCard =
+  !profile ||
+  !profile.isComplete ||
+  !profile.profilePicture ||
+  !profile.occupation?.trim();
 
   return (
     <div className="w-10/12 mx-auto container py-10 text-text-primary">
@@ -128,7 +133,7 @@ const DiscoveryPage = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl">
+          {showCompleteProfileCard && (<div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl">
             <div className="p-3 bg-theme-shade rounded-full size-fit flex items-center justify-center">
               <img src="/camera.svg" />
             </div>
@@ -145,7 +150,7 @@ const DiscoveryPage = () => {
             >
               Update Profile
             </button>
-          </div>
+          </div>)}
         </div>
       </main>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />

@@ -1,9 +1,10 @@
 import mongoose from 'mongoose';
 import { profile, Profile } from '../../model/profile.js';
 
-export async function createProfile(userId: string, data: profile) {
-  console.log(data);
 
+export async function createProfile(userId: string, data: profile, ) {
+  console.log(data);
+ const iscomplete = isComplete(data)
   const {
     fullName,
     gender,
@@ -13,7 +14,7 @@ export async function createProfile(userId: string, data: profile) {
     age,
     location,
     profilePicture,
-    // locationCoords,
+    locationCoords,
   } = data;
 
   const newProfile = await Profile.findOneAndUpdate(
@@ -28,7 +29,7 @@ export async function createProfile(userId: string, data: profile) {
       age,
       location,
       profilePicture,
-      // locationCoords,
+      locationCoords,
     },
     {
       new: true,
@@ -39,6 +40,18 @@ export async function createProfile(userId: string, data: profile) {
 
   return formatProfile(newProfile.toObject());
 }
+
+export const isComplete = (profileData: profile) => {
+  const hasRequiredFields =
+    profileData.fullName.trim() !== '' &&
+    profileData.age >= 18 &&
+    profileData.location.trim() !== '' &&
+    profileData.gender.trim() !== '' &&
+    profileData.interests.length > 0 &&
+    profileData.about.trim() !== '';
+
+  return hasRequiredFields;
+};
 
 export async function listProfiles(
   query: Record<string, unknown>,
@@ -179,6 +192,6 @@ function formatProfile(item: Record<string, any>) {
     ...item,
     userId: String(item.userId),
     interest: item.interests ?? [],
-    isComplete: isProfileComplete(item),
-  };
+    isComplete: true,
+  }
 }
