@@ -27,19 +27,24 @@ import GuestOnlyRoute from './layout/GuestOnlyRoutes';
 import { MatchesModal } from './components/MatchModal';
 import LikesProvider from './context/likeContext/LikesProvider';
 import { connectSocket, disconnectSocket } from './lib/socket';
+import { getUser } from './services/api';
 
 // Everything that needs to know "is someone logged in" (the auth gate modal,
 // the likes/matches state) lives inside AuthProvider so it can read that.
 function Providers({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  // const { data } = getUser();
+  // console.log(data);
 
   useEffect(() => {
     if (!user?.id) {
       disconnectSocket();
+      console.log('no user found');
       return;
     }
 
     connectSocket(user.id);
+    console.log('user found');
 
     return () => {
       disconnectSocket();

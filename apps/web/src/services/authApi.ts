@@ -63,18 +63,13 @@ export async function logout(): Promise<void> {
 
 export async function getCurrentUser(): Promise<User | null> {
   const { data } = await api.get('/api/v1/auth/me');
-  const user = data?.user ?? data?.data?.user ?? data?.data ?? data;
-
-  return (user as User | null) ?? null;
+  return (data?.data as User | null) ?? null;
 }
-
 export async function getProfile(userId: string): Promise<Profile | null> {
   if (!userId) return null;
   const { data } = await api.get(`/api/v1/profiles/${userId}`);
-  const profile = data?.profile ?? data?.data?.profile ?? data;
-  return (profile as Profile | null) ?? null;
+  return (data?.data as Profile | null) ?? null;
 }
-
 export async function getMyProfile(): Promise<Profile | null> {
   const { data } = await api.get('/api/v1/profiles/me/profile');
   const profile = data?.profile ?? data?.data?.profile ?? data;
@@ -133,7 +128,9 @@ export async function canMessage(
   return Boolean(result);
 }
 
-export async function getWhoLikedMe(userId: string): Promise<DiscoverProfile[]> {
+export async function getWhoLikedMe(
+  userId: string,
+): Promise<DiscoverProfile[]> {
   const { data } = await api.get('/api/v1/likes/who-liked-me', {
     params: { userId },
   });
@@ -167,6 +164,10 @@ export async function likeUser(
   return data?.data ?? data;
 }
 
+export const likeProfile = async (profileId: string) => {
+  return await api.put(`/api/v1/likes/profiles/${profileId}/like`);
+}
+
 export async function unlikeUser(
   _userId: string,
   targetId: string,
@@ -174,16 +175,14 @@ export async function unlikeUser(
   await api.delete(`/api/v1/likes/profiles/${targetId}/like`);
 }
 
-export async function getLikedByMe(
-  userId: string,
-): Promise<DiscoverProfile[]> {
-  const { data } = await api.get('/api/v1/likes/liked-by-me', {
-    params: { userId },
-  });
+export async function getLikedByMe(): Promise<DiscoverProfile[]> {
+  const { data } = await api.get('/api/v1/likes/liked-by-me');
   return (data?.items ?? data?.data?.items ?? data ?? []) as DiscoverProfile[];
 }
 
-export async function getConversations(userId: string): Promise<Conversation[]> {
+export async function getConversations(
+  userId: string,
+): Promise<Conversation[]> {
   const { data } = await api.get('/api/v1/conversations', {
     params: { userId },
   });
