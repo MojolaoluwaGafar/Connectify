@@ -63,12 +63,14 @@ export async function logout(): Promise<void> {
 
 export async function getCurrentUser(): Promise<User | null> {
   const { data } = await api.get('/api/v1/auth/me');
+
   return (data?.data as User | null) ?? null;
 }
 export async function getProfile(userId: string): Promise<Profile | null> {
   if (!userId) return null;
   const { data } = await api.get(`/api/v1/profiles/${userId}`);
-  return (data?.profile as Profile | null) ?? null;
+  console.log(data);
+  return (data?.data as Profile | null) ?? null;
 }
 export async function getMyProfile(): Promise<Profile | null> {
   const { data } = await api.get('/api/v1/profiles/me/profile');
