@@ -108,9 +108,10 @@ const DiscoveryPage = () => {
           ) : (
             <EmptyProfile />
           )}
+           <Pagination page={page} totalPages={totalPages} onChange={setPage} /> 
         </div>
         <div className="space-y-6 lg:w-1/4">
-          <FilterProfiles setTab={setTab} tab={tab} setPage={setPage} />
+          <FilterProfiles className="hidden lg:flex" setTab={setTab} tab={tab} setPage={setPage} />
           <div className="border rounded-2xl p-4 text-sm space-y-3">
             <div className="flex justify-between ">
               <h2 className="font-fraunces font-semibold text-black">
@@ -131,6 +132,32 @@ const DiscoveryPage = () => {
                 </button>
               </div>
             </div>
+            <div className="flex gap-3 items-center">
+              <img className="size-10" src="/Avatar.png"></img>
+              <div className="grow">
+                <h2 className="text-black text-md">Sarah, 26</h2>
+                <p>London, UK</p>
+              </div>
+              <div>
+                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-medium text-black">
+                  View
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-3 items-center">
+              <img className="size-10" src="/Avatar.png"></img>
+              <div className="grow">
+                <h2 className="text-black text-md">Sarah, 26</h2>
+                <p>London, UK</p>
+              </div>
+              <div>
+                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-medium text-black">
+                  View
+                </button>
+              </div>
+            </div>
+            
+            
           </div>
 
           {showCompleteProfileCard && (<div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl">
@@ -153,7 +180,7 @@ const DiscoveryPage = () => {
           </div>)}
         </div>
       </main>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+     
     </div>
   );
 };
