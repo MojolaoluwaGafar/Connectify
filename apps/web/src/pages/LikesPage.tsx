@@ -38,7 +38,7 @@ const LikesPage = () => {
   return (
     <div className="min-h-screen ">
       {/* MAIN */}
-      <main className="mx-auto w-full max-w-7xl px-6 py-8">
+      <main className="mx-auto w-full max-w-7xl px-6 py-8cd">
         {/* TITLE + TABS */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           {/* TITLE */}
