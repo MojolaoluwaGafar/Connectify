@@ -19,6 +19,9 @@ import TextArea from '../components/ui/TextArea';
 import Chip from '../components/ui/Chip';
 import Button from '../components/ui/Button';
 
+// Change this path if your modal is located somewhere else.
+import ProfilePreviewModal from '../components/profilePreviewModal';
+
 interface FieldErrors {
   fullName?: string;
   age?: string;
@@ -29,59 +32,70 @@ interface FieldErrors {
 }
 
 export default function ProfileEditPage() {
-  const { user, profile, refreshProfile, isLoading: isAuthLoading } = useAuth();
-
-  console.log('profile from context:', profile);
+  const {
+    user,
+    profile,
+    refreshProfile,
+    isLoading: isAuthLoading,
+  } = useAuth();
 
   const navigate = useNavigate();
 
   const isCreating = !profile;
 
-  const [fullName, setFullName] = useState("");
-  const [age, setAge] = useState("");
+  const [fullName, setFullName] = useState('');
+  const [age, setAge] = useState('');
   const [gender, setGender] = useState<Gender | null>(null);
-  const [location, setLocation] = useState("");
-  const [occupation, setOccupation] = useState("");
+  const [location, setLocation] = useState('');
+  const [occupation, setOccupation] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
-  const [about, setBio] = useState("");
+  const [about, setBio] = useState('');
   const [profilePicture, setPhotoUrl] = useState<string | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [apiError, setApiError] = useState("");
+  const [apiError, setApiError] = useState('');
 
   useEffect(() => {
     if (profile) {
-      setFullName(profile.fullName);
+      setFullName(profile.fullName ?? '');
       setAge(profile.age ? String(profile.age) : '');
       setGender(profile.gender ?? null);
-      setLocation(profile.location);
-      setOccupation(profile.occupation);
-      setInterests(profile.interest ?? profile.interests ?? []);
-      setBio(profile.about);
-      setPhotoUrl(profile.profilePicture);
+      setLocation(profile.location ?? '');
+      setOccupation(profile.occupation ?? '');
+
+      setInterests(
+        profile.interest ??
+          profile.interests ??
+          [],
+      );
+
+      setBio(profile.about ?? '');
+      setPhotoUrl(profile.profilePicture ?? null);
     } else if (user) {
-      setFullName(user.fullName);
+      setFullName(user.fullName ?? '');
     }
   }, [profile, user]);
 
-  // If a profile was saved before locations were restricted to Nigerian
-  // states, its stored value won't match any option below and the select
-  // would silently show as unselected. Keep it as an extra option so the
-  // user's existing choice stays visible until they pick a real state.
   const locationOptions = useMemo(() => {
     if (
       location &&
-      !NIGERIA_STATES.includes(location as (typeof NIGERIA_STATES)[number])
+      !NIGERIA_STATES.includes(
+        location as (typeof NIGERIA_STATES)[number],
+      )
     ) {
       return [location, ...NIGERIA_STATES];
     }
+
     return NIGERIA_STATES;
   }, [location]);
 
   function toggleInterest(label: string) {
     setInterests((prev) =>
-      prev.includes(label) ? prev.filter((i) => i !== label) : [...prev, label],
+      prev.includes(label)
+        ? prev.filter((interest) => interest !== label)
+        : [...prev, label],
     );
   }
 
@@ -89,31 +103,36 @@ export default function ProfileEditPage() {
     const next: FieldErrors = {};
 
     if (fullName.trim().length < 2) {
-      next.fullName = "Enter your full name.";
+      next.fullName = 'Enter your full name.';
     }
 
     const ageNum = Number(age);
 
     if (!age) {
-      next.age = "Age is required.";
-    } else if (!Number.isInteger(ageNum) || ageNum < 18 || ageNum > 100) {
-      next.age = "Enter an age between 18 and 100.";
+      next.age = 'Age is required.';
+    } else if (
+      !Number.isInteger(ageNum) ||
+      ageNum < 18 ||
+      ageNum > 100
+    ) {
+      next.age = 'Enter an age between 18 and 100.';
     }
 
     if (!gender) {
-      next.gender = "Select a gender.";
+      next.gender = 'Select a gender.';
     }
 
     if (!location.trim()) {
-      next.location = "Location is required.";
+      next.location = 'Location is required.';
     }
 
     if (about.trim().length < 10) {
-      next.about = "Write at least 10 characters so people know who you are.";
+      next.about =
+        'Write at least 10 characters so people know who you are.';
     }
 
     if (interests.length === 0) {
-      next.interest = "Pick at least one interest.";
+      next.interest = 'Pick at least one interest.';
     }
 
     setFieldErrors(next);
@@ -123,32 +142,47 @@ export default function ProfileEditPage() {
 
   async function handleSave(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
-    if (!user) return;
 
-    setApiError("");
+    if (!user) {
+      setApiError('You must be logged in to save your profile.');
+      return;
+    }
 
-    if (!validate()) return;
+    setApiError('');
 
-    if (!gender) return;
+    if (!validate()) {
+      return;
+    }
+
+    if (!gender) {
+      return;
+    }
 
     setIsSaving(true);
 
     try {
-      await createProfile({
-        fullName: fullName.trim() || '',
+      const response = await createProfile({
+        fullName: fullName.trim(),
         age: Number(age),
-        gender: gender,
+        gender,
         location: location.trim(),
         occupation: occupation.trim(),
         interests,
         about: about.trim(),
-        profilePicture: profilePicture,
+        profilePicture,
       });
 
+      console.log('Profile saved:', response);
+
       await refreshProfile();
-      navigate("/profile");
-    } catch {
-      setApiError("Could not save your profile. Please try again.");
+
+      navigate('/profile');
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+
+      setApiError(
+        'Could not save your profile. Please try again.',
+      );
     } finally {
       setIsSaving(false);
     }
@@ -165,12 +199,13 @@ export default function ProfileEditPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="font-display text-3xl font-semibold text-ink-900">
-        {isCreating ? "Complete your profile" : "Edit your profile"}
+        {isCreating ? 'Complete your profile' : 'Edit your profile'}
       </h1>
+
       <p className="mt-1 text-ink-500">
         {isCreating
-          ? "Tell people a little about yourself so they can find you"
-          : "Keep your profile up to date to get better matches"}
+          ? 'Tell people a little about yourself so they can find you'
+          : 'Keep your profile up to date to get better matches'}
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
@@ -205,14 +240,18 @@ export default function ProfileEditPage() {
               <Select
                 label="Gender"
                 value={gender ?? ''}
-                onChange={(e) => setGender(e.target.value as Gender)}
+                onChange={(e) =>
+                  setGender(e.target.value as Gender)
+                }
                 error={fieldErrors.gender}
               >
-                <option value="">select gender</option>
+                <option value="">Select gender</option>
                 <option value="female">Female</option>
                 <option value="male">Male</option>
                 <option value="non-binary">Non-binary</option>
-                <option value="prefer-not-to-say">Prefer not to say</option>
+                <option value="prefer-not-to-say">
+                  Prefer not to say
+                </option>
               </Select>
 
               <Select
@@ -222,6 +261,7 @@ export default function ProfileEditPage() {
                 error={fieldErrors.location}
               >
                 <option value="">Select your state</option>
+
                 {locationOptions.map((state) => (
                   <option key={state} value={state}>
                     {state}
@@ -234,13 +274,16 @@ export default function ProfileEditPage() {
           <Section title="Personal information">
             <Input
               label="Occupation"
-              placeholder="what do you do? (optional)"
+              placeholder="What do you do? (optional)"
               value={occupation}
               onChange={(e) => setOccupation(e.target.value)}
             />
           </Section>
 
-          <Section title="Interests" subtitle="Select all that apply">
+          <Section
+            title="Interests"
+            subtitle="Select all that apply"
+          >
             <div className="flex flex-wrap gap-2">
               {INTEREST_OPTIONS.map((label) => (
                 <Chip
@@ -261,9 +304,11 @@ export default function ProfileEditPage() {
 
           <Section title="About you">
             <TextArea
-              placeholder="Write a short about about yourself (at least 10 characters)"
+              placeholder="Write a short about yourself (at least 10 characters)"
               value={about}
-              onChange={(e) => setBio(e.target.value.slice(0, 200))}
+              onChange={(e) =>
+                setBio(e.target.value.slice(0, 200))
+              }
               maxLength={200}
               rows={4}
               error={fieldErrors.about}
@@ -291,10 +336,20 @@ export default function ProfileEditPage() {
           )}
 
           <div className="flex gap-3">
-            <Button size="lg" onClick={handleSave} isLoading={isSaving}>
-              {isCreating ? "Save Profile and continue" : "Save Changes"}
+            <Button
+              size="lg"
+              onClick={handleSave}
+              isLoading={isSaving}
+            >
+              {isCreating
+                ? 'Save Profile and continue'
+                : 'Save Changes'}
             </Button>
-            <Button type="button" onClick={() => setIsPreviewOpen(true)}>
+
+            <Button
+              type="button"
+              onClick={() => setIsPreviewOpen(true)}
+            >
               Preview Profile
             </Button>
 
@@ -302,7 +357,7 @@ export default function ProfileEditPage() {
               <Button
                 size="lg"
                 variant="ghost"
-                onClick={() => navigate("/profile")}
+                onClick={() => navigate('/profile')}
               >
                 Cancel
               </Button>
@@ -316,7 +371,7 @@ export default function ProfileEditPage() {
         onClose={() => setIsPreviewOpen(false)}
         fullName={fullName}
         age={age}
-        gender={gender ?? ""}
+        gender={gender ?? ''}
         location={location}
         occupation={occupation}
         interests={interests}
@@ -326,7 +381,6 @@ export default function ProfileEditPage() {
     </div>
   );
 }
-
 
 function Section({
   title,
@@ -343,7 +397,11 @@ function Section({
         {title}
       </p>
 
-      {subtitle && <p className="mt-0.5 text-xs text-[#6b6178]">{subtitle}</p>}
+      {subtitle && (
+        <p className="mt-0.5 text-xs text-[#6b6178]">
+          {subtitle}
+        </p>
+      )}
 
       <div className="mt-4">{children}</div>
     </div>
