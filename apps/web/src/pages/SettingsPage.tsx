@@ -9,13 +9,11 @@ const Settings = () => {
   const { logout } = useAuth();
   const [newMatches, setNewMatches] = useState(() => {
     const savedMatches = localStorage.getItem("newMatches");
-
     return savedMatches !== null ? JSON.parse(savedMatches) : true;
   });
 
   const [newMessages, setNewMessages] = useState(() => {
     const savedMessages = localStorage.getItem("newMessages");
-
     return savedMessages !== null ? JSON.parse(savedMessages) : true;
   });
 
@@ -51,20 +49,20 @@ const Settings = () => {
   return (
     <>
       <main
-        className="w-full mx-auto flex min-h-[831px] max-w[1440px] flex-col gap-8 
+        className="w-full mx-auto flex min-h-[831px] max-w-[1440px] flex-col gap-8
           bg-white px-[240px] pb-[80px] pt-[48px] md:px-8 lg:px-[240px]"
       >
         <section className="flex w-full flex-col gap-1">
-          <h1 className="font-serif text-[32px] font-bold leading-[38px] text-grey-900">
+          <h1 className="font-serif text-[32px] font-bold leading-[38px] text-gray-900">
             Settings
           </h1>
-          <p className="text-grey-500 leading-[19px] text-[16px]">
+          <p className="text-gray-500 leading-[19px] text-[16px]">
             Manage your account preferences
           </p>
         </section>
 
         <section
-          className="mx-auto mt-5 w-full max-w-[960px] 
+          className="mx-auto mt-5 w-full max-w-[960px]
              border border-[#1C152414] rounded-[16px] p-6 bg-white"
         >
           <div className="flex items-center gap-2">
@@ -89,7 +87,6 @@ const Settings = () => {
 
           <div className="mt-5 flex items-center justify-between">
             <span className="text-[14px] text-[#6B6575]">Email</span>
-
             <span className="text-[14px] font-semibold text-[#1C1524]">
               mickietyronne@gmail.com
             </span>
@@ -117,9 +114,8 @@ const Settings = () => {
               strokeLinejoin="round"
             >
               <path d="M10.268 21a2 2 0 0 0 3.464 0" />
-              <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
+              <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0.74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
             </svg>
-
             <h2 className="text-[16px] font-semibold text-[#1C1524]">
               Notifications
             </h2>
@@ -127,14 +123,11 @@ const Settings = () => {
 
           <div className="mt-5 flex items-center justify-between">
             <span className="text-[14px] text-[#6B6575]">New matches</span>
-
             <button
               type="button"
               onClick={() => {
                 const newValue = !newMatches;
-
                 setNewMatches(newValue);
-
                 localStorage.setItem("newMatches", JSON.stringify(newValue));
               }}
               className={`relative h-6 w-11 rounded-full transition ${
@@ -154,14 +147,11 @@ const Settings = () => {
 
           <div className="flex items-center justify-between">
             <span className="text-[14px] text-[#6B6575]">New messages</span>
-
             <button
               type="button"
               onClick={() => {
                 const newValue = !newMessages;
-
                 setNewMessages(newValue);
-
                 localStorage.setItem("newMessages", JSON.stringify(newValue));
               }}
               className={`relative h-6 w-11 rounded-full transition ${
@@ -197,7 +187,6 @@ const Settings = () => {
               <path d="M10 11v5" />
               <path d="M14 11v5" />
             </svg>
-
             <h2 className="text-[16px] font-semibold">Danger zone</h2>
           </div>
 
@@ -255,26 +244,24 @@ const Settings = () => {
         </section>
       </main>
 
+      {/* Delete Modal */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
           <div className="flex h-70 w-full max-w-lg flex-col items-center justify-center rounded-xl bg-white p-10 shadow-xl">
             <h2 className="text-lg font-semibold text-gray-900">
               Delete account?
             </h2>
-
             <p className="mt-2 text-center text-sm text-gray-500">
               Are you sure you want to delete your account? This action cannot
               be undone.
             </p>
-
             <div className="mt-6 flex w-full flex-col gap-3">
               <button
                 onClick={() => setDeleteModalOpen(false)}
-                className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="w-full rounded-md border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
-
               <button
                 onClick={handleDeleteAccount}
                 className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
@@ -286,23 +273,21 @@ const Settings = () => {
         </div>
       )}
 
+      {/* Logout Modal */}
       {logoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
           <div className="flex h-70 w-full max-w-lg flex-col items-center justify-center rounded-xl bg-white p-10 shadow-xl">
             <h2 className="text-lg font-semibold text-gray-900">Log out?</h2>
-
             <p className="mt-2 text-center text-sm text-gray-500">
               Are you sure you want to log out of your account?
             </p>
-
             <div className="mt-6 flex w-full flex-col gap-3">
               <button
                 onClick={() => setLogoutModalOpen(false)}
-                className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="w-full rounded-md border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
-
               <button
                 onClick={handleLogout}
                 className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
