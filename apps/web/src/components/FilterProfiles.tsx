@@ -14,20 +14,20 @@ const FilterProfiles = ({ tab, setTab, setPage, className }: Props) => {
     <>
       <div className={`flex gap-2 items-center font-geist ${className}`}>
         <button
-          className={`px-3 py-1 border rounded-2xl border-stroke-primary text-black ${tab === 'all' ? 'bg-theme text-white' : ''}`}
+          className={`px-3 py-1 border rounded-2xl border-stroke-primary text-black font-600 text-[13px] text-semibold ${tab === 'all' ? 'bg-theme text-white' : ''}`}
           onClick={() => handleFilter('all')}
         >
           All
         </button>
         <button
-          className={`px-3 py-1 border rounded-2xl border-stroke-primary text-black ${tab === 'near-me' ? 'bg-theme text-white' : ''}`}
+          className={`px-3 py-1 border rounded-2xl border-stroke-primary text-black font-500 text-[13px] text-medium ${tab === 'near-me' ? 'bg-theme text-white' : ''}`}
           value={'near-me'}
           onClick={() => handleFilter('near-me')}
         >
           Near Me
         </button>
         <button
-          className={`px-3 py-1 border rounded-2xl border-stroke-primary text-black ${tab === 'new' ? 'bg-theme text-white' : ''}`}
+          className={`px-3 py-1 border rounded-2xl border-stroke-primary text-black font-500 text-[13px] text-medium ${tab === 'new' ? 'bg-theme text-white' : ''}`}
           value={'new'}
           onClick={() => handleFilter('new')}
         >
