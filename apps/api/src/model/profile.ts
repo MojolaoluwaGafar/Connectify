@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface profile extends Document {
   userId: mongoose.Types.ObjectId;
@@ -11,20 +11,20 @@ export interface profile extends Document {
   interests: string[];
   profilePicture: string | null;
   locationCoords?: {
-    type: "Point";
+    type: 'Point';
     coordinates: [number, number];
   };
   isComplete:boolean
 }
 
 const ProfileSchema: Schema = new Schema({
-    userId: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
     required: true,
     unique: true,
   },
-  
+
   fullName: {
     type: String,
     required: true,
@@ -42,19 +42,19 @@ const ProfileSchema: Schema = new Schema({
     trim: true,
   },
 
-  locationCoords: {
-    type: {
-      type: String,
-      enum: ["Point"],
-    },
-    coordinates: {
-      type: [Number],
-      validate: {
-        validator: (value: number[]) => value.length === 2,
-        message: "Location coordinates must contain longitude and latitude",
-      },
-    },
-  },
+  // locationCoords: {
+  //   type: {
+  //     type: String,
+  //     enum: ["Point"],
+  //   },
+  //   coordinates: {
+  //     type: [Number],
+  //     validate: {
+  //       validator: (value: number[]) => value.length === 2,
+  //       message: "Location coordinates must contain longitude and latitude",
+  //     },
+  //   },
+  // },
 
   occupation: {
     type: String,
@@ -65,7 +65,7 @@ const ProfileSchema: Schema = new Schema({
   gender: {
     type: String,
     required: true,
-    enum: ["male", "female", "non-binary", "prefer-not-to-say"],
+    enum: ['male', 'female', 'non-binary', 'prefer-not-to-say'],
   },
 
   interests: {
@@ -90,7 +90,6 @@ const ProfileSchema: Schema = new Schema({
   }
 });
 
-ProfileSchema.index({ locationCoords: "2dsphere" });
+// ProfileSchema.index({ locationCoords: '2dsphere' });
 
-
-export const Profile = mongoose.model<profile>("Profile", ProfileSchema)
+export const Profile = mongoose.model<profile>('Profile', ProfileSchema);
