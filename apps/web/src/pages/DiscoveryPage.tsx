@@ -68,8 +68,6 @@ const DiscoveryPage = () => {
       } catch {
         setProfiles([]);
         setTotal(0);
-      } finally {
-        setIsLoading(false);
       }
     };
 
