@@ -80,8 +80,9 @@ const DiscoveryPage = () => {
         <p className="mt-2 text-sm text-red-600">{discoveryError}</p>
       )}
 
-      <main className="flex lg:flex-row flex-col-reverse gap-10 mt-5 w-full">
+      <main className="flex lg:flex-row flex-col gap-10 mt-5 w-full">
         <div className="lg:w-3/4 space-y-4">
+          <FilterProfiles className="lg:hidden" setTab={setTab} tab={tab} setPage={setPage} />
           <div className="relative flex items-center gap-2 w-full">
             <img
               className="absolute top-3 left-3"
