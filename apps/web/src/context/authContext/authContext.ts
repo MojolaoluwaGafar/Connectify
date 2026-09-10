@@ -19,6 +19,7 @@ export interface AuthContextValue {
   ) => Promise<void>;
 
   setUserAfterVerification: (user: User) => void;
+  googleLogin: (idToken: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(

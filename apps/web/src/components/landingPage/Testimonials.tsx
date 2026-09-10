@@ -32,7 +32,7 @@ const Testimonials = () => {
             {/* Sarah information + stars */}
             <div className="w-full h-15 flex items-center justify-between md:h-13">
               {/* Sarah profile */}
-              <div className="w-auto h-15 flex items-center gap-4 md:h-13 md:gap-4">
+              <div className="h-15 flex items-center gap-3 md:h-13 md:gap-4">
                 {/* Initials */}
                 <div className="w-15 h-15 rounded-full bg-[#EDE9FE] flex items-center justify-center md:w-13 md:h-13">
                   <span className="font-['Inter'] font-semibold text-[18px] leading-6 text-[#6D28D9] md:text-[16px] md:leading-6">
@@ -41,8 +41,8 @@ const Testimonials = () => {
                 </div>
 
                 {/* Name */}
-                <div className="w-auto h-7 md:h-7">
-                  <p className="m-0 font-['Inter'] font-semibold text-[20px] leading-7 text-[#1C1524] md:text-[18px] md:leading-7">
+                <div className="">
+                  <p className="font-['Inter'] font-semibold text-[20px] leading-7 text-[#1C1524] md:text-[18px] md:leading-7">
                     Sarah Mitchell
                   </p>
                 </div>
@@ -79,8 +79,8 @@ const Testimonials = () => {
             </div>
 
             {/* Sarah testimonial */}
-            <div className="w-full mt-7 md:mt-5">
-              <p className="m-0 w-full font-['Inter'] font-normal text-[20px] leading-7 text-[#6B6178] md:text-[16px] md:leading-6">
+            <div className="w-full mt-5">
+              <p className="m-0 w-full font-['Inter'] font-normal text-[16px] leading-7 text-[#6B6178] md:text-[16px] md:leading-6">
                 "I joined Connectify last month and already made 3 genuine
                 friendships. The matching based on interests is so accurate."
               </p>
@@ -98,7 +98,7 @@ const Testimonials = () => {
             {/* Priya information + stars */}
             <div className="w-full h-15 flex items-center justify-between md:h-13">
               {/* Priya profile */}
-              <div className="w-auto h-15 flex items-center gap-4 md:h-13 md:gap-4">
+              <div className="w-auto h-15 flex items-center gap-3 md:h-13 md:gap-4">
                 {/* Initials */}
                 <div className="w-15 h-15 rounded-full bg-[#EDE9FE] flex items-center justify-center md:w-13 md:h-13">
                   <span className="font-['Inter'] font-semibold text-[18px] leading-6 text-[#6D28D9] md:text-[16px] md:leading-6">
@@ -107,7 +107,7 @@ const Testimonials = () => {
                 </div>
 
                 {/* Name */}
-                <div className="w-auto h-7 md:h-7">
+                <div className="">
                   <p className="m-0 font-['Inter'] font-semibold text-[20px] leading-7 text-[#1C1524] md:text-[18px] md:leading-7">
                     Priya Sharma
                   </p>
@@ -145,8 +145,8 @@ const Testimonials = () => {
             </div>
 
             {/* Priya testimonial */}
-            <div className="w-full mt-7 md:mt-5">
-              <p className="m-0 w-full font-['Inter'] font-normal text-[20px] leading-7 text-[#6B6178] md:text-[16px] md:leading-6">
+            <div className="w-full mt-5">
+              <p className="m-0 w-full font-['Inter'] font-normal text-[16px] leading-7 text-[#6B6178] md:text-[16px] md:leading-6">
                 "The chat feature is so smooth and the profiles feel real.
                 Connectify is genuinely different from other platforms and
                 that's why I love it."
@@ -174,7 +174,7 @@ const Testimonials = () => {
                 </div>
 
                 {/* Name */}
-                <div className="w-auto h-7 md:h-7">
+                <div className="">
                   <p className="m-0 font-['Inter'] font-semibold text-[20px] leading-7 text-[#1C1524] md:text-[18px] md:leading-7">
                     James Okafor
                   </p>
@@ -212,8 +212,8 @@ const Testimonials = () => {
             </div>
 
             {/* James testimonial */}
-            <div className="w-full mt-7 md:mt-5">
-              <p className="m-0 w-full font-['Inter'] font-normal text-[20px] leading-7 text-[#6B6178] md:text-[16px] md:leading-6">
+            <div className="mt-5">
+              <p className="m-0 w-full font-['Inter'] font-normal text-[16px] leading-7 text-[#6B6178] md:text-[16px] md:leading-6">
                 "Finally a platform that connects people based on what they
                 actually care about. I love it so much because I found my soul
                 mate."

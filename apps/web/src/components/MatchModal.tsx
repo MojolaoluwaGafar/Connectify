@@ -32,7 +32,7 @@ export const MatchesModal = () => {
         ) : (
           <div>
             <img
-              src={profile?.photoUrl || ''}
+              src={profile?.profilePicture || ''}
               alt={profile?.fullName || ''}
               className="size-16 rounded-full"
             />
@@ -49,7 +49,7 @@ export const MatchesModal = () => {
         {/* other user */}
         <div>
           <img
-            src={justMatched?.photoUrl || ''}
+            src={justMatched?.profilePicture || ''}
             alt={justMatched?.fullName || ''}
             className="size-16 rounded-full"
           />

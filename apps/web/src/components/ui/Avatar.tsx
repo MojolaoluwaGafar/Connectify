@@ -4,8 +4,6 @@ interface AvatarProps {
   size?: number;
 }
 
-// Shows the user's photo if they have one, otherwise falls back to a
-// colored circle with their initial — matches the "D" avatar in the design.
 export default function Avatar({ src, name, size = 40 }: AvatarProps) {
   const initial = name.trim().charAt(0).toUpperCase() || '?';
 

@@ -1,9 +1,11 @@
-import { Router } from 'express'
+import { Router } from 'express';
 
-import { profilesController } from './profiles.controller.js'
+import { profilesController } from './profiles.controller.js';
+import { authMiddleware } from '../../core/middleware/auth.js';
 
-export const profilesRouter = Router()
+export const profilesRouter = Router();
 
-profilesRouter.get('/', profilesController.list)
+profilesRouter.get('/',authMiddleware, profilesController.list)
+profilesRouter.get('/me/profile', authMiddleware, profilesController.getMe)
 profilesRouter.get('/:profileId', profilesController.getById)
-profilesRouter.get('/me/profile', profilesController.getMe)
+profilesRouter.post('/createProfile', authMiddleware, profilesController.create)

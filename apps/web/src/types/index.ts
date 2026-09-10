@@ -22,19 +22,41 @@ export interface User {
 
 export interface Profile {
   userId: string;
+  isComplete?: boolean;
   fullName: string;
-  age: number | null;
-  gender: Gender | null;
+  age: number;
+  gender: Gender;
   location: string;
   occupation: string;
-  bio: string;
+  about: string;
+  interest?: string[];
+  interests?: string[];
+  profilePicture: string | null;
+  //   locationCoords?: {
+  //     type: 'Point';
+  //     coordinates: [number, number];
+  //   };
+  //   isComplete: boolean;
+  // }
+}
+export interface ICreateProfile {
+  fullName: string;
+  age: number;
+  gender: Gender;
+  location: string;
+  occupation: string;
+  about: string;
   interests: string[];
-  photoUrl: string | null;
-  isComplete: boolean;
+  profilePicture: string | null;
+  locationCoords?: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
 }
 
 export interface DiscoverProfile extends Profile {
   id: string; // same as userId, convenience for lists/keys
+  interests: string[];
   distanceLabel?: string; // e.g. "Near Me" — used for filtering
   joinedDaysAgo: number; // used for the "New" filter
 }
