@@ -28,6 +28,7 @@ export default function Pagination({
       >
         <ChevronLeft size={16} />
       </button>
+
       {pages.map((p) => (
         <button
           key={p}
@@ -40,6 +41,7 @@ export default function Pagination({
           {p}
         </button>
       ))}
+
       <button
         onClick={() => onChange(Math.min(totalPages, page + 1))}
         disabled={page === totalPages}
