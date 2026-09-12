@@ -7,6 +7,8 @@ import ProfileCard from '../components/discover/ProfileCard';
 import { useLikes } from '../context/likeContext/useLikes';
 import {useNavigate} from 'react-router-dom'
 
+import { getLikedByMe } from '../services/authApi';
+
 type Tab = 'liked-you' | 'you-liked';
 
 const LikesPage = () => {
@@ -26,11 +28,26 @@ const LikesPage = () => {
   // ==========================================================
   // LOAD PEOPLE WE HAVE LIKED
   // ==========================================================
-  useEffect(() => {
-    const profiles = mockProfiles.filter((profile) => likedIds.has(profile.id));
+  // useEffect(() => {
+  //   const profiles = mockProfiles.filter((profile) => likedIds.has(profile.id));
 
-    setYouLiked(profiles);
-  }, [likedIds]);
+  //   setYouLiked(profiles);
+  // }, [likedIds]);
+
+  useEffect(() => {
+    const fetchLikes = async () => {
+      try {
+        const response = await getLikedByMe();
+        console.log(response)
+
+        console.log("LIKED BY ME:", response);
+      } catch (error) {
+        console.error("FAILED TO GET LIKES:", error);
+      }
+    };
+
+    fetchLikes();
+  }, []);
 
   // Decide which profiles to display.
   const list = tab === 'liked-you' ? likedYou : youLiked;
