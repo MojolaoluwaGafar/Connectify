@@ -108,8 +108,8 @@ export async function getProfileById(
   profileId: string,
 ): Promise<DiscoverProfile | null> {
   const { data } = await api.get(`/api/v1/profiles/${profileId}`);
-  const profile = data?.profile ?? data?.data?.profile ?? data;
-  return (profile as DiscoverProfile | null) ?? null;
+  return (data?.data as DiscoverProfile | null) ?? null;
+  // return (profile as DiscoverProfile | null) ?? null;
 }
 
 export async function getDiscoverProfiles(filters: {
