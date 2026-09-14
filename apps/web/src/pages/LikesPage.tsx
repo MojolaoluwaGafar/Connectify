@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { DiscoverProfile } from '../types';
 
-import { mockProfiles } from '../data/mockProfile';
-
 import ProfileCard from '../components/discover/ProfileCard';
-import { useLikes } from '../context/likeContext/useLikes';
 import {useNavigate} from 'react-router-dom'
 
 import { getLikedByMe } from '../services/authApi';
@@ -15,32 +12,16 @@ const LikesPage = () => {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('liked-you');
 
-  // These 5 profiles are only being used to keep
-  // the "Liked You (5)" layout populated for now.
-  const [likedYou] = useState<DiscoverProfile[]>(mockProfiles.slice(0, 5));
+  const [likedYou] = useState<DiscoverProfile[]>([]);
 
   // These are the people YOU have actually liked.
   const [youLiked, setYouLiked] = useState<DiscoverProfile[]>([]);
-
-  // Get the shared like state from LikesContent.
-  const { likedIds } = useLikes();
-
-  // ==========================================================
-  // LOAD PEOPLE WE HAVE LIKED
-  // ==========================================================
-  // useEffect(() => {
-  //   const profiles = mockProfiles.filter((profile) => likedIds.has(profile.id));
-
-  //   setYouLiked(profiles);
-  // }, [likedIds]);
 
   useEffect(() => {
     const fetchLikes = async () => {
       try {
         const response = await getLikedByMe();
-        console.log(response)
-
-        console.log("LIKED BY ME:", response);
+        setYouLiked(response);
       } catch (error) {
         console.error("FAILED TO GET LIKES:", error);
       }

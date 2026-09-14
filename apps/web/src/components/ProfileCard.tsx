@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Heart, MapPin, Check } from 'lucide-react';
+// import { Heart, MapPin, Check } from 'lucide-react';
 
 import type { DiscoverProfile } from '../types';
 import { useLikes } from '../context/likeContext/useLikes';

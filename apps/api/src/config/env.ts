@@ -25,7 +25,7 @@ const environmentSchema = z.object({
   JWT_SECRET_KEY: z.string().default('dev-secret-change-me'),
   JWT_EXPIRES_IN: z.string().default('7d'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-
+  
   CLOUD_NAME: z.string().optional().default(''),
   CLOUDINARY_API_KEY: z.string().optional().default(''),
   CLOUDINARY_API_SECRET: z.string().optional().default(''),

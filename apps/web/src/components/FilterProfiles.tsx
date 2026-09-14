@@ -11,8 +11,8 @@ const FilterProfiles = ({ tab, setTab, setPage, className }: Props) => {
     setPage(1);
   }
 
-  const baseButtonStyles =
-    'rounded-full px-4 py-2 text-sm font-semibold transition-colors';
+  // const baseButtonStyles =
+  //   'rounded-full px-4 py-2 text-sm font-semibold transition-colors';
 
   return (
     <>
