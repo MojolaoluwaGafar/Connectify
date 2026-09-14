@@ -1,7 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import JWT from 'jsonwebtoken';
-import type { JWTPayload } from '../../types/payload.js';
-import { env } from '../../config/env.js';
+import { verifyAuthToken } from '../auth/token.js';
 
 export const authMiddleware = (
   req: Request,
@@ -18,19 +16,15 @@ export const authMiddleware = (
 
   const token = authHeader.substring(7).trim();
 
-  if (!env.JWT_SECRET_KEY) {
-    throw new Error('JWT_SECRET_KEY is not defined in environment variables');
-  }
+  const decoded = verifyAuthToken(token);
 
-  try {
-    const decoded = JWT.verify(token, env.JWT_SECRET_KEY) as JWTPayload;
-
-    req.user = decoded;
-
-    next();
-  } catch {
+  if (!decoded) {
     return res.status(403).json({
       message: 'Invalid or expired token',
     });
   }
+
+  req.user = decoded;
+
+  next();
 };

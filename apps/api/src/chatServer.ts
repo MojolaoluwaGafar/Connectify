@@ -1,8 +1,8 @@
 import http from 'node:http'
-import JWT from 'jsonwebtoken'
 import { Server, type Socket } from 'socket.io'
 
 import { env } from './config/env.js'
+import { verifyAuthToken } from './core/auth/token.js'
 import { registerChatHandlers } from './sockets/chatSocket.js'
 
 const server = http.createServer()
@@ -15,7 +15,7 @@ export const io = new Server(server, {
   },
 })
 
-const onlineUsers = new Map<number, Set<string>>()
+const onlineUsers = new Map<string, Set<string>>()
 
 const getTokenFromSocket = (socket: Socket) => {
   const authToken = socket.handshake.auth?.token
@@ -39,16 +39,7 @@ const getUserIdFromSocket = (socket: Socket) => {
    return null
   }
 
-  try {
-   const decoded = JWT.verify(token, env.JWT_SECRET_KEY) as {
-     userId?: string | number
-   }
-
-   const userId = Number(decoded.userId)
-   return Number.isFinite(userId) ? userId : null
-  } catch {
-   return null
-  }
+  return verifyAuthToken(token)?.id ?? null
 }
 
 io.on('connection', (socket: Socket) => {
@@ -58,6 +49,8 @@ io.on('connection', (socket: Socket) => {
    socket.disconnect(true)
    return
   }
+
+  socket.data.userId = userId
 
   if (!onlineUsers.has(userId)) {
    onlineUsers.set(userId, new Set())

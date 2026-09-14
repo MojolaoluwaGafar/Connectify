@@ -1,20 +1,18 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 import * as profilesService from './profiles.service.js';
+import { profileInputSchema } from './profiles.validation.js';
 
 export const profilesController = {
-  create: async (request: Request, response: Response) => {
-    // console.log(data)
-    const data = request.body;
+  create: async (request: Request, response: Response, next: NextFunction) => {
     if (!request.user) {
       return response.status(401).json({
         message: 'Authentication required',
       });
     }
     const userId = request.user.id;
-    console.log(userId);
-
     try {
+      const data = profileInputSchema.parse(request.body);
       const createdProfile = await profilesService.createProfile(userId, data);
       response.status(201).json({
         success: true,
@@ -22,11 +20,7 @@ export const profilesController = {
         profile: createdProfile,
       });
     } catch (error) {
-      console.error(error);
-      response.status(500).json({
-        success: false,
-        message: error,
-      });
+      next(error);
     }
   },
 

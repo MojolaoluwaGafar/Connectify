@@ -4,38 +4,39 @@ import * as likesService from './likes.service.js'
 
 export const likesController = {
   like: async (request: Request, response: Response) => {
-    const profileId = Array.isArray(request.params.profileId)
-      ? request.params.profileId[0] ?? ''
-      : request.params.profileId ?? ''
+    const result = Array.isArray(request.params.profileId)
+      ? (request.params.profileId[0] ?? "")
+      : (request.params.profileId ?? "");
 
-    await likesService.likeProfile(profileId, request.body)
-    response.status(501).json({
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Likes are scheduled for the next backend milestone.',
-        requestId: request.requestId,
-        details: {},
-      },
-    })
+    await likesService.likeProfile(request.user!.id, result);
+
+    response.status(200).json({
+      message: "Profile liked successfully.",
+      status: "success",
+      likerId: request.user!.id,
+      likedUserId: result,
+    });
   },
 
   unlike: async (request: Request, response: Response) => {
-    const profileId = Array.isArray(request.params.profileId)
-      ? request.params.profileId[0] ?? ''
-      : request.params.profileId ?? ''
+    const result = Array.isArray(request.params.profileId)
+      ? (request.params.profileId[0] ?? "")
+      : (request.params.profileId ?? "");
 
-    await likesService.unlikeProfile(profileId)
-    response.status(501).json({
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Removing likes is scheduled for the next backend milestone.',
-        requestId: request.requestId,
-        details: {},
-      },
-    })
+    await likesService.unlikeProfile(request.user!.id, result);
+    response.status(200).json({
+      message: "Profile unliked successfully.",
+      status: "success",
+      likerId: request.user!.id,
+      likedUserId: result,
+    });
   },
 
-  likedByMe: async (_request: Request, response: Response) => {
-    response.status(200).json({ items: [] })
+  likedByMe: async (request: Request, response: Response) => {
+    const result = await likesService.likedByMe(request.user!.id);
+
+    response.status(200).json({
+      items: result,
+    });
   },
-}
+};

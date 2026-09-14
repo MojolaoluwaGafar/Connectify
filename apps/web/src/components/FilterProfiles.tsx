@@ -10,6 +10,10 @@ const FilterProfiles = ({ tab, setTab, setPage, className }: Props) => {
     setTab(value);
     setPage(1);
   }
+
+  // const baseButtonStyles =
+  //   'rounded-full px-4 py-2 text-sm font-semibold transition-colors';
+
   return (
     <>
       <div className={`flex gap-2 items-center font-geist ${className}`}>

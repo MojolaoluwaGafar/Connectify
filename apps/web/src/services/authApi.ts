@@ -71,6 +71,7 @@ export async function googleLogin(idToken: string): Promise<User> {
 
   return user as User;
 }
+
 export async function logout(): Promise<void> {
   clearAuth();
 }
@@ -82,7 +83,6 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function getProfile(userId: string): Promise<Profile | null> {
   if (!userId) return null;
   const { data } = await api.get(`/api/v1/profiles/${userId}`);
-  console.log('getProfile data:', data);
   return (data?.data as Profile | null) ?? null;
 }
 export async function getMyProfile(): Promise<Profile | null> {
@@ -92,13 +92,16 @@ export async function getMyProfile(): Promise<Profile | null> {
 }
 
 export async function saveProfile(
+  userId: string,
   data: Omit<Profile, 'userId' | 'isComplete'>,
 ): Promise<Profile> {
-  const { data: response } = await api.post('/api/v1/profiles/createProfile', {
+  const { data: response } = await api.post('/api/v1/profiles/me/profile', {
+    userId,
     ...data,
   });
 
-  return response?.data as Profile;
+  const profile = response?.profile ?? response?.data?.profile ?? response;
+  return profile as Profile;
 }
 
 export async function getProfileById(
@@ -176,6 +179,10 @@ export async function likeUser(
   return data?.data ?? data;
 }
 
+export const likeProfile = async (profileId: string) => {
+  return await api.put(`/api/v1/likes/profiles/${profileId}/like`);
+}
+
 export async function unlikeUser(
   _userId: string,
   targetId: string,
@@ -183,10 +190,8 @@ export async function unlikeUser(
   await api.delete(`/api/v1/likes/profiles/${targetId}/like`);
 }
 
-export async function getLikedByMe(userId: string): Promise<DiscoverProfile[]> {
-  const { data } = await api.get('/api/v1/likes/liked-by-me', {
-    params: { userId },
-  });
+export async function getLikedByMe(): Promise<DiscoverProfile[]> {
+  const { data } = await api.get('/api/v1/likes/liked-by-me');
   return (data?.items ?? data?.data?.items ?? data ?? []) as DiscoverProfile[];
 }
 

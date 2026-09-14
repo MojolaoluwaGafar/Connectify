@@ -2,6 +2,9 @@ import { useRef } from 'react';
 import { Camera } from 'lucide-react';
 import Avatar from './Avatar';
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg']);
+
 interface PhotoUploaderProps {
   profilePicture: string | null;
   name: string;
@@ -17,6 +20,9 @@ export default function PhotoUploader({
 
   function handleFile(file?: File) {
     if (!file) return;
+    if (!ACCEPTED_TYPES.has(file.type) || file.size > MAX_FILE_SIZE) {
+      return;
+    }
 
     const reader = new FileReader();
 

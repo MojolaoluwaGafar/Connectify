@@ -14,14 +14,14 @@ export const socket = io(socketUrl, {
   reconnectionAttempts: 5,
 })
 
-export const connectSocket = (userId?: string | number) => {
+export const connectSocket = () => {
   const token = getAuthToken()
 
-  if (!userId || !token) {
+  if (!token) {
     return
   }
 
-  socket.auth = { token, userId: Number(userId) }
+  socket.auth = { token }
 
   if (!socket.connected) {
     socket.connect()
