@@ -5,8 +5,6 @@ import type { DiscoverProfile } from "../types";
 
 import { useNavigate } from "react-router-dom";
 import { useLikes } from "../context/likeContext/useLikes";
-import Pagination from "../components/Pagination";
-const PAGESIZE = 8;
 
 const Matches = () => {
   const navigate = useNavigate();
@@ -22,10 +20,6 @@ const Matches = () => {
 
   // Loading state
   const [loading, setLoading] = useState(true);
-
-  // for pagination 
-  const [page, setPage] = useState(1)
- const totalPages = Math.ceil(matches.length / PAGESIZE);
 
   // Get the user's matches when the user or liked profiles change
   useEffect(() => {
@@ -68,7 +62,7 @@ const Matches = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 w-full max-w-7xl mx-auto">
           {/* Loading state */}
           {loading ? (
-            <div className="col-span-full flex h-[60vh] w-full items-center justify-center">
+            <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed my-2 rounded-2xl min-h-96 space-y-4 p-5 sm:p-10 md:p-16 lg:p-20 w-full max-w-7xl mx-auto">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
             </div>
           ) : matches.length === 0 ? (
@@ -172,19 +166,18 @@ const Matches = () => {
                     </button>
                   </div>
                 </div>
-                
               </div>
             ))
           )}
         </div>
         {/* pagination */}
-        <div className="flex justify-center mt-8">
+        {/* <div className="flex justify-center mt-8">
           <Pagination
             page={page}
             totalPages={Math.ceil(totalPages)}
             onChange={setPage}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );
