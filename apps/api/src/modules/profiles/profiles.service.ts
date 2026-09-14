@@ -13,6 +13,7 @@ export async function createProfile(userId: string, data: profile) {
     age,
     location,
     profilePicture,
+    locationCoords,
   } = data;
 
   const updatedProfile = await Profile.findOneAndUpdate(
@@ -27,6 +28,7 @@ export async function createProfile(userId: string, data: profile) {
       age,
       location,
       profilePicture,
+      locationCoords,
     },
     {
       new: true,
@@ -236,6 +238,6 @@ function formatProfile(item: Record<string, any>) {
     ...item,
     userId: String(item.userId),
     interest: item.interests ?? [],
-    isComplete: isProfileComplete(item),
-  };
+    isComplete: true,
+  }
 }

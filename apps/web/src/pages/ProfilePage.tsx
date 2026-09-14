@@ -145,7 +145,7 @@ setLoading(false)
           )}
 
           {/* Interests */}
-          {target?.interests.length > 0 && (
+          {target?.interests?.length > 0 && (
             <div className="mt-6">
               <p className="text-xs font-semibold uppercase tracking-wide text-theme">
                 Interests

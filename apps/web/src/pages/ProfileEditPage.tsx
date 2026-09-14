@@ -1,26 +1,19 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from 'react';
-import { useNavigate } from 'react-router-dom';
-import { createProfile } from '../services/api';
+import { useEffect, useState, type MouseEvent, type ReactNode, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { saveProfile } from "../services/authApi";
+import ProfilePreviewModal from "../components/profilePreviewModal";
 
-import { useAuth } from '../context/authContext/useAuth';
-import type { Gender } from '../types';
-import PhotoUploader from '../components/ui/PhotoUploader';
-import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
-import { INTEREST_OPTIONS } from '../data/mockProfile';
-import { NIGERIA_STATES } from '../data/nigeriaStates';
-import TextArea from '../components/ui/TextArea';
-import Chip from '../components/ui/Chip';
-import Button from '../components/ui/Button';
 
-// Change this path if your modal is located somewhere else.
-import ProfilePreviewModal from '../components/profilePreviewModal';
+import { useAuth } from "../context/authContext/useAuth";
+import type { Gender } from "../types";
+import PhotoUploader from "../components/ui/PhotoUploader";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
+import { INTEREST_OPTIONS } from "../data/mockProfile";
+import TextArea from "../components/ui/TextArea";
+import Chip from "../components/ui/Chip";
+import Button from "../components/ui/Button";
+import { NIGERIA_STATES } from "../data/nigeriaStates";
 
 interface FieldErrors {
   fullName?: string;
@@ -32,12 +25,8 @@ interface FieldErrors {
 }
 
 export default function ProfileEditPage() {
-  const {
-    user,
-    profile,
-    refreshProfile,
-    isLoading: isAuthLoading,
-  } = useAuth();
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const { user, profile, refreshProfile } = useAuth();
 
   const navigate = useNavigate();
 
@@ -51,28 +40,26 @@ export default function ProfileEditPage() {
   const [interests, setInterests] = useState<string[]>([]);
   const [about, setBio] = useState('');
   const [profilePicture, setPhotoUrl] = useState<string | null>(null);
+  const [locationCoords, setLocationCoords] = useState<{
+    type: "Point";
+    coordinates: [number, number];
+  }>();
 
   const [isSaving, setIsSaving] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [apiError, setApiError] = useState('');
 
   useEffect(() => {
     if (profile) {
-      setFullName(profile.fullName ?? '');
-      setAge(profile.age ? String(profile.age) : '');
-      setGender(profile.gender ?? null);
-      setLocation(profile.location ?? '');
-      setOccupation(profile.occupation ?? '');
-
-      setInterests(
-        profile.interest ??
-          profile.interests ??
-          [],
-      );
-
-      setBio(profile.about ?? '');
-      setPhotoUrl(profile.profilePicture ?? null);
+      setFullName(profile.fullName);
+      setAge(profile.age ? String(profile.age) : "");
+      setGender(profile.gender ?? "");
+      setLocation(profile.location);
+      setOccupation(profile.occupation);
+      setInterests(profile.interest ?? profile.interests ?? []);
+      setBio(profile.about);
+      setPhotoUrl(profile.profilePicture);
     } else if (user) {
       setFullName(user.fullName ?? '');
     }
@@ -161,8 +148,28 @@ export default function ProfileEditPage() {
     setIsSaving(true);
 
     try {
-      const response = await createProfile({
-        fullName: fullName.trim(),
+      let nextLocationCoords = locationCoords;
+
+      if (navigator.geolocation) {
+        const position = await new Promise<GeolocationPosition | null>(
+          (resolve) => {
+            navigator.geolocation.getCurrentPosition(resolve, () =>
+              resolve(null),
+            );
+          },
+        );
+
+        if (position) {
+          nextLocationCoords = {
+            type: "Point",
+            coordinates: [position.coords.longitude, position.coords.latitude],
+          };
+          setLocationCoords(nextLocationCoords);
+        }
+      }
+
+      await saveProfile({
+        fullName: fullName.trim() || "",
         age: Number(age),
         gender,
         location: location.trim(),
@@ -172,7 +179,7 @@ export default function ProfileEditPage() {
         profilePicture,
       });
 
-      console.log('Profile saved:', response);
+      console.log('Profile saved:', Response);
 
       await refreshProfile();
 
@@ -186,14 +193,6 @@ export default function ProfileEditPage() {
     } finally {
       setIsSaving(false);
     }
-  }
-
-  if (isAuthLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
-      </div>
-    );
   }
 
   return (
