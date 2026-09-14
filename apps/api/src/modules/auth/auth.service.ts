@@ -15,6 +15,7 @@ import { env } from '../../config/env.js'
 import type { JWTPayload } from '../../types/payload.js'
 import { ActivationTemplate } from '../../MailTemplates/Activate.js'
 import { SendEmail } from '../../utils/SendMail.js'
+import { ForgetPassWordTemplate } from '../../MailTemplates/forgetPassword.js'
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID)
 
@@ -33,6 +34,19 @@ async function sendVerificationEmail(
     to: email,
     subject: "Verify your Connectify account",
     html: ActivationTemplate(firstName, verificationCode),
+  });
+}
+async function sendForgetPasswordVerificationEmail(
+  email: string,
+  fullName: string,
+  verificationCode: string,
+) {
+  const firstName = fullName.trim().split(/\s+/)[0] || "there";
+
+  await SendEmail({
+    to: email,
+    subject: "Password Reset Code",
+    html: ForgetPassWordTemplate(firstName, verificationCode),
   });
 }
 
@@ -185,6 +199,7 @@ export async function loginUser(payload: unknown) {
       expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
     },
   );
+  
 
   return {
     token,
@@ -233,6 +248,11 @@ export async function forgotPassword(payload: unknown) {
   console.log("Expires: 10 minutes");
   console.log("====================================");
 
+    await sendForgetPasswordVerificationEmail(
+    user.email,
+    user.fullName,
+    resetToken,
+  );
   return {
     message:
       "If an account with that email exists, a password reset code has been sent.",
