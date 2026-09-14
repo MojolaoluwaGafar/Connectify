@@ -1,13 +1,15 @@
+import { useCallback, useState } from 'react';
 import * as api from '../services/authApi';
 import { ProfileCard } from '../components/ProfileCard';
 import FilterProfiles from '../components/FilterProfiles';
 import EmptyProfile from '../components/EmptyProfile';
-import { useEffect, useState } from 'react';
 import type { DiscoverProfile } from '../types';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../assets/search.svg';
 import { useAuth } from '../context/authContext/useAuth';
+import { useApiQuery } from '../hooks/useApiQuery';
+
 const PAGESIZE = 8;
 
 const DiscoveryPage = () => {
@@ -16,53 +18,49 @@ const DiscoveryPage = () => {
   const [tab, setTab] = useState<'all' | 'new' | 'near-me'>('all');
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
-
-  const [profiles, setProfiles] = useState<DiscoverProfile[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [discoveryError, setDiscoveryError] = useState('');
 
-  useEffect(() => {
-    let cancelled = false;
+  // Recreated whenever the actual query params change, so useApiQuery's
+  // internal fetchData always calls the API with fresh args, and so
+  // cacheKey (below) and this closure stay in sync.
+  const request = useCallback(
+    () =>
+      api.getDiscoverProfiles({
+        search: searchValue,
+        tab,
+        page,
+        pageSize: PAGESIZE,
+        excludeUserId: user?.id,
+      }),
+    [searchValue, tab, page, user?.id],
+  );
 
-    const getProfiles = async () => {
-      try {
-        setIsLoading(true);
-        setDiscoveryError('');
+  // One cache entry per distinct combination of filters — switching back
+  // to a tab/page/search you've already loaded shows cached results
+  // instantly instead of refetching and flashing a spinner.
+  const cacheKey = `discover:${tab}:${page}:${searchValue}:${user?.id ?? 'anon'}`;
 
-        const result = await api.getDiscoverProfiles({
-          search: searchValue,
-          tab,
-          page,
-          pageSize: PAGESIZE,
-          excludeUserId: user?.id,
-        });
+  const {
+    data,
+    loading: isLoading,
+    isRefetching,
+  } = useApiQuery(request, 'Could not load profiles. Please try again.', {
+    cacheKey,
+    staleTime: 30_000,
+    onSuccess: () => setDiscoveryError(''),
+    onError: () => {
+      setDiscoveryError(
+        tab === 'near-me'
+          ? 'Set your location in your profile to see nearby matches.'
+          : 'Could not load profiles. Please try again.',
+      );
+    },
+  });
 
-        if (cancelled) return;
-        setProfiles(result.items);
-        setTotal(result.total);
-      } catch (error) {
-        if (cancelled) return;
-        setProfiles([]);
-        setTotal(0);
-        setDiscoveryError(
-          tab === 'near-me'
-            ? 'Set your location in your profile to see nearby matches.'
-            : 'Could not load profiles. Please try again.',
-        );
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    };
-
-    getProfiles();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [searchValue, tab, page, user?.id]);
-
+  const profiles: DiscoverProfile[] = data?.items ?? [];
+  const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGESIZE);
+
   const showCompleteProfileCard =
     !profile ||
     !profile.isComplete ||
@@ -105,7 +103,7 @@ const DiscoveryPage = () => {
             />
           </div>
 
-          {isLoading ? (
+          {isLoading || isRefetching ? (
             <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed my-2 rounded-2xl min-h-96 space-y-4 p-5 sm:p-10 md:p-16 lg:p-20 w-full max-w-7xl mx-auto">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
             </div>
