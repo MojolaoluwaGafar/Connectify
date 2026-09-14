@@ -51,9 +51,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
         </p>
 
         {/* Bio */}
-        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2">
-          {profile.about}
-        </p>
+        <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2">{profile.about}</p>
 
         {/* Actions */}
         <div className="mt-4 flex gap-2">

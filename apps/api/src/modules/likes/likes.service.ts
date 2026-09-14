@@ -5,6 +5,15 @@ import mongoose from "mongoose";
 export async function likeProfile(likerId: string, likedUserId: string) {
   // I (by I, i mean Chidera ) removed the payload validation for now if any error occurs later add in the payload thank you
 
+  // temporal: testing for matches 
+  const existingLike = await Like.findOne({likerId: likedUserId,
+    likedUserId: likerId
+  });
+  const matched = !!existingLike
+  console.log("EXISTING LIKES", existingLike);
+  
+
+
   const like = new Like({
     likerId: likerId,
     likedUserId: likedUserId,
@@ -16,6 +25,8 @@ export async function likeProfile(likerId: string, likedUserId: string) {
     status: "success",
     likerId: likerId,
     likedUserId: likedUserId,
+    // temporally added to test matches 
+    matched: matched,
   };
 }
 
@@ -50,4 +61,49 @@ export async function likedByMe(likerId: string) {
     id: profile.userId.toString(),
     userId: profile.userId.toString(),
   }));
+}
+
+export const whoLikedMe = async (userId: string) => {
+  const likes = await Like.find({
+    likedUserId: new mongoose.Types.ObjectId(userId),
+  });
+  const likerIds = likes.map((like) => like.likerId);
+
+  const profiles = await Profile.find({ userId: { $in: likerIds } });
+
+  return profiles.map((profile) => ({
+    ...profile.toObject(),
+    id: profile.userId.toString(),
+    userId: profile.userId.toString(),
+  }));
+};
+
+export const getMatches = async (userId: string)=>{
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  // Find everyone I liked
+  const myLikes = await Like.find({
+    likerId: userObjectId,
+  });
+
+  const likedUserIds = myLikes.map((like) => like.likedUserId);
+
+  // Find the people who also liked me
+  const mutualLikes = await Like.find({
+    likerId: { $in: likedUserIds },
+    likedUserId: userObjectId,
+  });
+
+  const matchedUserIds = mutualLikes.map((like) => like.likerId);
+
+  // Get their profiles
+  const profiles = await Profile.find({
+    userId: { $in: matchedUserIds },
+  });
+
+  return profiles.map((profile) => ({
+    ...profile.toObject(),
+    id: profile.userId.toString(),
+    userId: profile.userId.toString(),
+  })); 
 }

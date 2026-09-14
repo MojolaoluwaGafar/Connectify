@@ -41,7 +41,7 @@ const Matches = () => {
     api
       .getMatches(user.id)
       .then((res) => {
-        setMatches(res.map((m) => m.profile));
+        setMatches(res);
       })
       .catch((error) => {
         console.error("Failed to get matches:", error);
@@ -174,17 +174,18 @@ const Matches = () => {
                     </button>
                   </div>
                 </div>
-                {/* pagination */}
-                <div className="flex justify-center mt-8">
-                  <Pagination
-                    page={page}
-                    totalPages={Math.ceil(totalPages)}
-                    onChange={setPage}
-                  />
-                </div>
+                
               </div>
             ))
           )}
+        </div>
+        {/* pagination */}
+        <div className="flex justify-center mt-8">
+          <Pagination
+            page={page}
+            totalPages={Math.ceil(totalPages)}
+            onChange={setPage}
+          />
         </div>
       </div>
     </div>

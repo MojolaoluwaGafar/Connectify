@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 
 import * as likesService from './likes.service.js'
+import { LikeActionResultSchema } from '../../../../../packages/shared/src/api.js';
 
 export const likesController = {
   like: async (request: Request, response: Response) => {
@@ -8,15 +9,20 @@ export const likesController = {
       ? (request.params.profileId[0] ?? "")
       : (request.params.profileId ?? "");
 
-    await likesService.likeProfile(request.user!.id, result);
+      // temporal this was not stored in a like result variable so i added this 
+    const likeResult = await likesService.likeProfile(
+      request.user!.id,
+      result,
+    ); 
 
     response.status(200).json({
       message: "Profile liked successfully.",
       status: "success",
       likerId: request.user!.id,
       likedUserId: result,
+ matched:likeResult.matched
     });
-  },
+  }, //..
 
   unlike: async (request: Request, response: Response) => {
     const result = Array.isArray(request.params.profileId)
@@ -39,4 +45,18 @@ export const likesController = {
       items: result,
     });
   },
+
+  whoLikedMe: async(request:Request, response:Response)=>{
+    const result = await likesService.whoLikedMe(request.user!.id);
+    response.status(200).json({
+      items:result,
+    })
+  },
+  matches: async (request: Request, response: Response) => {
+  const result = await likesService.getMatches(request.user!.id);
+
+  response.status(200).json({
+    items: result,
+  });
+},
 };

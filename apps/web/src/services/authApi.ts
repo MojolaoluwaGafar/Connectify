@@ -153,15 +153,12 @@ export async function getWhoLikedMe(
   return (result as DiscoverProfile[]) ?? [];
 }
 
-export async function getMatches(
-  userId: string,
-): Promise<Array<{ profile: DiscoverProfile }>> {
-  const { data } = await api.get('/api/v1/likes/matches', {
+export async function getMatches(userId: string): Promise<DiscoverProfile[]> {
+  const { data } = await api.get("/api/v1/likes/matches", {
     params: { userId },
   });
-  return (data?.items ?? data?.data?.items ?? data) as Array<{
-    profile: DiscoverProfile;
-  }>;
+
+  return (data?.items ?? data?.data?.items ?? data ?? []) as DiscoverProfile[];
 }
 
 export async function getSession() {
@@ -190,8 +187,10 @@ export async function unlikeUser(
   await api.delete(`/api/v1/likes/profiles/${targetId}/like`);
 }
 
-export async function getLikedByMe(): Promise<DiscoverProfile[]> {
-  const { data } = await api.get('/api/v1/likes/liked-by-me');
+export async function getLikedByMe(userId: string): Promise<DiscoverProfile[]> {
+  const { data } = await api.get("/api/v1/likes/liked-by-me", {
+    params: { userId },
+  });
   return (data?.items ?? data?.data?.items ?? data ?? []) as DiscoverProfile[];
 }
 
@@ -203,3 +202,11 @@ export async function getConversations(
   });
   return (data?.items ?? data?.data?.items ?? data ?? []) as Conversation[];
 }
+
+// export async function getMatches(userId: string): Promise<DiscoverProfile[]> {
+//   const { data } = await api.get("/api/v1/likes/matches", {
+//     params: { userId },
+//   });
+
+//   return (data?.items ?? data?.data?.items ?? data ?? []) as DiscoverProfile[];
+// }
