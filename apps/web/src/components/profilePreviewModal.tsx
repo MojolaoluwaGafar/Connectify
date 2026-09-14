@@ -11,7 +11,7 @@ interface ProfilePreviewModalProps {
   profilePicture: string | null;
 }
 
-const ProfilePreviewModal = ({
+export const ProfilePreviewModal = ({
   isOpen,
   onClose,
   fullName,
