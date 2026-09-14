@@ -15,7 +15,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
       setLikedIds(new Set());
       return;
     }
-    const liked = await api.getLikedByMe();
+    const liked = await api.getLikedByMe(user.id);
     setLikedIds(new Set(liked.map((p) => p.id)));
   }
 
@@ -31,7 +31,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
         setLikedIds(new Set());
         return;
       }
-      const liked = await api.getLikedByMe();
+      const liked = await api.getLikedByMe(user.id);
       if (!ignore) {
         setLikedIds(new Set(liked.map((p) => p.id)));
       }
@@ -63,14 +63,18 @@ function LikesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-     const data =await api.likeProfile(profile.id);
+    // ill come back to you later 
+     const data =await api.likeUser(user.id,profile.userId);
      console.log("PROFILE BEING LIKED:", profile, "RESPONSE:", data);
     setLikedIds((prev) => new Set(prev).add(profile.id));
-    // if (matched) {
-    //   setJustMatched(profile);
-    // } else {
-    //   setJustLiked(profile);
-    // }
+    
+    if (data.matched) {
+      setJustMatched(profile);
+    } else {
+      setJustLiked(profile);
+    }
+
+    // setJustMatched(profile);
   }
 
   return (
@@ -91,3 +95,12 @@ function LikesProvider({ children }: { children: ReactNode }) {
 }
 
 export default LikesProvider;
+
+
+
+// {
+//   "email":"timilehingafar@gmail.com",
+//   "password": "P@ss1234%"
+// }
+
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYTE2MGM0NmNiNTg2Y2M5MjliZTg3ZCIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzg5MzQ1MzM3LCJleHAiOjE3ODk5NTAxMzd9.Un6lvt-nHZfCtev4ii8KDa07GbbUHu-0aIu_eLQDvOE

@@ -1,9 +1,10 @@
-import mongoose from "mongoose";
-import { profile, Profile } from "../../model/profile.js";
+import mongoose from 'mongoose';
+import { profile, Profile } from '../../model/profile.js';
 
-export async function createProfile(userId: string, data: profile) {
+
+export async function createProfile(userId: string, data: profile, ) {
   console.log(data);
-
+ const iscomplete = isComplete(data)
   const {
     fullName,
     gender,
@@ -17,7 +18,7 @@ export async function createProfile(userId: string, data: profile) {
   } = data;
 
   const newProfile = await Profile.findOneAndUpdate(
-    { userId }, // match existing profile by userId
+    { userId },
     {
       userId,
       fullName,
@@ -31,24 +32,36 @@ export async function createProfile(userId: string, data: profile) {
       locationCoords,
     },
     {
-      new: true, // return the updated document
-      upsert: true, // create if not found
+      new: true,
+      upsert: true,
       setDefaultsOnInsert: true,
     },
   );
 
-  return newProfile;
+  return formatProfile(newProfile.toObject());
 }
 
-export async function listProfiles(query: Record<string, unknown>) {
+export const isComplete = (profileData: profile) => {
+  const hasRequiredFields =
+    profileData.fullName.trim() !== '' &&
+    profileData.age >= 18 &&
+    profileData.location.trim() !== '' &&
+    profileData.gender.trim() !== '' &&
+    profileData.interests.length > 0 &&
+    profileData.about.trim() !== '';
+
+  return hasRequiredFields;
+};
+
+export async function listProfiles(
+  query: Record<string, unknown>,
+  currentUserId?: string,
+) {
   const page = Math.max(Number(query.page) || 1, 1);
-
   const pageSize = Math.min(Math.max(Number(query.pageSize) || 8, 1), 50);
-
   const skip = (page - 1) * pageSize;
 
-  const search = typeof query.search === "string" ? query.search.trim() : "";
-
+  const search = typeof query.search === 'string' ? query.search.trim() : '';
   const tab =
     query.tab === "near-me" || query.tab === "new" ? query.tab : "all";
 
@@ -57,86 +70,39 @@ export async function listProfiles(query: Record<string, unknown>) {
 
   const baseFilter: Record<string, unknown> = {};
 
-  // Exclude a specific user
   if (excludeUserId && mongoose.isValidObjectId(excludeUserId)) {
     baseFilter.userId = {
       $ne: new mongoose.Types.ObjectId(excludeUserId),
     };
   }
 
-  // Search by full name or interests
   if (search) {
     baseFilter.$or = [
-      {
-        fullName: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-      {
-        interests: {
-          $regex: search,
-          $options: "i",
-        },
-      },
+      { fullName: { $regex: search, $options: 'i' } },
+      { interests: { $regex: search, $options: 'i' } },
     ];
   }
 
-  if (tab === "near-me") {
-    const lat = Number(query.lat);
-    const lng = Number(query.lng);
-
-    const radius = Math.min(Math.max(Number(query.radius) || 25, 1), 100);
-
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+  if (tab === 'near-me') {
+    if (!currentUserId || !mongoose.isValidObjectId(currentUserId)) {
       throw new Error(
-        "Latitude and longitude are required for nearby discovery",
+        'A valid signed-in user is required for nearby discovery',
       );
     }
 
-    const [result] = await Profile.aggregate([
-      {
-        $geoNear: {
-          near: {
-            type: "Point",
-            coordinates: [lng, lat],
-          },
+    const currentUserProfile = await Profile.findOne({
+      userId: new mongoose.Types.ObjectId(currentUserId),
+    })
+      .select('location')
+      .lean();
 
-          key: "locationCoords",
+    if (!currentUserProfile?.location) {
+      throw new Error(
+        'Set your location in your profile to see nearby matches',
+      );
+    }
 
-          distanceField: "distanceMeters",
-
-          maxDistance: radius * 1000,
-
-          spherical: true,
-
-          query: baseFilter,
-        },
-      },
-
-      {
-        $facet: {
-          metadata: [
-            {
-              $count: "total",
-            },
-          ],
-
-          items: [
-            {
-              $skip: skip,
-            },
-            {
-              $limit: pageSize,
-            },
-          ],
-        },
-      },
-    ]);
-
-    const total = result?.metadata?.[0]?.total ?? 0;
-
-    return formatDiscoveryResult(result?.items ?? [], total, page, pageSize);
+    baseFilter.location = currentUserProfile.location;
   }
 
   const profileQuery = Profile.find(baseFilter)
@@ -160,42 +126,27 @@ function formatDiscoveryResult(
   pageSize: number,
 ) {
   return {
-    message: "Profile discovery successful.",
-    status: "success",
-
+    message: 'Profile discovery successful.',
+    status: 'success',
     items: items.map((item) => ({
       ...item,
-
       id: String(item.userId),
-
       userId: String(item.userId),
-
       interest: item.interests ?? [],
-
       joinedDaysAgo: item.createdAt
         ? Math.floor(
             (Date.now() - new Date(item.createdAt).getTime()) / 86400000,
           )
         : 0,
-
-      ...(item.distanceMeters !== undefined
-        ? {
-            distanceLabel: `${(item.distanceMeters / 1000).toFixed(1)} km away`,
-          }
-        : {}),
     })),
-
     total,
-
     page,
-
     pageSize,
   };
 }
 
 export async function getProfileById(userId: string) {
   if (!mongoose.isValidObjectId(userId)) return null;
-
   const item = await Profile.findOne({
     userId: new mongoose.Types.ObjectId(userId),
   }).lean();
@@ -205,6 +156,36 @@ export async function getProfileById(userId: string) {
 export async function getCurrentProfile(userId: string | undefined) {
   if (!userId) return null;
   return getProfileById(userId);
+}
+
+// Mirrors the required-field rules enforced client-side in
+// ProfileEditPage's validate(), so "complete" means the same thing on
+// both ends. A profile can exist (via upsert) without being complete —
+// e.g. right after the first partial save, or if required fields are
+// blanked out on a later edit.
+export function isProfileComplete(item: Record<string, any>): boolean {
+  const interests = item.interests ?? [];
+
+  return Boolean(
+    typeof item.fullName === 'string' &&
+    item.fullName.trim().length >= 2 &&
+    typeof item.age === 'number' &&
+    Number.isInteger(item.age) &&
+    item.age >= 18 &&
+    item.age <= 100 &&
+    typeof item.gender === 'string' &&
+    item.gender.length > 0 &&
+    typeof item.location === 'string' &&
+    item.location.trim().length > 0 &&
+    typeof item.about === 'string' &&
+    item.about.trim().length >= 10 &&
+    Array.isArray(interests) &&
+    interests.length > 0 &&
+    typeof item.occupation === 'string' &&
+    item.occupation.trim().length > 0 &&
+    typeof item.profilePicture === 'string' &&
+    item.profilePicture.trim().length > 0,
+  );
 }
 
 function formatProfile(item: Record<string, any>) {
