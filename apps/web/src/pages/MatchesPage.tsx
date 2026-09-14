@@ -25,9 +25,7 @@ const Matches = () => {
 
   // for pagination 
   const [page, setPage] = useState(1)
-  const total = 20;
-
-  const totalPages = Math.ceil(total / PAGESIZE);
+ const totalPages = Math.ceil(matches.length / PAGESIZE);
 
   // Get the user's matches when the user or liked profiles change
   useEffect(() => {

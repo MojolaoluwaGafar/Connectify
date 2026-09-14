@@ -67,6 +67,8 @@ export const whoLikedMe = async (userId: string) => {
   const likes = await Like.find({
     likedUserId: new mongoose.Types.ObjectId(userId),
   });
+  console.log("WHO LIKED ME LIKES", likes);
+  
   const likerIds = likes.map((like) => like.likerId);
 
   const profiles = await Profile.find({ userId: { $in: likerIds } });
