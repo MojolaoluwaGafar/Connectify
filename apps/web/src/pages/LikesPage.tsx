@@ -3,32 +3,74 @@ import type { DiscoverProfile } from '../types';
 
 import ProfileCard from '../components/discover/ProfileCard';
 import {useNavigate} from 'react-router-dom'
+import { useLikes } from '../context/likeContext/useLikes';
 
-import { getLikedByMe } from '../services/authApi';
+import { getLikedByMe, getWhoLikedMe } from '../services/authApi';
+
+import { useAuth } from '../context/authContext/useAuth';
+
 
 type Tab = 'liked-you' | 'you-liked';
 
 const LikesPage = () => {
   const navigate = useNavigate()
-  const [tab, setTab] = useState<Tab>('liked-you');
+  // static 
+  // const [tab, setTab] = useState<Tab>('liked-you');
+   const [tab, setTab] = useState<Tab>("liked-you");
 
-  const [likedYou] = useState<DiscoverProfile[]>([]);
+  // These 5 profiles are only being used to keep
+  // the "Liked You (5)" layout populated for now.
+
+
+  // for the old static profile 
+  // const [likedYou] = useState<DiscoverProfile[]>(mockProfiles.slice(0, 5));
+  const [likedYou, setLikedYou] = useState<DiscoverProfile[]>([]);
+
 
   // These are the people YOU have actually liked.
   const [youLiked, setYouLiked] = useState<DiscoverProfile[]>([]);
 
+  // Get the shared like state from LikesContent.
+  const { likedIds } = useLikes();
+
+  // ==========================================================
+  // LOAD PEOPLE WE HAVE LIKED
+  // ==========================================================
+  // useEffect(() => {
+  //   const profiles = mockProfiles.filter((profile) => likedIds.has(profile.id));
+
+  //   setYouLiked(profiles);
+  // }, [likedIds]);
+
+  const {user} = useAuth()
+
   useEffect(() => {
-    const fetchLikes = async () => {
-      try {
-        const response = await getLikedByMe();
-        setYouLiked(response);
-      } catch (error) {
-        console.error("FAILED TO GET LIKES:", error);
-      }
-    };
+    if (!user)
+      return;
+
+      const fetchLikes = async () => {
+        try {
+          const response = await getLikedByMe(user.id);
+          const likedYouResponse = await getWhoLikedMe(user.id)
+
+          console.log("LIKED BY ME:", response);
+          console.log("LIKE ME", likedYouResponse);
+          
+
+          setYouLiked(response)
+          setLikedYou(likedYouResponse)
+
+        } catch (error) {
+          console.error("FAILED TO GET LIKES:", error);
+        }
+      };
 
     fetchLikes();
-  }, []);
+  }, [user]);
+
+  useEffect(()=>{
+    setYouLiked((prev)=> prev.filter((profile)=> likedIds.has(profile.id)));
+  }, [likedIds])
 
   // Decide which profiles to display.
   const list = tab === 'liked-you' ? likedYou : youLiked;
@@ -65,7 +107,7 @@ const LikesPage = () => {
                   : 'text-[#655E75]'
               }`}
             >
-              Liked You (5)
+              Liked You ({likedYou.length})
             </button>
 
             {/* DYNAMIC YOU LIKED */}

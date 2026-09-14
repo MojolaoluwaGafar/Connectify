@@ -19,7 +19,7 @@ export const MatchesModal = () => {
           It's a Match
         </h1>
         <p className="text-[#6B6178] font-regular font-400 font-geist">
-          You and {justMatched?.fullName.split(' ')[0]} both liked each other
+          You and {justMatched?.fullName.split(" ")[0]} both liked each other
         </p>
       </div>
       {/* avatar */}
@@ -32,8 +32,8 @@ export const MatchesModal = () => {
         ) : (
           <div>
             <img
-              src={profile?.profilePicture || ''}
-              alt={profile?.fullName || ''}
+              src={profile?.profilePicture || "/profile-picture.png"}
+              alt={profile?.fullName || ""}
               className="size-16 rounded-full"
             />
           </div>
@@ -41,7 +41,7 @@ export const MatchesModal = () => {
         {/* HEART */}
         <div>
           <img
-            src={'/heart-overlay.png'}
+            src={"/heart-overlay.png"}
             alt="Heartoverlay"
             className="size-14"
           />
@@ -49,8 +49,8 @@ export const MatchesModal = () => {
         {/* other user */}
         <div>
           <img
-            src={justMatched?.profilePicture || ''}
-            alt={justMatched?.fullName || ''}
+            src={justMatched?.profilePicture || "/profile-picture.png"}
+            alt={justMatched?.fullName || ""}
             className="size-16 rounded-full"
           />
         </div>
@@ -60,7 +60,7 @@ export const MatchesModal = () => {
         <button
           className=" bg-theme text-white py-2 px-4 rounded-lg hover:bg-[#6b32cf] font-medium font-geist"
           onClick={() => {
-            navigate('/messages', {
+            navigate("/messages", {
               state: {
                 selectedUser: justMatched,
               },
