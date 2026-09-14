@@ -2,88 +2,68 @@ import { useEffect, useState } from 'react';
 import type { DiscoverProfile } from '../types';
 
 import ProfileCard from '../components/discover/ProfileCard';
-import {useNavigate} from 'react-router-dom'
+import { useNavigate } from 'react-router-dom';
 import { useLikes } from '../context/likeContext/useLikes';
 
 import { getLikedByMe, getWhoLikedMe } from '../services/authApi';
 
 import { useAuth } from '../context/authContext/useAuth';
 
-
 type Tab = 'liked-you' | 'you-liked';
 
 const LikesPage = () => {
-  const navigate = useNavigate()
-  // static 
-  // const [tab, setTab] = useState<Tab>('liked-you');
-   const [tab, setTab] = useState<Tab>("liked-you");
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<Tab>('liked-you');
 
-  // These 5 profiles are only being used to keep
-  // the "Liked You (5)" layout populated for now.
-
-
-  // for the old static profile 
-  // const [likedYou] = useState<DiscoverProfile[]>(mockProfiles.slice(0, 5));
   const [likedYou, setLikedYou] = useState<DiscoverProfile[]>([]);
-
-
-  // These are the people YOU have actually liked.
   const [youLiked, setYouLiked] = useState<DiscoverProfile[]>([]);
 
-  // Get the shared like state from LikesContent.
+  // NEW: tracks whether the initial likes fetch is in flight
+  const [isLoading, setIsLoading] = useState(true);
+
   const { likedIds } = useLikes();
 
-  // ==========================================================
-  // LOAD PEOPLE WE HAVE LIKED
-  // ==========================================================
-  // useEffect(() => {
-  //   const profiles = mockProfiles.filter((profile) => likedIds.has(profile.id));
-
-  //   setYouLiked(profiles);
-  // }, [likedIds]);
-
-  const {user} = useAuth()
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (!user)
-      return;
+    if (!user) return;
 
-      const fetchLikes = async () => {
-        try {
-          const response = await getLikedByMe(user.id);
-          const likedYouResponse = await getWhoLikedMe(user.id)
+    const fetchLikes = async () => {
+      setIsLoading(true);
+      try {
+        const response = await getLikedByMe(user.id);
+        const likedYouResponse = await getWhoLikedMe(user.id);
 
-          console.log("LIKED BY ME:", response);
-          console.log("LIKE ME", likedYouResponse);
-          
+        console.log('LIKED BY ME:', response);
+        console.log('LIKE ME', likedYouResponse);
 
-          setYouLiked(response)
-          setLikedYou(likedYouResponse)
-
-        } catch (error) {
-          console.error("FAILED TO GET LIKES:", error);
-        }
-      };
+        setYouLiked(response);
+        setLikedYou(likedYouResponse);
+      } catch (error) {
+        console.error('FAILED TO GET LIKES:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     fetchLikes();
   }, [user]);
 
-  useEffect(()=>{
-    setYouLiked((prev)=> prev.filter((profile)=> likedIds.has(profile.id)));
-  }, [likedIds])
+  useEffect(() => {
+    setYouLiked((prev) => prev.filter((profile) => likedIds.has(profile.id)));
+  }, [likedIds]);
 
-  // Decide which profiles to display.
   const list = tab === 'liked-you' ? likedYou : youLiked;
 
   return (
     <div className="min-h-screen ">
       {/* MAIN */}
-      <main className="mx-auto w-full max-w-7xl px-6 py-8cd">
+      <main className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 text-[#655E75]">
         {/* TITLE + TABS */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           {/* TITLE */}
           <div>
-            <h1 className="text-2xl font-bold font-fraunces tracking-normal leading-[100%] text-[#1C1524] md:text-3xl text-[16px]">
+            <h1 className="text-2xl font-bold font-fraunces tracking-normal leading-[100%] text-[#1C1524] md:text-3xl">
               {tab === 'liked-you'
                 ? 'People who liked you'
                 : 'People you liked'}
@@ -98,7 +78,6 @@ const LikesPage = () => {
 
           {/* TABS */}
           <div className="flex w-full gap-2 rounded-full bg-[#EEF2F6] p-1 lg:w-fit">
-            {/* STATIC LIKED YOU */}
             <button
               onClick={() => setTab('liked-you')}
               className={`rounded-full px-4 w-1/2 py-2 font-[inter] text-sm font-semibold transition lg:w-fit ${
@@ -110,7 +89,6 @@ const LikesPage = () => {
               Liked You ({likedYou.length})
             </button>
 
-            {/* DYNAMIC YOU LIKED */}
             <button
               onClick={() => setTab('you-liked')}
               className={`rounded-full px-4 w-1/2 py-2 font-[inter] text-sm font-semibold transition lg:w-fit ${
@@ -126,7 +104,12 @@ const LikesPage = () => {
 
         {/* PROFILE AREA */}
         <div className="mt-8  ">
-          {list.length === 0 ? (
+          {isLoading ? (
+            /* LOADING STATE */
+            <div className="min-h-96 rounded-2xl border border-dashed border-gray-300  flex flex-col items-center justify-center p-10 text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+            </div>
+          ) : list.length === 0 ? (
             /* EMPTY STATE */
             <div className="min-h-96 rounded-2xl border border-dashed border-gray-300  flex flex-col items-center justify-center p-10 text-center">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-theme ">
@@ -140,8 +123,11 @@ const LikesPage = () => {
               <p className="mt-4 max-w-md text-sm text-[#655E75] font-geist tracking-normal leading-[100%]">
                 Head to Discover and like a few profiles that catch your eye.
               </p>
-              <button className="border border-[#655e7579] px-5 py-2 font-geist rounded-xl text-sm text-black font-semibold hover:bg-gray-100 mt-7" onClick={()=>navigate("/home")}>
-                Discover People 
+              <button
+                className="border border-[#655e7579] px-5 py-2 font-geist rounded-xl text-sm text-black font-semibold hover:bg-gray-100 mt-7"
+                onClick={() => navigate('/home')}
+              >
+                Discover People
               </button>
             </div>
           ) : (
