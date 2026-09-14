@@ -2,9 +2,11 @@ import {useState, useEffect} from "react"
 import type { DiscoverProfile } from "../types";
 import { getWhoLikedMe } from "../services/authApi";
 import { useAuth } from "../context/authContext/useAuth";
+import { useNavigate } from "react-router-dom";
 
 
 export const WhoLikedYou =()=>{
+    const navigate = useNavigate()
     const {user} = useAuth()
     const [likedYou, setLikedYou] = useState<DiscoverProfile[]>([])
     useEffect(()=>{
@@ -32,7 +34,8 @@ export const WhoLikedYou =()=>{
             <h2 className="font-fraunces font-semibold font-600 text-[16px] text-black">
               Who liked you
             </h2>
-            <button className="font-geist text-[#7C3AED] font-semibold text-[12px] font-600 cursor-pointer hover:border hover:border-gray-300 p-2 rounded-lg">
+            <button className="font-geist text-[#7C3AED] font-semibold text-[12px] font-600 cursor-pointer hover:border hover:border-gray-300 p-2 rounded-lg"
+            onClick={()=> navigate('/likes')}>
               See All
             </button>
           </div>
@@ -59,7 +62,8 @@ export const WhoLikedYou =()=>{
               </div>
 
               <div>
-                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-semibold text-black text-[12px] font-600">
+                <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-semibold text-black text-[12px] font-600 hover:bg-gray-100" 
+                onClick={()=> navigate(`/profile/${profile.id}`)}>
                   View
                 </button>
               </div>

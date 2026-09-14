@@ -59,7 +59,7 @@ const Matches = () => {
         </div>
 
         {/* Matches grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 w-full max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4 w-full max-w-7xl mx-auto ">
           {/* Loading state */}
           {loading ? (
             <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed my-2 rounded-2xl min-h-96 space-y-4 p-5 sm:p-10 md:p-16 lg:p-20 w-full max-w-7xl mx-auto">
@@ -101,16 +101,20 @@ const Matches = () => {
             matches.map((profile: DiscoverProfile) => (
               <div
                 key={profile.id}
-                className="bg-white rounded-[24px] overflow-hidden border border-[#EBEAED] shadow-sm flex flex-col w-full"
+                className="group relative overflow-hidden rounded-2xl border border-stroke-primary text-sm shadow-sm transition-all duration-300 hover:shadow-lg"
               >
                 {/* Profile image */}
-                <div className="w-full h-[260px] sm:h-[280px] md:h-[300px] lg:h-[320px] xl:h-[340px] overflow-hidden">
-                  <img
-                    src={profile.profilePicture ?? ""}
-                    alt={profile.fullName}
-                    className="w-full h-full object-cover block"
-                  />
-                </div>
+                <div className="flex h-80 w-full items-center justify-center overflow-hidden bg-gray-100">
+              <img
+                src={profile.profilePicture || ''}
+                alt={profile.fullName}
+                className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+                  profile.profilePicture
+                    ? ''
+                    : 'size-32 w-auto h-auto object-contain'
+                }`}
+              />
+            </div>
 
                 {/* Profile content */}
                 <div className="p-4 sm:p-5 lg:p-6 flex flex-col gap-3">

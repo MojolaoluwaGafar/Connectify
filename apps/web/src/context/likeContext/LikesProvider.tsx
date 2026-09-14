@@ -16,7 +16,8 @@ function LikesProvider({ children }: { children: ReactNode }) {
       return;
     }
     const liked = await api.getLikedByMe(user.id);
-    setLikedIds(new Set(liked.map((p) => p.id)));
+     console.log("LIKED PROFILES FROM BACKEND:", liked);
+    setLikedIds(new Set(liked.map((p) => p.userId)));
   }
 
   // Runs whenever the logged-in user changes (login, logout, session
@@ -55,6 +56,8 @@ function LikesProvider({ children }: { children: ReactNode }) {
     if (likedIds.has(profile.id)) {
       await api.unlikeUser(user.id, profile.userId);
       console.log("PROFILE BEING UNLIKED:", profile);
+      console.log("CURRENT USER:", user.id);
+     
       setLikedIds((prev) => {
         const next = new Set(prev);
         next.delete(profile.id);
