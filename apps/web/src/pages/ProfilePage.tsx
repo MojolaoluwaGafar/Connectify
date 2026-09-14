@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { ArrowLeft, MapPin, Heart, MessageCircle } from "lucide-react";
 
-import type { DiscoverProfile } from '../types/index';
-import * as api from '../services/authApi';
+import type { DiscoverProfile } from "../types/index";
+import * as api from "../services/authApi";
 
-import { useAuthGate } from '../context/authContext/useAuthGate';
-import Chip from '../components/ui/Chip';
-import Button from '../components/ui/Button';
-import ProfileCard from '../components/ui/ProfileCard';
-import { useAuth } from '../context/authContext/useAuth';
-import { useLikes } from '../context/likeContext/useLikes';
+import { useAuthGate } from "../context/authContext/useAuthGate";
+import Chip from "../components/ui/Chip";
+import Button from "../components/ui/Button";
+import ProfileCard from "../components/ui/ProfileCard";
+import { useAuth } from "../context/authContext/useAuth";
+import { useLikes } from "../context/likeContext/useLikes";
 
 export default function ViewProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -34,10 +34,10 @@ export default function ViewProfilePage() {
 
   useEffect(() => {
     if (!id) return;
-    setLoading(true)
+    setLoading(true);
     api.getProfileById(id).then(async (profile) => {
       setTarget(profile);
-setLoading(false)
+      setLoading(false);
       if (profile) {
         const res = await api.getDiscoverProfiles({
           excludeUserId: user?.id,
@@ -65,14 +65,14 @@ setLoading(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [likedIds]);
 
-   if (loading)
-     return (
-       <div className="flex h-screen w-screen items-center justify-center">
-         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
-       </div>
-     );
+  if (loading)
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+      </div>
+    );
 
-  if (!target && !loading ) {
+  if (!target && !loading) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <p className="font-display text-xl font-semibold text-ink-900">
@@ -90,8 +90,7 @@ setLoading(false)
   }
   if (!target) return null;
 
-  
-  const isLiked = likedIds.has(target?.id || '') ?? 'false';
+  const isLiked = likedIds.has(target?.id || "") ?? "false";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -109,7 +108,7 @@ setLoading(false)
         {/* Profile image */}
         <div className="overflow-hidden rounded-3xl border border-stroke-primary shadow-sm">
           <img
-            src={target?.profilePicture ?? ''}
+            src={target?.profilePicture ?? ""}
             alt={target?.fullName}
             className="aspect-4/5 w-full object-cover"
           />
@@ -123,8 +122,8 @@ setLoading(false)
 
           <h1 className="font-display text-3xl font-semibold text-ink-900 sm:text-4xl">
             {target?.fullName}
-            {target?.age ? `, ${target.age}` : ''}
-          </h1> 
+            {target?.age ? `, ${target.age}` : ""}
+          </h1>
 
           <p className="mt-2 flex items-center gap-1.5 text-ink-500">
             <MapPin size={15} />
@@ -173,18 +172,18 @@ setLoading(false)
           {/* Actions */}
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button
-              variant={isLiked ? 'secondary' : 'primary'}
+              variant={isLiked ? "secondary" : "primary"}
               icon={
-                <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+                <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
               }
               className={
                 isLiked
-                  ? 'bg-theme-shade/20! text-theme!'
-                  : 'bg-theme! hover:bg-theme-shade!'
+                  ? "bg-theme-shade/20! text-theme!"
+                  : "bg-theme! hover:bg-theme-shade!"
               }
               onClick={() => requireAuth(() => toggleLike(target))}
             >
-              {isLiked ? 'Liked' : 'Like profile'}
+              {isLiked ? "Liked" : "Like profile"}
             </Button>
 
             {canMessage ? (
@@ -193,7 +192,7 @@ setLoading(false)
                 icon={<MessageCircle size={16} />}
                 className="border-stroke-primary! text-theme! hover:bg-theme-shade/20!"
                 onClick={() =>
-                  navigate('/messages', {
+                  navigate("/messages", {
                     state: {
                       openProfileId: target?.id,
                     },
@@ -240,8 +239,9 @@ setLoading(false)
           </div>
         </div>
       )}
-    </div>)}
-
+    </div>
+  );
+}
 
 // import { useEffect, useState } from 'react';
 // import { useNavigate, useParams, Link } from 'react-router-dom';
