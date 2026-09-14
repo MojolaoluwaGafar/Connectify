@@ -1,8 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary'
 import dotenv from 'dotenv'
-import multer from 'multer'
-import { CloudinaryStorage } from 'multer-storage-cloudinary'
-
 import { env } from './env.js'
 
 dotenv.config()
@@ -13,18 +10,10 @@ cloudinary.config({
   api_secret: env.CLOUDINARY_API_SECRET,
 })
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => {
-    let folder = "Connectify/uploads";
-    let resourceType = "auto";
-    return {
-      folder,
-      resource_type: resourceType,
-    };
-  },
-});
+export const profileMediaUploadOptions = {
+  folder: 'Connectify/profiles',
+  resource_type: 'image' as const,
+}
 
-export const upload = multer({ storage });
-export default cloudinary;
+export default cloudinary
 

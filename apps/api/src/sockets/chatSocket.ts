@@ -2,12 +2,10 @@ import { type Server, type Socket } from 'socket.io'
 
 type ConversationEvent = {
   conversationId: string
-  userId: number
 }
 
 type MessagePayload = {
   conversationId: string
-  senderId: number
   content: string
   createdAt?: string
   id?: string
@@ -33,7 +31,8 @@ export function registerChatHandlers(socket: Socket, io: Server) {
 
   socket.on(
    'typing_start',
-   ({ conversationId, userId }: ConversationEvent) => {
+   ({ conversationId }: ConversationEvent) => {
+     const userId = socket.data.userId as string | undefined
      if (!conversationId || !userId) return
 
      socket.to(conversationId).emit('user_typing', { conversationId, userId })
@@ -43,7 +42,8 @@ export function registerChatHandlers(socket: Socket, io: Server) {
 
   socket.on(
    'typing_stop',
-   ({ conversationId, userId }: ConversationEvent) => {
+   ({ conversationId }: ConversationEvent) => {
+     const userId = socket.data.userId as string | undefined
      if (!conversationId || !userId) return
 
      socket.to(conversationId).emit('user_stop_typing', { conversationId, userId })
@@ -52,7 +52,8 @@ export function registerChatHandlers(socket: Socket, io: Server) {
   )
 
   socket.on('send_message', async (data: MessagePayload) => {
-   const { conversationId, senderId, content } = data
+    const { conversationId, content } = data
+    const senderId = socket.data.userId as string | undefined
 
    if (!conversationId || !senderId || !content) return
 
@@ -68,7 +69,8 @@ export function registerChatHandlers(socket: Socket, io: Server) {
    io.to(conversationId).emit('new_message', newMessage)
   })
 
-  socket.on('mark_read', async ({ conversationId, userId }: ConversationEvent) => {
+  socket.on('mark_read', async ({ conversationId }: ConversationEvent) => {
+   const userId = socket.data.userId as string | undefined
    if (!conversationId || !userId) return
 
    io.to(conversationId).emit('message_read', { conversationId, userId })

@@ -5,6 +5,8 @@ import type { DiscoverProfile } from "../types";
 
 import { useNavigate } from "react-router-dom";
 import { useLikes } from "../context/likeContext/useLikes";
+import Pagination from "../components/Pagination";
+const PAGESIZE = 8;
 
 const Matches = () => {
   const navigate = useNavigate();
@@ -21,6 +23,12 @@ const Matches = () => {
   // Loading state
   const [loading, setLoading] = useState(true);
 
+  // for pagination 
+  const [page, setPage] = useState(1)
+  const total = 20;
+
+  const totalPages = Math.ceil(total / PAGESIZE);
+
   // Get the user's matches when the user or liked profiles change
   useEffect(() => {
     if (!user) {
@@ -33,7 +41,7 @@ const Matches = () => {
     api
       .getMatches(user.id)
       .then((res) => {
-        setMatches(res.map((m) => m.profile));
+        setMatches(res);
       })
       .catch((error) => {
         console.error("Failed to get matches:", error);
@@ -44,30 +52,30 @@ const Matches = () => {
   }, [user, likedIds]);
 
   return (
-    <div className="p-4 md:px-20 md:py-10 flex flex-col gap-8 text-[#655E75]">
+    <div className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 text-[#655E75]">
       {/* Main matches container */}
       <div className="flex flex-col gap-6">
         {/* Page heading */}
-        <div className="w-full container mx-auto translate-x-4 md:-translate-x-3">
-          <h1 className="font-fraunces font-bold text-[28px] text-black">
+        <div className="w-full max-w-7xl mx-auto">
+          <h1 className="font-fraunces font-bold text-[24px] sm:text-[26px] md:text-[28px] text-black">
             Your matches
           </h1>
 
-          <p className="text-sm md:text-[15px] font-geist text-[#655E75]">
+          <p className="text-sm sm:text-[15px] font-geist text-[#655E75]">
             People who liked you back - start a conversation!
           </p>
         </div>
 
         {/* Matches grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-11/12 container mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 w-full max-w-7xl mx-auto">
           {/* Loading state */}
           {loading ? (
-            <div className="col-span-full flex h-screen w-full items-center justify-center">
+            <div className="col-span-full flex h-[60vh] w-full items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
             </div>
           ) : matches.length === 0 ? (
             /* Empty state */
-            <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed max-h-[55vh] my-4 md:my-2 rounded-2xl space-y-4 p-5 md:p-20">
+            <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed my-2 rounded-2xl space-y-4 p-5 sm:p-10 md:p-16 lg:p-20 w-full max-w-7xl mx-auto">
               {/* Empty state icon */}
               <img
                 src="/ai-spark-icon.svg"
@@ -81,7 +89,7 @@ const Matches = () => {
                   No matches yet
                 </h2>
 
-                <p className="font-geist text-[#655E75] mt-2">
+                <p className="font-geist text-[#655E75] mt-2 text-sm sm:text-base">
                   When you and someone else like each other, they'll show{" "}
                   <br className="hidden md:block" />
                   up here so you can start chatting.
@@ -101,10 +109,10 @@ const Matches = () => {
             matches.map((profile: DiscoverProfile) => (
               <div
                 key={profile.id}
-                className="bg-white rounded-[24px] overflow-hidden border border-[#EBEAED] shadow-sm flex flex-col md:-translate-x-[60px]"
+                className="bg-white rounded-[24px] overflow-hidden border border-[#EBEAED] shadow-sm flex flex-col w-full"
               >
                 {/* Profile image */}
-                <div className="w-full overflow-hidden">
+                <div className="w-full h-[260px] sm:h-[280px] md:h-[300px] lg:h-[320px] xl:h-[340px] overflow-hidden">
                   <img
                     src={profile.profilePicture ?? ""}
                     alt={profile.fullName}
@@ -113,13 +121,13 @@ const Matches = () => {
                 </div>
 
                 {/* Profile content */}
-                <div className="p-6 flex flex-col gap-3">
+                <div className="p-4 sm:p-5 lg:p-6 flex flex-col gap-3">
                   {/* Profile avatar and name */}
                   <div className="flex items-center gap-3">
                     <img
                       src={profile.profilePicture ?? ""}
                       alt={profile.fullName}
-                      className="rounded-full w-8 h-8"
+                      className="rounded-full w-8 h-8 object-cover"
                     />
 
                     <h2 className="font-fraunces font-semibold text-base text-black">
@@ -148,27 +156,36 @@ const Matches = () => {
                   </div>
 
                   {/* Profile action buttons */}
-                  <div className="grid grid-cols-2 gap-3 mt-4">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-4">
                     {/* Start chat button */}
                     <button
                       onClick={() => navigate("/messages")}
-                      className="bg-theme text-white font-medium font-geist py-2.5 px-4 rounded-lg text-sm hover:bg-[#6941C6] transition-colors"
+                      className="bg-theme text-white font-medium font-geist py-2.5 px-2 sm:px-4 rounded-lg text-sm hover:bg-[#6941C6] transition-colors"
                     >
                       Start Chat
                     </button>
 
                     {/* View profile button */}
                     <button
-                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors"
+                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-2 sm:px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors"
                       onClick={() => navigate(`/profile/${profile.id}`)}
                     >
                       View Profile
                     </button>
                   </div>
                 </div>
+                
               </div>
             ))
           )}
+        </div>
+        {/* pagination */}
+        <div className="flex justify-center mt-8">
+          <Pagination
+            page={page}
+            totalPages={Math.ceil(totalPages)}
+            onChange={setPage}
+          />
         </div>
       </div>
     </div>

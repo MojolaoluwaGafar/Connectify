@@ -1,8 +1,12 @@
 import mongoose from 'mongoose';
 import { profile, Profile } from '../../model/profile.js';
+import cloudinary, {
+  profileMediaUploadOptions,
+} from '../../config/Cloudinary.js';
+import type { ProfileInput } from './profiles.validation.js';
 
-export async function createProfile(userId: string, data: profile) {
-  console.log('Profile data:', data);
+export async function createProfile(userId: string, data: ProfileInput) {
+  const profilePicture = await uploadProfilePicture(data.profilePicture);
 
   const {
     fullName,
@@ -12,8 +16,6 @@ export async function createProfile(userId: string, data: profile) {
     about,
     age,
     location,
-    profilePicture,
-    locationCoords,
   } = data;
 
   const updatedProfile = await Profile.findOneAndUpdate(
@@ -28,7 +30,6 @@ export async function createProfile(userId: string, data: profile) {
       age,
       location,
       profilePicture,
-      locationCoords,
     },
     {
       new: true,
@@ -238,6 +239,20 @@ function formatProfile(item: Record<string, any>) {
     ...item,
     userId: String(item.userId),
     interest: item.interests ?? [],
-    isComplete: true,
+    isComplete: isProfileComplete(item),
+  };
+}
+
+async function uploadProfilePicture(profilePicture: string | null) {
+  if (!profilePicture || !profilePicture.startsWith('data:')) {
+    return profilePicture;
   }
+
+  const result = await cloudinary.uploader.upload(profilePicture, {
+    ...profileMediaUploadOptions,
+    use_filename: false,
+    unique_filename: true,
+  });
+
+  return result.secure_url;
 }

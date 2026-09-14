@@ -42,7 +42,7 @@ function Providers({ children }: { children: ReactNode }) {
       return;
     }
 
-    connectSocket(user.id);
+    connectSocket();
     console.log('user found');
 
     return () => {

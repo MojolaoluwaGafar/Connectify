@@ -34,10 +34,11 @@ export default function ViewProfilePage() {
 
   useEffect(() => {
     if (!id) return;
-    setLoading(true)
+    setLoading(true);
     api.getProfileById(id).then(async (profile) => {
       setTarget(profile);
-setLoading(false)
+
+      setLoading(false);
       if (profile) {
         const res = await api.getDiscoverProfiles({
           excludeUserId: user?.id,
@@ -65,14 +66,14 @@ setLoading(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [likedIds]);
 
-   if (loading)
-     return (
-       <div className="flex h-screen w-screen items-center justify-center">
-         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
-       </div>
-     );
+  if (loading)
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+      </div>
+    );
 
-  if (!target && !loading ) {
+  if (!target && !loading) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <p className="font-display text-xl font-semibold text-ink-900">
@@ -90,7 +91,6 @@ setLoading(false)
   }
   if (!target) return null;
 
-  
   const isLiked = likedIds.has(target?.id || '') ?? 'false';
 
   return (
@@ -124,7 +124,7 @@ setLoading(false)
           <h1 className="font-display text-3xl font-semibold text-ink-900 sm:text-4xl">
             {target?.fullName}
             {target?.age ? `, ${target.age}` : ''}
-          </h1> 
+          </h1>
 
           <p className="mt-2 flex items-center gap-1.5 text-ink-500">
             <MapPin size={15} />
@@ -240,8 +240,9 @@ setLoading(false)
           </div>
         </div>
       )}
-    </div>)}
-
+    </div>
+  );
+}
 
 // import { useEffect, useState } from 'react';
 // import { useNavigate, useParams, Link } from 'react-router-dom';

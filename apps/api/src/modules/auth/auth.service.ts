@@ -43,7 +43,7 @@ export async function registerUser(payload: unknown) {
 
   if (existingUser) {
     throw new AppError(409, "EMAIL_ALREADY_EXISTS", "Email already in use");
-  }
+  } 
 
   const hashedPassword = await bcrypt.hash(data.password, 12);
 
