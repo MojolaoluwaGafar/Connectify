@@ -34,7 +34,7 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
       try {
         // Retrieve conversation threads for active user ID from mock API
         const data = await getConversations(user.id);
-        setConversations(data);
+        setConversations(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Failed to load conversations:', error);
       } finally {

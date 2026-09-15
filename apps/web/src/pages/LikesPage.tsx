@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { DiscoverProfile } from '../types';
+// import type { DiscoverProfile } from '../types';
 
 import ProfileCard from '../components/discover/ProfileCard';
 import { useNavigate } from 'react-router-dom';
