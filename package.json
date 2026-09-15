@@ -33,6 +33,7 @@
     "google-auth-library": "^11.0.2",
     "react-hook-form": "^7.87.0",
     "react-router-dom": "^7.18.3",
-    "react-spinners": "^0.17.0"
+    "react-spinners": "^0.17.0",
+    "react-toastify": "^11.1.0"
   }
 }
