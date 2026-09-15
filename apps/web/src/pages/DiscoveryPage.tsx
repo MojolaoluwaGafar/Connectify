@@ -6,9 +6,10 @@ import EmptyProfile from '../components/EmptyProfile';
 import type { DiscoverProfile } from '../types';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
-import Icon from '../assets/search.svg';
 import { useAuth } from '../context/authContext/useAuth';
 import { useApiQuery } from '../hooks/useApiQuery';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 
 const PAGESIZE = 8;
 
@@ -85,21 +86,19 @@ const DiscoveryPage = () => {
             tab={tab}
             setPage={setPage}
           />
-          <div className="relative flex items-center gap-2 w-full">
-            <img
-              className="absolute top-3 left-3"
-              src={Icon}
-              alt="search icon"
+
+          <div className="border-solid  w-full lg:w-3/5 border-[#1c1524]/[0.0784] border rounded-3xl gap-2 flex items-center px-3 py-2.5 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-transparent mx-4 md:mx-0">
+            <FontAwesomeIcon
+              icon={faMagnifyingGlass}
+              className="text-gray-500"
             />
+
             <input
-              type="text"
-              name="search"
               value={searchValue}
-              onChange={(e) => {
-                setSearchValue(e.target.value);
-              }}
+              onChange={(e) => setSearchValue(e.target.value)}
+              type="text"
               placeholder="Search by name or interests..."
-              className="  mb-4 outline-0 border border-stroke-primary placeholder:text-text-primary rounded-[100px] font-giest py-1.5 px-9 w-full lg:w-3/5 leading-[100%] tracking-normal font-normal "
+              className="w-full text-sm outline-none focus:outline focus:ring-0"
             />
           </div>
 

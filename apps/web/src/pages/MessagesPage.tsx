@@ -14,7 +14,8 @@ const MessagesPage = () => {
       if (!user) return;
 
       try {
-        const data = await api.getConversations(user.id);
+        const data = await api.getConversations();
+        console.log('messages', data);
 
         const selectedUser = location.state?.selectedUser;
 

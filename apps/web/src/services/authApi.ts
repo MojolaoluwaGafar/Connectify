@@ -154,7 +154,7 @@ export async function getWhoLikedMe(
 }
 
 export async function getMatches(userId: string): Promise<DiscoverProfile[]> {
-  const { data } = await api.get("/api/v1/likes/matches", {
+  const { data } = await api.get('/api/v1/likes/matches', {
     params: { userId },
   });
 
@@ -178,7 +178,7 @@ export async function likeUser(
 
 export const likeProfile = async (profileId: string) => {
   return await api.put(`/api/v1/likes/profiles/${profileId}/like`);
-}
+};
 
 export async function unlikeUser(
   _userId: string,
@@ -188,20 +188,24 @@ export async function unlikeUser(
 }
 
 export async function getLikedByMe(userId: string): Promise<DiscoverProfile[]> {
-  const { data } = await api.get("/api/v1/likes/liked-by-me", {
+  const { data } = await api.get('/api/v1/likes/liked-by-me', {
     params: { userId },
   });
   return (data?.items ?? data?.data?.items ?? data ?? []) as DiscoverProfile[];
 }
 
-export async function getConversations(
-  userId: string,
-): Promise<Conversation[]> {
-  const { data } = await api.get('/api/v1/conversations', {
-    params: { userId },
-  });
-  return (data?.items ?? data?.data?.items ?? data ?? []) as Conversation[];
-}
+export const getConversations = async (): Promise<Conversation[]> => {
+  const { data } = await api.get('/api/v1/conversations');
+  return (data?.data as Conversation[]) ?? [];
+};
+// export async function getConversations(
+//   userId: string,
+// ): Promise<Conversation[]> {
+//   const { data } = await api.get('/api/v1/conversations', {
+//     params: { userId },
+//   });
+//   return (data?.items ?? data?.data?.items ?? data ?? []) as Conversation[];
+// }
 
 // export async function getMatches(userId: string): Promise<DiscoverProfile[]> {
 //   const { data } = await api.get("/api/v1/likes/matches", {
