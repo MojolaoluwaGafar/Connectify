@@ -1,41 +1,62 @@
 import type { Request, Response } from 'express'
 
 import * as likesService from './likes.service.js'
+import { LikeActionResultSchema } from '../../../../../packages/shared/src/api.js';
 
 export const likesController = {
   like: async (request: Request, response: Response) => {
-    const profileId = Array.isArray(request.params.profileId)
-      ? request.params.profileId[0] ?? ''
-      : request.params.profileId ?? ''
+    const result = Array.isArray(request.params.profileId)
+      ? (request.params.profileId[0] ?? "")
+      : (request.params.profileId ?? "");
 
-    await likesService.likeProfile(profileId, request.body)
-    response.status(501).json({
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Likes are scheduled for the next backend milestone.',
-        requestId: request.requestId,
-        details: {},
-      },
-    })
-  },
+      // temporal this was not stored in a like result variable so i added this 
+    const likeResult = await likesService.likeProfile(
+      request.user!.id,
+      result,
+    ); 
+
+    response.status(200).json({
+      message: "Profile liked successfully.",
+      status: "success",
+      likerId: request.user!.id,
+      likedUserId: result,
+ matched:likeResult.matched
+    });
+  }, //..
 
   unlike: async (request: Request, response: Response) => {
-    const profileId = Array.isArray(request.params.profileId)
-      ? request.params.profileId[0] ?? ''
-      : request.params.profileId ?? ''
+    const result = Array.isArray(request.params.profileId)
+      ? (request.params.profileId[0] ?? "")
+      : (request.params.profileId ?? "");
 
-    await likesService.unlikeProfile(profileId)
-    response.status(501).json({
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Removing likes is scheduled for the next backend milestone.',
-        requestId: request.requestId,
-        details: {},
-      },
+    await likesService.unlikeProfile(request.user!.id, result);
+    response.status(200).json({
+      message: "Profile unliked successfully.",
+      status: "success",
+      likerId: request.user!.id,
+      likedUserId: result,
+    });
+  },
+
+  likedByMe: async (request: Request, response: Response) => {
+    const result = await likesService.likedByMe(request.user!.id);
+
+    response.status(200).json({
+      items: result,
+    });
+  },
+
+  whoLikedMe: async(request:Request, response:Response)=>{
+    const result = await likesService.whoLikedMe(request.user!.id);
+    response.status(200).json({
+      items:result,
     })
   },
+  matches: async (request: Request, response: Response) => {
+  const result = await likesService.getMatches(request.user!.id);
 
-  likedByMe: async (_request: Request, response: Response) => {
-    response.status(200).json({ items: [] })
-  },
-}
+  response.status(200).json({
+    items: result,
+  });
+},
+};

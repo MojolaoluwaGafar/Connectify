@@ -1,25 +1,25 @@
-﻿import axios, { type AxiosError } from 'axios';
+﻿import axios, { type AxiosError } from "axios";
 
-import { clearAuth, getAuthToken } from '../utils/authToken';
-import type { ICreateProfile } from '../types';
+import { clearAuth, getAuthToken } from "../utils/authToken";
+import type { ICreateProfile } from "../types";
 
 const redirectToLogin = () => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   clearAuth();
-  window.location.replace('/login');
+  window.location.replace("/login");
 };
 
 const apiBaseUrl =
   import.meta.env.VITE_BASE_URL ??
   import.meta.env.VITE_API_URL ??
-  'http://localhost:3001';
+  "http://localhost:3001";
 
 const api = axios.create({
   baseURL: apiBaseUrl,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -27,7 +27,7 @@ const PublicApi = axios.create({
   baseURL: apiBaseUrl,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -59,10 +59,18 @@ export { PublicApi };
 export function isAxiosError(error: unknown): error is AxiosError {
   return (error as AxiosError).isAxiosError === true;
 }
-export const getUser = async ()=>{
-  return await api.get("/api/v1/auth/me") 
-}
+export const getUser = async () => {
+  return await api.get("/api/v1/auth/me");
+};
 
-export const  createProfile = async (data: ICreateProfile)=>{
- return await api.post("/api/v1/profiles/createProfile", data)
+export const createProfile = async (data: ICreateProfile) => {
+  return await api.post("/api/v1/profiles/createProfile", data);
+};
+
+export const getLikedByMe = async () => {
+  return await api.get("/api/v1/likes/liked-by-me");
+};
+
+export const likeProfile = async (profileId: string) => {
+  return await api.put(`/api/v1/likes/profiles/${profileId}/like`);
 }

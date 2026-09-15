@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { GoogleLogin } from '@react-oauth/google';
 
 import {
   loginSchema,
   type LoginInput,
 } from '../../../../../packages/shared/src/schemas/auth';
+
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import Button from '../../components/ui/Button';
@@ -18,14 +20,18 @@ import PasswordInput from '../../components/auth/PasswordInput';
 
 const LoginPage = () => {
   const location = useLocation();
-  const { login } = useAuth();
   const navigate = useNavigate();
+
+  const { login, googleLogin } = useAuth();
 
   const [loginError, setLoginError] = useState('');
 
+  const googleLoginRef = useRef<HTMLDivElement>(null);
+
   const showVerifiedMessage = location.state?.verified === true;
 
-  const showPasswordResetMessage = location.state?.passwordReset === true;
+  const showPasswordResetMessage =
+    location.state?.passwordReset === true;
 
   const {
     register,
@@ -53,6 +59,14 @@ const LoginPage = () => {
           : 'Incorrect email or password.',
       );
     }
+  };
+
+  const handleGoogleLogin = () => {
+    const googleButton = googleLoginRef.current?.querySelector(
+      'div[role="button"]',
+    ) as HTMLElement | null;
+
+    googleButton?.click();
   };
 
   return (
@@ -162,13 +176,70 @@ const LoginPage = () => {
 
           {/* Google button */}
 
-          <button
-            type="button"
-            className="flex w-full h-12 items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-[15px] font-semibold text-gray-900 transition hover:bg-gray-50"
-          >
-            <img src="../../../public/material-icon-theme_google.svg" alt="" />
-            <span>Continue with Google</span>
-          </button>
+          <div className="relative h-12 w-full">
+
+            {/* Your custom Google button */}
+
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="absolute inset-0 z-0 flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-[15px] font-semibold text-gray-900 transition hover:bg-gray-50"
+            >
+              <img
+                src="/material-icon-theme_google.svg"
+                alt="Google"
+                className="h-5 w-5"
+              />
+
+              <span>Continue with Google</span>
+            </button>
+
+            {/* Invisible Google Login component */}
+
+            <div
+              ref={googleLoginRef}
+              className="absolute inset-0 z-10 h-12 w-full opacity-0"
+            >
+              <GoogleLogin
+                width="100%"
+                onSuccess={async (credentialResponse) => {
+                  try {
+                    setLoginError('');
+
+                    if (!credentialResponse.credential) {
+                      throw new Error(
+                        'Google did not return an ID token.',
+                      );
+                    }
+
+                    await googleLogin(
+                      credentialResponse.credential,
+                    );
+
+                    navigate('/home', {
+                      replace: true,
+                    });
+                  } catch (error) {
+                    console.error(
+                      'Google login failed:',
+                      error,
+                    );
+
+                    setLoginError(
+                      error instanceof Error
+                        ? error.message
+                        : 'Google login failed. Please try again.',
+                    );
+                  }
+                }}
+                onError={() => {
+                  setLoginError(
+                    'Google login failed. Please try again.',
+                  );
+                }}
+              />
+            </div>
+          </div>
 
           {/* Sign up */}
 

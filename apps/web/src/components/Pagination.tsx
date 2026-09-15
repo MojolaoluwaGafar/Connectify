@@ -28,18 +28,20 @@ export default function Pagination({
       >
         <ChevronLeft size={16} />
       </button>
+
       {pages.map((p) => (
         <button
           key={p}
           onClick={() => onChange(p)}
           aria-current={p === page ? 'page' : undefined}
-          className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${
+          className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors border border-theme/10 ${
             p === page ? 'bg-theme text-white' : 'hover:bg-theme/10'
           }`}
         >
           {p}
         </button>
       ))}
+
       <button
         onClick={() => onChange(Math.min(totalPages, page + 1))}
         disabled={page === totalPages}

@@ -18,7 +18,7 @@ export default function ProfileCard({
 }: ProfileCardProps) {
   const navigate = useNavigate();
 
- return (
+  return (
     <div className="group flex h-[420px] flex-col overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* Profile image */}
       <button
@@ -27,17 +27,16 @@ export default function ProfileCard({
         aria-label={`View ${profile.fullName}'s profile`}
       >
         <div
-          className={`relative w-full h-48 overflow-hidden bg-theme-shade/20 ${
+          className={`relative w-full h-62 overflow-hidden bg-theme-shade/20 ${
             variant === 'compact' ? 'aspect-4/5' : 'aspect-4/5'
           }`}
         >
           <img
             src={profile.profilePicture || '/profile-picture.png'}
             alt={profile.fullName}
-             className={`w-full h-full object-cover ${profile.profilePicture ? '' : 'size-32 w-auto h-auto object-contain'}`}
+            className={`w-full h-full object-cover ${profile.profilePicture ? '' : 'size-32 w-auto h-auto object-contain'}`}
             loading="lazy"
           />
-     
 
           {/* Liked badge */}
           {isLiked && (

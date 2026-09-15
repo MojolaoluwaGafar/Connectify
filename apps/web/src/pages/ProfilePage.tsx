@@ -38,6 +38,8 @@ export default function ViewProfilePage() {
     api.getProfileById(id).then(async (profile) => {
       setTarget(profile);
       setLoading(false);
+
+      setLoading(false);
       if (profile) {
         const res = await api.getDiscoverProfiles({
           excludeUserId: user?.id,
@@ -90,7 +92,7 @@ export default function ViewProfilePage() {
   }
   if (!target) return null;
 
-  const isLiked = likedIds.has(target?.id || "") ?? "false";
+  const isLiked = likedIds.has(target.id);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
