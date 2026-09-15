@@ -10,6 +10,7 @@ import { useAuth } from '../context/authContext/useAuth';
 import { useApiQuery } from '../hooks/useApiQuery';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { WhoLikedYou } from '../components/LikedYou';
 
 const PAGESIZE = 8;
 
