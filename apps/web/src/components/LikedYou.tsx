@@ -26,6 +26,10 @@ export const WhoLikedYou =()=>{
         fetchWhoLikedMe()
     }, [user])
 
+    if (likedYou.length === 0) {
+        return null;
+    }
+
     return (
       <div>
         {/* starts here  */}
