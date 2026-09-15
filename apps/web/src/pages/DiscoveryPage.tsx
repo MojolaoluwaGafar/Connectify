@@ -81,7 +81,7 @@ const DiscoveryPage = () => {
       {tab === "near-me" && discoveryError && (
         <p className="mt-2 text-sm text-red-600">{discoveryError}</p>
       )}
-      <main className="flex lg:flex-row flex-col gap-10 lg:mt-5 w-full">
+      <main className="flex lg:flex-row flex-col gap-10 lg:mt-5 w-full justify-between">
         <div className=" space-y-4">
           <FilterProfiles
             className="lg:hidden"
@@ -90,7 +90,7 @@ const DiscoveryPage = () => {
             setPage={setPage}
           />
 
-          <div className="border-solid  w-full lg:w-3/5 border-[#1c1524]/[0.0784] border rounded-3xl gap-2 flex items-center px-3 py-2.5 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-transparent mx-4 md:mx-0">
+          <div className="border-solid w-full lg:w-3/5 border-[#1c1524]/[0.0784] border rounded-3xl gap-2 flex items-center px-3 py-2.5 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-transparent lg:mx-4 md:mx-0">
             <FontAwesomeIcon
               icon={faMagnifyingGlass}
               className="text-gray-500"
@@ -110,7 +110,9 @@ const DiscoveryPage = () => {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
             </div>
           ) : profiles.length > 0 ? (
-            <ProfileCard profiles={profiles} />
+            <div className='w-full'>
+              <ProfileCard profiles={profiles} />
+            </div>
           ) : (
             <EmptyProfile />
           )}

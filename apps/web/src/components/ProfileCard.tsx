@@ -13,7 +13,7 @@ export const ProfileCard = ({ profiles }: Props) => {
   const { likedIds, toggleLike } = useLikes();
 
   return (
-    <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4 ">
+    <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4">
       {profiles.map((profile, i) => {
         const isLiked = likedIds.has(profile.id);
 
