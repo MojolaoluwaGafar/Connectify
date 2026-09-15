@@ -1,13 +1,13 @@
-import * as api from '../services/authApi';
 import { ProfileCard } from '../components/ProfileCard';
 import FilterProfiles from '../components/FilterProfiles';
 import EmptyProfile from '../components/EmptyProfile';
-import { useEffect, useState } from 'react';
-import type { DiscoverProfile } from '../types';
+import { useState } from 'react';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../assets/search.svg';
 import { useAuth } from '../context/authContext/useAuth';
+import { useProfile } from '../hooks/Profile/useProfile';
+
 const PAGESIZE = 8;
 
 const DiscoveryPage = () => {
@@ -17,50 +17,20 @@ const DiscoveryPage = () => {
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
 
-  const [profiles, setProfiles] = useState<DiscoverProfile[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [discoveryError, setDiscoveryError] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const getProfiles = async () => {
-      try {
-        setIsLoading(true);
-        setDiscoveryError('');
-
-        const result = await api.getDiscoverProfiles({
-          search: searchValue,
-          tab,
-          page,
-          pageSize: PAGESIZE,
-          excludeUserId: user?.id,
-        });
-
-        if (cancelled) return;
-        setProfiles(result.items);
-        setTotal(result.total);
-      } catch (error) {
-        if (cancelled) return;
-        setProfiles([]);
-        setTotal(0);
-        setDiscoveryError(
-          tab === 'near-me'
-            ? 'Set your location in your profile to see nearby matches.'
-            : 'Could not load profiles. Please try again.',
-        );
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    };
-
-    getProfiles();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [searchValue, tab, page, user?.id]);
+  const { data, loading: isLoading, error: queryError } = useProfile({
+    search: searchValue,
+    tab,
+    page,
+    pageSize: PAGESIZE,
+    excludeUserId: user?.id,
+  });
+  const profiles = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const discoveryError = queryError
+    ? tab === 'near-me'
+      ? 'Set your location in your profile to see nearby matches.'
+      : 'Could not load profiles. Please try again.'
+    : '';
 
   const totalPages = Math.ceil(total / PAGESIZE);
   const showCompleteProfileCard =
@@ -70,7 +40,8 @@ const DiscoveryPage = () => {
     !profile.occupation?.trim();
 
   return (
-    <div className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 lg:gap-2 text-[#655E75]">
+    <div className='container flex items-center mx-auto'>
+      <div className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 lg:gap-2 text-[#655E75]">
       <h1 className="font-fraunces font-bold text-[24px] sm:text-[26px] md:text-[28px] text-black">
         Discover People
       </h1>
@@ -133,7 +104,7 @@ const DiscoveryPage = () => {
               </p>
             </div>
 
-            <div className="flex gap-3 items-center font-geist">
+            {/* <div className="flex gap-3 items-center font-geist">
               <img className="size-10" src="/Avatar.png"></img>
               <div className="grow">
                 <h2 className="text-black text-md font-semibold font-600 text-[14px]">
@@ -178,7 +149,9 @@ const DiscoveryPage = () => {
                   View
                 </button>
               </div>
-            </div>
+            </div> */}
+
+            
           </div>
 
           {showCompleteProfileCard && (
@@ -203,6 +176,7 @@ const DiscoveryPage = () => {
           )}
         </div>
       </main>
+    </div>
     </div>
   );
 };

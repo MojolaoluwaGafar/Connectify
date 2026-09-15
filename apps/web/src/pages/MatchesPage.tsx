@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import * as api from '../services/authApi';
+import { getMatches } from '../API/Services/Matches/matches';
 import { useAuth } from '../context/authContext/useAuth';
 import type { DiscoverProfile } from '../types';
 
@@ -38,8 +38,7 @@ const Matches = () => {
 
     setLoading(true);
 
-    api
-      .getMatches(user.id)
+    getMatches(user.id)
       .then((res) => {
         setMatches(res);
       })
@@ -112,9 +111,9 @@ const Matches = () => {
                 className="bg-white rounded-[24px] overflow-hidden border border-[#EBEAED] shadow-sm flex flex-col w-full"
               >
                 {/* Profile image */}
-                <div className="w-full h-[260px] sm:h-[280px] md:h-[300px] lg:h-[320px] xl:h-[340px] overflow-hidden">
+                <div className="w-full h-[260px] sm:h-[280px] md:h-[300px] lg:h-[320px] xl:h-[340px] overflow-hidden bg-gray-100">
                   <img
-                    src={profile.profilePicture ?? ''}
+                    src={profile.profilePicture ?? '/profile-picture.png'}
                     alt={profile.fullName}
                     className="w-full h-full object-cover block"
                   />
@@ -125,7 +124,7 @@ const Matches = () => {
                   {/* Profile avatar and name */}
                   <div className="flex items-center gap-3">
                     <img
-                      src={profile.profilePicture ?? ''}
+                      src={profile.profilePicture ?? '/profile-picture.png'}
                       alt={profile.fullName}
                       className="rounded-full w-8 h-8 object-cover"
                     />
@@ -179,13 +178,13 @@ const Matches = () => {
           )}
         </div>
         {/* pagination */}
-        {/* <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-8">
           <Pagination
             page={page}
             totalPages={Math.ceil(totalPages)}
             onChange={setPage}
           />
-        </div> */}
+        </div>
       </div>
     </div>
   );

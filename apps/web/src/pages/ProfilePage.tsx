@@ -3,7 +3,11 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
 
 import type { DiscoverProfile } from '../types/index';
-import * as api from '../services/authApi';
+import { canMessage as checkCanMessage } from '../API/Services/Messages/messages';
+import {
+  getDiscoverProfiles,
+  getProfileById,
+} from '../API/Services/Profile/Profile';
 
 import { useAuthGate } from '../context/authContext/useAuthGate';
 import Chip from '../components/ui/Chip';
@@ -34,13 +38,14 @@ export default function ViewProfilePage() {
 
   useEffect(() => {
     if (!id) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    api.getProfileById(id).then(async (profile) => {
+    getProfileById(id).then(async (profile) => {
       setTarget(profile);
 
       setLoading(false);
       if (profile) {
-        const res = await api.getDiscoverProfiles({
+        const res = await getDiscoverProfiles({
           excludeUserId: user?.id,
           pageSize: 3,
         });
@@ -53,7 +58,7 @@ export default function ViewProfilePage() {
         );
 
         if (user) {
-          setCanMessage(await api.canMessage(user.id, profile.id));
+          setCanMessage(await checkCanMessage(user.id, profile.id));
         }
       }
     });
@@ -61,7 +66,7 @@ export default function ViewProfilePage() {
 
   useEffect(() => {
     if (user && target) {
-      api.canMessage(user.id, target.id).then(setCanMessage);
+      checkCanMessage(user.id, target.id).then(setCanMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [likedIds]);
@@ -107,9 +112,9 @@ export default function ViewProfilePage() {
       {/* Main profile */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Profile image */}
-        <div className="overflow-hidden rounded-3xl border border-stroke-primary shadow-sm">
+        <div className="overflow-hidden rounded-3xl border border-stroke-primary shadow-sm bg-gray-100">
           <img
-            src={target?.profilePicture ?? ''}
+            src={target?.profilePicture ?? '/profile-picture.png'}
             alt={target?.fullName}
             className="aspect-4/5 w-full object-cover"
           />

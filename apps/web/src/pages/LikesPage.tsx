@@ -5,7 +5,7 @@ import ProfileCard from '../components/discover/ProfileCard';
 import { useNavigate } from 'react-router-dom';
 import { useLikes } from '../context/likeContext/useLikes';
 
-import { getLikedByMe, getWhoLikedMe } from '../services/authApi';
+import { getLikedByMe, getWhoLikedMe } from '../API/Services/Likes/likes';
 
 import { useAuth } from '../context/authContext/useAuth';
 
@@ -50,13 +50,15 @@ const LikesPage = () => {
   }, [user]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setYouLiked((prev) => prev.filter((profile) => likedIds.has(profile.id)));
   }, [likedIds]);
 
   const list = tab === 'liked-you' ? likedYou : youLiked;
 
   return (
-    <div className="min-h-screen ">
+    <div className='container flex items-center mx-auto'>
+      <div className="min-h-screen ">
       {/* MAIN */}
       <main className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 text-[#655E75]">
         {/* TITLE + TABS */}
@@ -140,6 +142,7 @@ const LikesPage = () => {
           )}
         </div>
       </main>
+    </div>
     </div>
   );
 };

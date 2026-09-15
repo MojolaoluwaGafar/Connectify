@@ -3,7 +3,7 @@ import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '../../context/authContext/useAuth';
-import * as api from '../../services/authApi';
+import { getConversations } from '../../API/Services/Messages/messages';
 
 // TypeScript interface for component props
 interface ConversationListProps {
@@ -33,7 +33,7 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
 
       try {
         // Retrieve conversation threads for active user ID from mock API
-        const data = await api.getConversations(user.id);
+        const data = await getConversations(user.id);
         setConversations(data);
       } catch (error) {
         console.error('Failed to load conversations:', error);

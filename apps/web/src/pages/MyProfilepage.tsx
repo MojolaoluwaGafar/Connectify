@@ -10,7 +10,8 @@ import {
   Compass,
 } from 'lucide-react';
 
-import * as api from '../services/authApi';
+import { getWhoLikedMe } from '../API/Services/Likes/likes';
+import { getMatches } from '../API/Services/Matches/matches';
 import { useAuth } from '../context/authContext/useAuth';
 
 import Avatar from '../components/ui/Avatar';
@@ -37,7 +38,7 @@ export default function MyProfilePage() {
   useEffect(() => {
     if (!user) return;
 
-    Promise.all([api.getWhoLikedMe(user.id), api.getMatches(user.id)]).then(
+    Promise.all([getWhoLikedMe(user.id), getMatches(user.id)]).then(
       ([likedYou, matches]) => {
         setStats({
           likedYou: likedYou.length,
