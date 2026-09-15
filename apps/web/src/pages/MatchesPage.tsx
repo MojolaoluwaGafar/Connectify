@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import * as api from '../services/authApi';
+import { getMatches } from '../API/Services/Matches/matches';
 import { useAuth } from '../context/authContext/useAuth';
 import type { DiscoverProfile } from '../types';
 
@@ -24,6 +24,7 @@ const Matches = () => {
   // Get the user's matches when the user or liked profiles change
   useEffect(() => {
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
@@ -168,14 +169,6 @@ const Matches = () => {
               </div>
             ))
           )}
-        </div>
-        {/* pagination */}
-        <div className="flex justify-center mt-8">
-          <Pagination
-            page={page}
-            totalPages={Math.ceil(totalPages)}
-            onChange={setPage}
-          />
         </div>
       </div>
     </div>

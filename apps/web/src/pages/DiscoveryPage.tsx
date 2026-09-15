@@ -1,4 +1,4 @@
-import * as api from "../services/authApi";
+import * as api from "../API/Services/Profile/Profile";
 import { ProfileCard } from "../components/ProfileCard";
 import FilterProfiles from "../components/FilterProfiles";
 import EmptyProfile from "../components/EmptyProfile";
@@ -67,16 +67,18 @@ const DiscoveryPage = () => {
     !profile.occupation?.trim();
 
   return (
-    <div className='container flex items-center mx-auto'>
+    <div className='container flex items-center mx-auto w-full'>
       <div className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 lg:gap-2 text-[#655E75]">
-      <h1 className="font-fraunces font-bold text-[24px] sm:text-[26px] md:text-[28px] text-black">
+      <div>
+        <h1 className="font-fraunces font-bold text-[24px] sm:text-[26px] md:text-[28px] text-black">
         Discover People
       </h1>
       <p>Find people who share your interests</p>
+      </div>
       {tab === "near-me" && discoveryError && (
         <p className="mt-2 text-sm text-red-600">{discoveryError}</p>
       )}
-      <main className="flex lg:flex-row flex-col gap-10 mt-5 w-full">
+      <main className="flex lg:flex-row flex-col gap-10 lg:mt-5 w-full">
         <div className="lg:w-3/4 space-y-4">
           <FilterProfiles
             className="lg:hidden"

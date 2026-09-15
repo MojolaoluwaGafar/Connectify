@@ -19,9 +19,8 @@ function LikesProvider({ children }: { children: ReactNode }) {
       setLikedIds(new Set());
       return;
     }
-    const liked = await api.getLikedByMe(user.id);
-     console.log("LIKED PROFILES FROM BACKEND:", liked);
-    setLikedIds(new Set(liked.map((p) => p.userId)));
+    const liked = await getLikedByMe(user.id);
+    setLikedIds(new Set(liked.map((profile) => profile.id)));
   }
 
   // Runs whenever the logged-in user changes (login, logout, session
