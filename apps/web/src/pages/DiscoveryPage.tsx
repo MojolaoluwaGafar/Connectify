@@ -112,14 +112,16 @@ const DiscoveryPage = () => {
           )}
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
-        <div className="space-y-9 lg:w-1/4">
+        <div className="space-y-9">
           <FilterProfiles
             className="hidden lg:flex"
             setTab={setTab}
             tab={tab}
             setPage={setPage}
           />
-          <WhoLikedYou />
+         <div className="lg:w-3/4">
+           <WhoLikedYou />
+         </div>
           {showCompleteProfileCard && (
             <div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl">
               <div className="p-3 bg-theme-shade rounded-full size-fit flex items-center justify-center">
