@@ -50,7 +50,7 @@ const LikesPage = () => {
   }, [user]);
 
   useEffect(() => {
-    setYouLiked((prev) => prev.filter((profile) => likedIds.has(profile.id)));
+    setYouLiked((prev) => prev.filter((profile) => likedIds.has(profile.userId)));
   }, [likedIds]);
 
   const list = tab === 'liked-you' ? likedYou : youLiked;
@@ -134,7 +134,7 @@ const LikesPage = () => {
             /* PROFILE CARDS */
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
               {list.map((profile) => (
-                <ProfileCard key={profile.id} profile={profile} />
+                <ProfileCard key={profile.userId} profile={profile} />
               ))}
             </div>
           )}

@@ -34,7 +34,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
       }
       const liked = await api.getLikedByMe(user.id);
       if (!ignore) {
-        setLikedIds(new Set(liked.map((p) => p.id)));
+        setLikedIds(new Set(liked.map((p) => p.userId)));
       }
     }
 
@@ -53,23 +53,22 @@ function LikesProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     console.log("TOGGLE LIKE:", profile);
 
-    if (likedIds.has(profile.id)) {
+    if (likedIds.has(profile.userId)) {
       await api.unlikeUser(user.id, profile.userId);
       console.log("PROFILE BEING UNLIKED:", profile);
       console.log("CURRENT USER:", user.id);
      
       setLikedIds((prev) => {
         const next = new Set(prev);
-        next.delete(profile.id);
+        next.delete(profile.userId);
         return next;
       });
       return;
     }
-
-    // ill come back to you later 
+    
      const data =await api.likeUser(user.id,profile.userId);
      console.log("PROFILE BEING LIKED:", profile, "RESPONSE:", data);
-    setLikedIds((prev) => new Set(prev).add(profile.id));
+    setLikedIds((prev) => new Set(prev).add(profile.userId));
     
     if (data.matched) {
       setJustMatched(profile);

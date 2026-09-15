@@ -47,13 +47,13 @@ export default function ViewProfilePage() {
 
         setSuggestions(
           res.items
-            .filter((person) => person.id !== profile.id)
+            .filter((person) => person.userId !== profile.userId)
             .sort((a, b) => sharedCount(b, profile) - sharedCount(a, profile))
             .slice(0, 3),
         );
 
         if (user) {
-          setCanMessage(await api.canMessage(user.id, profile.id));
+          setCanMessage(await api.canMessage(user.id, profile.userId));
         }
       }
     });
@@ -61,7 +61,7 @@ export default function ViewProfilePage() {
 
   useEffect(() => {
     if (user && target) {
-      api.canMessage(user.id, target.id).then(setCanMessage);
+      api.canMessage(user.id, target.userId).then(setCanMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [likedIds]);
@@ -199,7 +199,7 @@ export default function ViewProfilePage() {
                 onClick={() =>
                   navigate('/messages', {
                     state: {
-                      openProfileId: target?.id,
+                      openProfileId: target?.userId,
                     },
                   })
                 }
@@ -237,7 +237,7 @@ export default function ViewProfilePage() {
               <ProfileCard
                 key={profile.id}
                 profile={profile}
-                isLiked={likedIds.has(profile.id)}
+                isLiked={likedIds.has(profile.userId)}
                 onLike={(person) => requireAuth(() => toggleLike(person))}
               />
             ))}

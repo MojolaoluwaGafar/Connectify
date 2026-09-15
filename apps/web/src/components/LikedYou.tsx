@@ -15,7 +15,8 @@ export const WhoLikedYou =()=>{
         const fetchWhoLikedMe = async()=>{
             try {
                 const result = await getWhoLikedMe(user.id);
-                setLikedYou(result)
+                setLikedYou(result.slice(0,3));
+
                 console.log("WHO LIKED ME RESULT", result);
                 
             } catch (error) {
@@ -67,7 +68,7 @@ export const WhoLikedYou =()=>{
 
               <div>
                 <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-semibold text-black text-[12px] font-600 hover:bg-gray-100" 
-                onClick={()=> navigate(`/profile/${profile.id}`)}>
+                onClick={()=> navigate(`/profile/${profile.userId}`)}>
                   View
                 </button>
               </div>
