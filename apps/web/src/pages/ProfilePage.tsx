@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { ArrowLeft, MapPin, Heart, MessageCircle } from "lucide-react";
 
 import type { DiscoverProfile } from '../types/index';
 import { canMessage as checkCanMessage } from '../API/Services/Messages/messages';
@@ -9,12 +9,12 @@ import {
   getProfileById,
 } from '../API/Services/Profile/Profile';
 
-import { useAuthGate } from '../context/authContext/useAuthGate';
-import Chip from '../components/ui/Chip';
-import Button from '../components/ui/Button';
-import ProfileCard from '../components/ui/ProfileCard';
-import { useAuth } from '../context/authContext/useAuth';
-import { useLikes } from '../context/likeContext/useLikes';
+import { useAuthGate } from "../context/authContext/useAuthGate";
+import Chip from "../components/ui/Chip";
+import Button from "../components/ui/Button";
+import ProfileCard from "../components/ui/ProfileCard";
+import { useAuth } from "../context/authContext/useAuth";
+import { useLikes } from "../context/likeContext/useLikes";
 
 export default function ViewProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -42,6 +42,7 @@ export default function ViewProfilePage() {
     setLoading(true);
     getProfileById(id).then(async (profile) => {
       setTarget(profile);
+      setLoading(false);
 
       setLoading(false);
       if (profile) {
@@ -132,7 +133,7 @@ export default function ViewProfilePage() {
 
           <h1 className="font-display text-3xl font-semibold text-ink-900 sm:text-4xl">
             {target?.fullName}
-            {target?.age ? `, ${target.age}` : ''}
+            {target?.age ? `, ${target.age}` : ""}
           </h1>
 
           <p className="mt-2 flex items-center gap-1.5 text-ink-500">
@@ -182,18 +183,18 @@ export default function ViewProfilePage() {
           {/* Actions */}
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button
-              variant={isLiked ? 'secondary' : 'primary'}
+              variant={isLiked ? "secondary" : "primary"}
               icon={
-                <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+                <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
               }
               className={
                 isLiked
-                  ? 'bg-theme-shade/20! text-theme!'
-                  : 'bg-theme! hover:bg-theme-shade!'
+                  ? "bg-theme-shade/20! text-theme!"
+                  : "bg-theme! hover:bg-theme-shade!"
               }
               onClick={() => requireAuth(() => toggleLike(target))}
             >
-              {isLiked ? 'Liked' : 'Like profile'}
+              {isLiked ? "Liked" : "Like profile"}
             </Button>
 
             {canMessage ? (
@@ -202,7 +203,7 @@ export default function ViewProfilePage() {
                 icon={<MessageCircle size={16} />}
                 className="border-stroke-primary! text-theme! hover:bg-theme-shade/20!"
                 onClick={() =>
-                  navigate('/messages', {
+                  navigate("/messages", {
                     state: {
                       openProfileId: target?.id,
                     },
