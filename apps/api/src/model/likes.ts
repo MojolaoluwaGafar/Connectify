@@ -5,18 +5,23 @@ export interface LikeInt extends Document{
    likedUserId: mongoose.Types.ObjectId;
 }
 
-export const LikeSchema:Schema = new Schema({
-likerId: {
-    required: true,
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
-},
-likedUserId: {
-    required: true,
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
-}
-})
+export const LikeSchema: Schema = new Schema(
+  {
+    likerId: {
+      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    likedUserId: {
+      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
 LikeSchema.index(
     {likerId: 1, likedUserId: 1},

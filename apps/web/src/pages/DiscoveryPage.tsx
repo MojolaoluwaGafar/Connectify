@@ -90,7 +90,7 @@ const DiscoveryPage = () => {
             setPage={setPage}
           />
 
-          <div className="border-solid w-full lg:w-3/5 border-[#1c1524]/[0.0784] border rounded-3xl gap-2 flex items-center px-3 py-2.5 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-transparent lg:mx-4 md:mx-0">
+          <div className="border-solid w-full lg:w-3/5 border-[#1c1524]/[0.0784] border rounded-3xl gap-2 flex items-center px-3 py-2.5 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-transparent md:mx-0">
             <FontAwesomeIcon
               icon={faMagnifyingGlass}
               className="text-gray-500"

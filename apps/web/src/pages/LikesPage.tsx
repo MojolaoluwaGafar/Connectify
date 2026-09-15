@@ -138,7 +138,7 @@ const LikesPage = () => {
             /* PROFILE CARDS */
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
               {list.map((profile) => (
-                <ProfileCard key={profile.id} profile={profile} />
+                <ProfileCard key={profile.userId} profile={profile} />
               ))}
             </div>
           )}
