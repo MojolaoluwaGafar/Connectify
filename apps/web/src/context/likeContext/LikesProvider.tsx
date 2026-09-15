@@ -23,6 +23,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
     setLikedIds(new Set(liked.map((profile) => profile.id)));
   }
 
+  console.log('LIKES PROVIDER RENDERED', { likedIds, justMatched, justLiked });
   // Runs whenever the logged-in user changes (login, logout, session
   // rehydration on mount). `ignore` guards against a slow-resolving
   // request for a stale `user` overwriting state after a newer one has
@@ -54,13 +55,13 @@ function LikesProvider({ children }: { children: ReactNode }) {
   // priority over the smaller "You liked them" one.
   async function toggleLike(profile: DiscoverProfile) {
     if (!user) return;
-    console.log("TOGGLE LIKE:", profile);
+    console.log('TOGGLE LIKE:', profile);
 
     if (likedIds.has(profile.id)) {
       await unlikeUser(user.id, profile.userId);
-      console.log("PROFILE BEING UNLIKED:", profile);
-      console.log("CURRENT USER:", user.id);
-     
+      console.log('PROFILE BEING UNLIKED:', profile);
+      console.log('CURRENT USER:', user.id);
+
       setLikedIds((prev) => {
         const next = new Set(prev);
         next.delete(profile.id);
@@ -69,11 +70,11 @@ function LikesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // ill come back to you later 
+    // ill come back to you later
     const data = await likeUser(user.id, profile.userId);
-     console.log("PROFILE BEING LIKED:", profile, "RESPONSE:", data);
+    console.log('PROFILE BEING LIKED:', profile, 'RESPONSE:', data);
     setLikedIds((prev) => new Set(prev).add(profile.id));
-    
+
     if (data.matched) {
       setJustMatched(profile);
     } else {
@@ -101,8 +102,6 @@ function LikesProvider({ children }: { children: ReactNode }) {
 }
 
 export default LikesProvider;
-
-
 
 // {
 //   "email":"timilehingafar@gmail.com",
