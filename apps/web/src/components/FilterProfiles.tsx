@@ -24,7 +24,7 @@ const FilterProfiles = ({ tab, setTab, setPage, className }: Props) => {
           All
         </button>
         <button
-          className={`px-3 py-1 border rounded-2xl border-stroke-primary text-black font-500 text-[13px] text-medium ${tab === 'near-me' ? 'bg-theme text-white' : ''}`}
+          className={`px-3 py-1 border lg:w-20 rounded-2xl border-stroke-primary text-black font-500 text-[13px] text-medium ${tab === 'near-me' ? 'bg-theme text-white' : ''}`}
           value={'near-me'}
           onClick={() => handleFilter('near-me')}
         >

@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
-import * as api from "../services/authApi";
-import { useAuth } from "../context/authContext/useAuth";
-import type { DiscoverProfile } from "../types";
+import { useEffect, useState } from 'react';
+import { getMatches } from '../API/Services/Matches/matches';
+import { useAuth } from '../context/authContext/useAuth';
+import type { DiscoverProfile } from '../types';
 
 import { useNavigate } from "react-router-dom";
 import { useLikes } from "../context/likeContext/useLikes";
-import Pagination from "../components/Pagination";
-const PAGESIZE = 8;
 
 const Matches = () => {
   const navigate = useNavigate();
@@ -23,23 +21,17 @@ const Matches = () => {
   // Loading state
   const [loading, setLoading] = useState(true);
 
-  // for pagination 
-  const [page, setPage] = useState(1)
-  const total = 20;
-
-  const totalPages = Math.ceil(total / PAGESIZE);
-
   // Get the user's matches when the user or liked profiles change
   useEffect(() => {
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
 
     setLoading(true);
 
-    api
-      .getMatches(user.id)
+    getMatches(user.id)
       .then((res) => {
         setMatches(res);
       })
@@ -67,10 +59,10 @@ const Matches = () => {
         </div>
 
         {/* Matches grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 w-full max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4 w-full max-w-7xl mx-auto ">
           {/* Loading state */}
           {loading ? (
-            <div className="col-span-full flex h-[60vh] w-full items-center justify-center">
+            <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed my-2 rounded-2xl min-h-96 space-y-4 p-5 sm:p-10 md:p-16 lg:p-20 w-full max-w-7xl mx-auto">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
             </div>
           ) : matches.length === 0 ? (
@@ -109,12 +101,12 @@ const Matches = () => {
             matches.map((profile: DiscoverProfile) => (
               <div
                 key={profile.id}
-                className="bg-white rounded-[24px] overflow-hidden border border-[#EBEAED] shadow-sm flex flex-col w-full"
+                className="group relative overflow-hidden rounded-2xl border border-stroke-primary text-sm shadow-sm transition-all duration-300 hover:shadow-lg"
               >
                 {/* Profile image */}
                 <div className="w-full h-[260px] sm:h-[280px] md:h-[300px] lg:h-[320px] xl:h-[340px] overflow-hidden">
                   <img
-                    src={profile.profilePicture ?? ""}
+                    src={profile.profilePicture ?? ''}
                     alt={profile.fullName}
                     className="w-full h-full object-cover block"
                   />
@@ -125,7 +117,7 @@ const Matches = () => {
                   {/* Profile avatar and name */}
                   <div className="flex items-center gap-3">
                     <img
-                      src={profile.profilePicture ?? ""}
+                      src={profile.profilePicture ?? ''}
                       alt={profile.fullName}
                       className="rounded-full w-8 h-8 object-cover"
                     />
@@ -174,18 +166,9 @@ const Matches = () => {
                     </button>
                   </div>
                 </div>
-                
               </div>
             ))
           )}
-        </div>
-        {/* pagination */}
-        <div className="flex justify-center mt-8">
-          <Pagination
-            page={page}
-            totalPages={Math.ceil(totalPages)}
-            onChange={setPage}
-          />
         </div>
       </div>
     </div>

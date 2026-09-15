@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import ConversationList from '../components/chat/ConversationalList';
 import ChatWindow from '../components/chat/ChatWindow';
 import { useAuth } from '../context/authContext/useAuth';
-import * as api from '../services/authApi';
+import { getConversations } from '../API/Services/Messages/messages';
 
 const MessagesPage = () => {
   const { user } = useAuth();
@@ -14,7 +14,7 @@ const MessagesPage = () => {
       if (!user) return;
 
       try {
-        const data = await api.getConversations(user.id);
+        const data = await getConversations(user.id);
 
         const selectedUser = location.state?.selectedUser;
 

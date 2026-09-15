@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-// import { Heart, MapPin, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 import type { DiscoverProfile } from '../types';
 import { useLikes } from '../context/likeContext/useLikes';
@@ -13,8 +13,10 @@ export const ProfileCard = ({ profiles }: Props) => {
   const { likedIds, toggleLike } = useLikes();
 
   return (
-    <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4 ">
+    <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4">
       {profiles.map((profile, i) => {
+        const isLiked = likedIds.has(profile.id);
+
         return (
           <div
             key={i}
@@ -31,6 +33,12 @@ export const ProfileCard = ({ profiles }: Props) => {
                     : 'size-32 w-auto h-auto object-contain'
                 }`}
               />
+              {isLiked && (
+                <span className="absolute flex gap-1 items-center right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-theme shadow-sm">
+                  <Check size={12} strokeWidth={3} />
+                  Liked
+                </span>
+              )}
             </div>
 
             {/* TEXT */}
@@ -58,7 +66,7 @@ export const ProfileCard = ({ profiles }: Props) => {
 
                 <button
                   className={`flex w-full items-center justify-center gap-2 rounded-lg border border-stroke-primary px-3 py-1 text-sm font-medium text-white ${
-                    likedIds.has(profile.id)
+                    isLiked
                       ? 'bg-gray-900'
                       : 'bg-theme hover:bg-purple-700'
                   }`}
@@ -67,14 +75,14 @@ export const ProfileCard = ({ profiles }: Props) => {
                   <img
                     className="size-4"
                     src={
-                      likedIds.has(profile.id)
+                      isLiked
                         ? '/vector.svg'
                         : '/icon-heart.svg'
                     }
                     alt=""
                   />
 
-                  {likedIds.has(profile.id) ? 'Liked' : 'Like'}
+                  {isLiked ? 'Liked' : 'Like'}
                 </button>
               </div>
             </div>

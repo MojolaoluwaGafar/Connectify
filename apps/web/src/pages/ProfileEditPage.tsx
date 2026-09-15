@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createProfile } from '../services/api';
+import { createProfile } from '../API/Services/Profile/Profile';
 
 import { useAuth } from '../context/authContext/useAuth';
 import type { Gender } from '../types';
@@ -36,7 +36,6 @@ export default function ProfileEditPage() {
     user,
     profile,
     refreshProfile,
-    isLoading: isAuthLoading,
   } = useAuth();
 
   const navigate = useNavigate();
@@ -50,7 +49,7 @@ export default function ProfileEditPage() {
   const [occupation, setOccupation] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
   const [about, setBio] = useState('');
-  const [profilePicture, setPhotoUrl] = useState<string | null>(null);
+  const [profilePicture, setPhotoUrl] = useState<string | File | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -368,7 +367,9 @@ export default function ProfileEditPage() {
         occupation={occupation}
         interests={interests}
         about={about}
-        profilePicture={profilePicture}
+        profilePicture={
+          typeof profilePicture === 'string' ? profilePicture : null
+        }
       />
     </div>
   );
