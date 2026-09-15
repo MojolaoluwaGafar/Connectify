@@ -1,6 +1,6 @@
 import type { Conversation, DiscoverProfile, Profile, User } from '../types';
 import { clearAuth, getAuthToken, setAuthToken } from '../utils/authToken';
-import api, { PublicApi } from './api';
+import api, { PublicApi } from '../API/api';
 
 export async function signUp(
   fullName: string,

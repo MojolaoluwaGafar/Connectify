@@ -8,6 +8,7 @@ import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authContext/useAuth';
 import { useApiQuery } from '../hooks/useApiQuery';
+import { WhoLikedYou } from '../components/LikedYou';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 
@@ -81,7 +82,7 @@ const DiscoveryPage = () => {
         <p className="mt-2 text-sm text-red-600">{discoveryError}</p>
       )}
       <main className="flex lg:flex-row flex-col gap-10 lg:mt-5 w-full">
-        <div className="lg:w-3/4 space-y-4">
+        <div className=" space-y-4">
           <FilterProfiles
             className="lg:hidden"
             setTab={setTab}
