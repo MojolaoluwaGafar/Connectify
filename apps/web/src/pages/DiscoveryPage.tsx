@@ -104,7 +104,7 @@ const DiscoveryPage = () => {
               </p>
             </div>
 
-            {/* <div className="flex gap-3 items-center font-geist">
+            <div className="flex gap-3 items-center font-geist">
               <img className="size-10" src="/Avatar.png"></img>
               <div className="grow">
                 <h2 className="text-black text-md font-semibold font-600 text-[14px]">
@@ -149,9 +149,7 @@ const DiscoveryPage = () => {
                   View
                 </button>
               </div>
-            </div> */}
-
-            
+            </div>
           </div>
 
           {showCompleteProfileCard && (

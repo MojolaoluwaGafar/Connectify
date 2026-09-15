@@ -25,7 +25,7 @@ function extractItems(data: unknown): DiscoverProfile[] {
 export async function getWhoLikedMe(userId: string): Promise<DiscoverProfile[]> {
   const { data } = await api.get('/api/v1/likes/who-liked-me', {
     params: { userId },
-  });
+  });  
   return extractItems(data);
 }
 
