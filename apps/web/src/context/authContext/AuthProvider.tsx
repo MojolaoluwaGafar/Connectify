@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { User, Profile } from '../../types/index';
 
-import * as api from '../../services/authApi';
+import * as api from '../../API/Services/Auth/authApi';
+import { getMyProfile } from '../../API/Services/Profile/Profile';
 import { AuthContext } from './authContext';
 
 
@@ -20,7 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(current);
 
           if (current?.id) {
-            const p = await api.getMyProfile();
+            const p = await getMyProfile();
             setProfile(p);
           }
         }
@@ -38,14 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function refreshProfile() {
     if (!user) return;
-    const p = await api.getMyProfile();
+    const p = await getMyProfile();
     setProfile(p);
   }
 
   async function login(email: string, password: string) {
     const loggedInUser = await api.login(email, password);
     setUser(loggedInUser);
-    const p = await api.getMyProfile();
+    const p = await getMyProfile();
     setProfile(p);
   }
   async function googleLogin(idToken: string) {
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   setUser(loggedInUser);
 
-  const p = await api.getMyProfile();
+  const p = await getMyProfile();
   setProfile(p);
 }
 

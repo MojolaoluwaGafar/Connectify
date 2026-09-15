@@ -6,7 +6,7 @@ import cloudinary, {
 import type { ProfileInput } from './profiles.validation.js';
 
 export async function createProfile(userId: string, data: ProfileInput) {
-  const profilePicture = await uploadProfilePicture(data.profilePicture);
+  const profilePicture = data.profilePicture;
 
   const {
     fullName,
@@ -171,6 +171,7 @@ function formatDiscoveryResult(
       id: String(item.userId),
       userId: String(item.userId),
       interest: item.interests ?? [],
+      isComplete: isProfileComplete(item),
       joinedDaysAgo: item.createdAt
         ? Math.floor(
             (Date.now() -
@@ -243,16 +244,27 @@ function formatProfile(item: Record<string, any>) {
   };
 }
 
-async function uploadProfilePicture(profilePicture: string | null) {
-  if (!profilePicture || !profilePicture.startsWith('data:')) {
-    return profilePicture;
-  }
+export async function uploadProfilePicture(file: {
+  buffer: Buffer;
+  mimetype: string;
+}) {
+  return new Promise<string>((resolve, reject) => {
+    const upload = cloudinary.uploader.upload_stream(
+      {
+        ...profileMediaUploadOptions,
+        use_filename: false,
+        unique_filename: true,
+      },
+      (error, result) => {
+        if (error || !result?.secure_url) {
+          reject(error ?? new Error('Profile image upload failed'));
+          return;
+        }
 
-  const result = await cloudinary.uploader.upload(profilePicture, {
-    ...profileMediaUploadOptions,
-    use_filename: false,
-    unique_filename: true,
+        resolve(result.secure_url);
+      },
+    );
+
+    upload.end(file.buffer);
   });
-
-  return result.secure_url;
 }
