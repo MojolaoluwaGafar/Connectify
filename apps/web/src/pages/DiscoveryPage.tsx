@@ -70,8 +70,8 @@ const DiscoveryPage = () => {
     !profile.occupation?.trim();
 
   return (
-    <div className="container flex items-center mx-auto w-full">
-      <div className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 lg:gap-2 text-[#655E75]">
+    <div className="md:w-11/12 w-full lg:w-11/12 container mx-auto md:my-10 mt-0 lg:my-10 lg:flex">
+      <div className=" mx-auto lg:w-[1216px] px-4">
         <div>
           <h1 className="font-fraunces font-bold text-[24px] sm:text-[26px] md:text-[28px] text-black">
             Discover People
@@ -82,7 +82,7 @@ const DiscoveryPage = () => {
           <p className="mt-2 text-sm text-red-600">{discoveryError}</p>
         )}
         <main className="flex lg:flex-row flex-col gap-10 lg:mt-5 w-full justify-between">
-          <div className=" space-y-4">
+          <div className=" space-y-4 lg:w-3/4">
             <FilterProfiles
               className="lg:hidden"
               setTab={setTab}
@@ -122,16 +122,16 @@ const DiscoveryPage = () => {
               onChange={setPage}
             />
           </div>
-          <div className="space-y-9">
+          <div className="space-y-9 lg:w-1/4">
             <FilterProfiles
               className="hidden lg:flex"
               setTab={setTab}
               tab={tab}
               setPage={setPage}
             />
-            <div className="lg:w-3/4">
-              <WhoLikedYou />
-            </div>
+
+            <WhoLikedYou />
+
             {showCompleteProfileCard && (
               <div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl">
                 <div className="p-3 bg-theme-shade rounded-full size-fit flex items-center justify-center">
