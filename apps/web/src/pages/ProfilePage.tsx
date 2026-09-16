@@ -53,7 +53,7 @@ export default function ViewProfilePage() {
 
         setSuggestions(
           res.items
-            .filter((person) => person.id !== profile.id)
+            .filter((person) => person.userId !== profile.userId)
             .sort((a, b) => sharedCount(b, profile) - sharedCount(a, profile))
             .slice(0, 3),
         );
@@ -205,7 +205,7 @@ export default function ViewProfilePage() {
                 onClick={() =>
                   navigate("/messages", {
                     state: {
-                      openProfileId: target?.id,
+                      openProfileId: target?.userId,
                     },
                   })
                 }
@@ -243,7 +243,7 @@ export default function ViewProfilePage() {
               <ProfileCard
                 key={profile.id}
                 profile={profile}
-                isLiked={likedIds.has(profile.id)}
+                isLiked={likedIds.has(profile.userId)}
                 onLike={(person) => requireAuth(() => toggleLike(person))}
               />
             ))}

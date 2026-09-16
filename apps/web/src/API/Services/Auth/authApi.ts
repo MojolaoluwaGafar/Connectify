@@ -1,5 +1,9 @@
 import type { User } from '../../../types';
-import { clearAuth, getAuthToken, setAuthToken } from '../../../utils/authToken';
+import {
+  clearAuth,
+  getAuthToken,
+  setAuthToken,
+} from '../../../utils/authToken';
 import api, { PublicApi } from '../../api';
 
 export async function signUp(
@@ -81,9 +85,7 @@ export async function getCurrentUser(): Promise<User | null> {
   return (data?.data as User | null) ?? null;
 }
 
-
 export async function getSession() {
   const token = getAuthToken();
   return token ? { token } : null;
 }
-

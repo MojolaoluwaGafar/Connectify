@@ -66,7 +66,8 @@ export async function likedByMe(likerId: string) {
 export const whoLikedMe = async (userId: string) => {
   const likes = await Like.find({
     likedUserId: new mongoose.Types.ObjectId(userId),
-  });
+  }).sort({createdAt: -1});
+  
   console.log("WHO LIKED ME LIKES", likes);
   
   const likerIds = likes.map((like) => like.likerId);

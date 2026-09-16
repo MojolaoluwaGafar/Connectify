@@ -37,7 +37,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
       }
       const liked = await getLikedByMe(user.id);
       if (!ignore) {
-        setLikedIds(new Set(liked.map((p) => p.id)));
+        setLikedIds(new Set(liked.map((p) => p.userId)));
       }
     }
 
@@ -63,7 +63,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
      
       setLikedIds((prev) => {
         const next = new Set(prev);
-        next.delete(profile.id);
+        next.delete(profile.userId);
         return next;
       });
       return;
@@ -72,7 +72,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
     // ill come back to you later 
     const data = await likeUser(user.id, profile.userId);
      console.log("PROFILE BEING LIKED:", profile, "RESPONSE:", data);
-    setLikedIds((prev) => new Set(prev).add(profile.id));
+    setLikedIds((prev) => new Set(prev).add(profile.userId));
     
     if (data.matched) {
       setJustMatched(profile);
