@@ -48,12 +48,16 @@ function Providers({ children }: { children: ReactNode }) {
     if (!location.state?.loginSuccess) return;
 
     toast.success('Login Successful!', {
-      style: {
-        backgroundColor: '#4caf50',
-        color: '#fff',
-        borderRadius: '8px',
-        fontWeight: 'bold',
-      },
+      //use key className to add custom toast design example is below
+      className : "LoginSuccessToastStyle",
+      //inline
+      // style: {
+      //   backgroundColor: '#4caf50',
+      //   color: '#fff',
+      //   borderRadius: '8px',
+      //   fontWeight: 'bold',
+      // },
+      //position for toast container placement
       position: 'top-left',
     });
 

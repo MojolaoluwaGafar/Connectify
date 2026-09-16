@@ -57,22 +57,23 @@ const LoginPage = () => {
       });
     } catch (error) {
       
-       const message =
+      const message =
       error instanceof Error ? error.message : 'Incorrect email or password.';
 
-    setLoginError(message);
-
-    toast.error(message, {
-      style: {
-        backgroundColor: "#f44336",
-        color: "#fff",
-        borderRadius: "8px",
-        fontWeight: "bold",
-        padding: "12px 20px"
-      }
-    });
       setLoginError(message);
-      
+
+      toast.error(message, {
+      // custome style
+      // className : "",
+        style: {
+          backgroundColor: "#f44336",
+          color: "#fff",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          padding: "12px 20px"
+        }
+    });
+        // setLoginError(message);
     }
   };
 
