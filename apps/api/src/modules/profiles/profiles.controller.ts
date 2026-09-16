@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 import * as profilesService from './profiles.service.js';
 import { profileInputSchema } from './profiles.validation.js';
+import { uploadProfilePicture } from './profiles.service.js';
 
 export const profilesController = {
   create: async (request: Request, response: Response, next: NextFunction) => {
@@ -12,8 +13,24 @@ export const profilesController = {
     }
     const userId = request.user.id;
     try {
-      const data = profileInputSchema.parse(request.body);
-      const createdProfile = await profilesService.createProfile(userId, data);
+      const data = profileInputSchema.parse({
+        ...request.body,
+        age: Number(request.body.age),
+        interests:
+          typeof request.body.interests === 'string'
+            ? JSON.parse(request.body.interests)
+            : request.body.interests,
+        profilePicture: request.body.profilePicture
+          ? request.body.profilePicture
+          : null,
+      });
+      const profilePicture = request.file
+        ? await uploadProfilePicture(request.file)
+        : data.profilePicture;
+      const createdProfile = await profilesService.createProfile(userId, {
+        ...data,
+        profilePicture,
+      });
       response.status(201).json({
         success: true,
         message: 'Profile Created',
@@ -30,16 +47,6 @@ export const profilesController = {
         message: 'Authentication required',
       });
     }
-    // await profilesService.listProfiles(request.query);
-    // response.status(501).json({
-    //   error: {
-    //     code: 'NOT_IMPLEMENTED',
-    //     message:
-    //       'Profile discovery is scheduled for the next backend milestone.',
-    //     requestId: request.requestId,
-    //     details: {},
-    //   },
-    // });
     try {
       const result = await profilesService.listProfiles(
         request.query as Record<string, unknown>,

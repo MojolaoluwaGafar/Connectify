@@ -47,7 +47,7 @@ export interface ICreateProfile {
   occupation: string;
   about: string;
   interests: string[];
-  profilePicture: string | null;
+  profilePicture: string | File | null;
   locationCoords?: {
     type: 'Point';
     coordinates: [number, number];

@@ -1,3 +1,5 @@
+import Button from "./ui/Button";
+
 interface ProfilePreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -77,9 +79,9 @@ export const ProfilePreviewModal = ({
           </h3>
 
           <div className="mt-1 space-y-1 text-sm text-gray-500">
-            {occupation && <p>{occupation}</p>}
-            {location && <p>{location}</p>}
-            {gender && <p className="capitalize">{gender}</p>}
+            {occupation && <p>Occupation : {occupation}</p>}
+            {location && <p>Location : {location}</p>}
+            {gender && <p className="capitalize">Gender: {gender}</p>}
           </div>
         </div>
 
@@ -110,13 +112,13 @@ export const ProfilePreviewModal = ({
         )}
 
         {/* Close */}
-        <button
+        <Button
           type="button"
           onClick={onClose}
           className="mt-6 w-full rounded-lg bg-theme py-2.5 font-semibold text-white"
         >
           Back to Edit
-        </button>
+        </Button>
       </div>
     </div>
   );

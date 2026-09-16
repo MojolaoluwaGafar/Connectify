@@ -17,9 +17,9 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
     <div className="relative group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-lg">
       
       {/* Profile image */}
-      <div className="h-70 w-99 overflow-hidden lg:h-99 lg:w-full">
+      <div className="h-70 w-99 overflow-hidden lg:h-99 lg:w-full bg-gray-100">
         <img
-          src={profile.profilePicture ?? ''}
+          src={profile.profilePicture ?? '/profile-picture.png'}
           alt={profile.fullName}
           className="h-70 w-99 object-cover transition-transform duration-300 group-hover:scale-105 lg:h-full lg:w-99 lg:group-hover:scale-108"
         />
@@ -33,7 +33,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
         </div>
       )}
 
-      <div className="p-4">
+      <div className="p-4 h-45 relative">
         <button
           onClick={() => navigate(`/profile/${profile.id}`)}
           className="text-left"
@@ -54,7 +54,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
         <p className="mt-3 text-[15px] leading-5 text-[#655E75] font-[geist] line-clamp-2">{profile.about}</p>
 
         {/* Actions */}
-        <div className="mt-4 flex gap-2">
+        <div className="absolute bottom-3 left-0 w-full px-4 flex gap-2">
           <button
             onClick={() => navigate(`/profile/${profile.id}`)}
             className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-[#1C1524] transition-colors hover:bg-gray-100"
