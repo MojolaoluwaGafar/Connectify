@@ -1,6 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { DiscoverProfile } from '../../types/index';
-import * as api from '../../services/authApi';
+import {
+  getLikedByMe,
+  likeUser,
+  unlikeUser,
+} from '../../API/Services/Likes/likes';
 import { useAuth } from '../authContext/useAuth';
 import { LikesContext } from './likeContext';
 
@@ -15,9 +19,8 @@ function LikesProvider({ children }: { children: ReactNode }) {
       setLikedIds(new Set());
       return;
     }
-    const liked = await api.getLikedByMe(user.id);
-     console.log("LIKED PROFILES FROM BACKEND:", liked);
-    setLikedIds(new Set(liked.map((p) => p.userId)));
+    const liked = await getLikedByMe(user.id);
+    setLikedIds(new Set(liked.map((profile) => profile.id)));
   }
 
   // Runs whenever the logged-in user changes (login, logout, session
@@ -32,7 +35,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
         setLikedIds(new Set());
         return;
       }
-      const liked = await api.getLikedByMe(user.id);
+      const liked = await getLikedByMe(user.id);
       if (!ignore) {
         setLikedIds(new Set(liked.map((p) => p.userId)));
       }
@@ -53,8 +56,8 @@ function LikesProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     console.log("TOGGLE LIKE:", profile);
 
-    if (likedIds.has(profile.userId)) {
-      await api.unlikeUser(user.id, profile.userId);
+    if (likedIds.has(profile.id)) {
+      await unlikeUser(user.id, profile.userId);
       console.log("PROFILE BEING UNLIKED:", profile);
       console.log("CURRENT USER:", user.id);
      
@@ -65,8 +68,9 @@ function LikesProvider({ children }: { children: ReactNode }) {
       });
       return;
     }
-    
-     const data =await api.likeUser(user.id,profile.userId);
+
+    // ill come back to you later 
+    const data = await likeUser(user.id, profile.userId);
      console.log("PROFILE BEING LIKED:", profile, "RESPONSE:", data);
     setLikedIds((prev) => new Set(prev).add(profile.userId));
     

@@ -1,7 +1,7 @@
 ﻿import axios, { type AxiosError } from "axios";
 
 import { clearAuth, getAuthToken } from "../utils/authToken";
-import type { ICreateProfile } from "../types";
+// import type { ICreateProfile } from "../types";
 
 const redirectToLogin = () => {
   if (typeof window === "undefined") return;
@@ -63,14 +63,24 @@ export const getUser = async () => {
   return await api.get("/api/v1/auth/me");
 };
 
-export const createProfile = async (data: ICreateProfile) => {
-  return await api.post("/api/v1/profiles/createProfile", data);
-};
+// export const createProfile = async (data: ICreateProfile) => {
+//   const formData = new FormData();
+//   formData.append('fullName', data.fullName);
+//   formData.append('age', String(data.age));
+//   formData.append('gender', data.gender);
+//   formData.append('location', data.location);
+//   formData.append('occupation', data.occupation);
+//   formData.append('about', data.about);
+//   formData.append('interests', JSON.stringify(data.interests));
 
-export const getLikedByMe = async () => {
-  return await api.get("/api/v1/likes/liked-by-me");
-};
+//   if (data.profilePicture instanceof File) {
+//     formData.append('profilePicture', data.profilePicture);
+//   } else if (data.profilePicture) {
+//     formData.append('profilePicture', data.profilePicture);
+//   }
 
-export const likeProfile = async (profileId: string) => {
-  return await api.put(`/api/v1/likes/profiles/${profileId}/like`);
-}
+//   return await api.post("/api/v1/profiles/createProfile", formData, {
+//     headers: { 'Content-Type': 'multipart/form-data' },
+//   });
+// };
+

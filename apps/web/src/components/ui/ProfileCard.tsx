@@ -71,7 +71,7 @@ export default function ProfileCard({
         </p>
 
         {/* Buttons */}
-        <div className="mt-auto flex gap-2 pt-4">
+        <div className="mt-auto flex gap-2 pt-2">
           <Button
             variant="outline"
             size="sm"

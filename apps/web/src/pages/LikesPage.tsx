@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
-import type { DiscoverProfile } from '../types';
+import { useCallback, useMemo, useState } from 'react';
+// import type { DiscoverProfile } from '../types';
 
 import ProfileCard from '../components/discover/ProfileCard';
 import { useNavigate } from 'react-router-dom';
 import { useLikes } from '../context/likeContext/useLikes';
 
-import { getLikedByMe, getWhoLikedMe } from '../services/authApi';
+import { getLikedByMe, getWhoLikedMe } from '../API/Services/Likes/likes';
 
 import { useAuth } from '../context/authContext/useAuth';
+import { useApiQuery } from '../hooks/useApiQuery';
 
 type Tab = 'liked-you' | 'you-liked';
 
@@ -15,48 +16,51 @@ const LikesPage = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('liked-you');
 
-  const [likedYou, setLikedYou] = useState<DiscoverProfile[]>([]);
-  const [youLiked, setYouLiked] = useState<DiscoverProfile[]>([]);
-
-  // NEW: tracks whether the initial likes fetch is in flight
-  const [isLoading, setIsLoading] = useState(true);
-
   const { likedIds } = useLikes();
-
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) return;
+  const fetchWhoLikedMe = useCallback(() => getWhoLikedMe(user!.id), [user]);
 
-    const fetchLikes = async () => {
-      setIsLoading(true);
-      try {
-        const response = await getLikedByMe(user.id);
-        const likedYouResponse = await getWhoLikedMe(user.id);
+  const fetchLikedByMe = useCallback(() => getLikedByMe(user!.id), [user]);
 
-        console.log('LIKED BY ME:', response);
-        console.log('LIKE ME', likedYouResponse);
+  const { data: likedYouData, loading: isLikedYouLoading } = useApiQuery(
+    fetchWhoLikedMe,
+    'Could not load your likes.',
+    {
+      enabled: Boolean(user),
+      cacheKey: user ? `liked-you:${user.id}` : null,
+      staleTime: 30_000,
+    },
+  );
 
-        setYouLiked(response);
-        setLikedYou(likedYouResponse);
-      } catch (error) {
-        console.error('FAILED TO GET LIKES:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { data: youLikedData, loading: isYouLikedLoading } = useApiQuery(
+    fetchLikedByMe,
+    'Could not load your likes.',
+    {
+      enabled: Boolean(user),
+      cacheKey: user ? `you-liked:${user.id}` : null,
+      staleTime: 30_000,
+    },
+  );
 
-    fetchLikes();
-  }, [user]);
+  const likedYou = likedYouData ?? [];
 
-  useEffect(() => {
-    setYouLiked((prev) => prev.filter((profile) => likedIds.has(profile.userId)));
-  }, [likedIds]);
+  // The old effect mutated a local copy whenever a like was toggled
+  // elsewhere in the app. Filtering here instead keeps the hook's cache
+  // as the single source of truth — a stale/unfiltered list is never
+  // shown after switching tabs or remounting.
+  const youLiked = useMemo(
+    () => (youLikedData ?? []).filter((profile) => likedIds.has(profile.id)),
+    [youLikedData, likedIds],
+  );
+
+  const isLoading = tab === 'liked-you' ? isLikedYouLoading : isYouLikedLoading;
 
   const list = tab === 'liked-you' ? likedYou : youLiked;
 
   return (
-    <div className="min-h-screen ">
+    <div className='container flex items-center mx-auto'>
+      <div className="min-h-screen ">
       {/* MAIN */}
       <main className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 text-[#655E75]">
         {/* TITLE + TABS */}
@@ -140,6 +144,7 @@ const LikesPage = () => {
           )}
         </div>
       </main>
+    </div>
     </div>
   );
 };

@@ -18,12 +18,13 @@ export const UserSchema = z.object({
 export const ProfileSchema = z.object({
   userId: z.string(),
   fullName: z.string(),
-  age: z.number().int().min(18).max(100).nullable(),
-  gender: GenderSchema.nullable(),
+  age: z.number().int().min(18).max(100),
+  gender: GenderSchema,
   location: z.string(),
   occupation: z.string(),
   about: z.string(),
   interest: z.array(z.string()),
+  interests: z.array(z.string()).default([]),
   profilePicture: z.string().url().nullable(),
   isComplete: z.boolean(),
 });
@@ -32,6 +33,19 @@ export const DiscoverProfileSchema = ProfileSchema.extend({
   id: z.string(),
   distanceLabel: z.string().optional(),
   joinedDaysAgo: z.number().int().nonnegative(),
+});
+
+export const ProfileListResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  data: z.object({
+    message: z.string(),
+    status: z.literal('success'),
+    items: z.array(DiscoverProfileSchema),
+    total: z.number().int().nonnegative(),
+    page: z.number().int().positive(),
+    pageSize: z.number().int().positive(),
+  }),
 });
 
 export const LikeSchema = z.object({

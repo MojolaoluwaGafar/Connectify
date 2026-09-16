@@ -1,6 +1,6 @@
 import {useState, useEffect} from "react"
 import type { DiscoverProfile } from "../types";
-import { getWhoLikedMe } from "../services/authApi";
+import { getWhoLikedMe } from "../API/Services/Likes/likes";
 import { useAuth } from "../context/authContext/useAuth";
 import { useNavigate } from "react-router-dom";
 
@@ -34,7 +34,7 @@ export const WhoLikedYou =()=>{
     return (
       <div>
         {/* starts here  */}
-        <div className="border rounded-2xl p-4 text-sm space-y-3 border-stroke-primary">
+        <div className="border rounded-2xl p-4 text-sm space-y-3 border-stroke-primary w-full lg:w-[250px]">
           <div className="flex justify-between items-center">
             <h2 className="font-fraunces font-semibold font-600 text-[16px] text-black">
               Who liked you

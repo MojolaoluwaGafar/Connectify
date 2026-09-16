@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import * as api from "../services/authApi";
-import { useAuth } from "../context/authContext/useAuth";
-import type { DiscoverProfile } from "../types";
+import { useEffect, useState } from 'react';
+import { getMatches } from '../API/Services/Matches/matches';
+import { useAuth } from '../context/authContext/useAuth';
+import type { DiscoverProfile } from '../types';
 
 import { useNavigate } from "react-router-dom";
 import { useLikes } from "../context/likeContext/useLikes";
@@ -24,14 +24,14 @@ const Matches = () => {
   // Get the user's matches when the user or liked profiles change
   useEffect(() => {
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
 
     setLoading(true);
 
-    api
-      .getMatches(user.id)
+    getMatches(user.id)
       .then((res) => {
         setMatches(res);
       })
@@ -104,24 +104,20 @@ const Matches = () => {
                 className="group relative overflow-hidden rounded-2xl border border-stroke-primary text-sm shadow-sm transition-all duration-300 hover:shadow-lg"
               >
                 {/* Profile image */}
-                <div className="flex h-80 w-full items-center justify-center overflow-hidden bg-gray-100">
-              <img
-                src={profile.profilePicture || ''}
-                alt={profile.fullName}
-                className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                  profile.profilePicture
-                    ? ''
-                    : 'size-32 w-auto h-auto object-contain'
-                }`}
-              />
-            </div>
+                <div className="w-full h-[260px] sm:h-[280px] md:h-[300px] lg:h-[320px] xl:h-[340px] overflow-hidden">
+                  <img
+                    src={profile.profilePicture ?? ''}
+                    alt={profile.fullName}
+                    className="w-full h-full object-cover block"
+                  />
+                </div>
 
                 {/* Profile content */}
                 <div className="p-4 sm:p-5 lg:p-6 flex flex-col gap-3">
                   {/* Profile avatar and name */}
                   <div className="flex items-center gap-3">
                     <img
-                      src={profile.profilePicture ?? ""}
+                      src={profile.profilePicture ?? ''}
                       alt={profile.fullName}
                       className="rounded-full w-8 h-8 object-cover"
                     />
@@ -174,14 +170,6 @@ const Matches = () => {
             ))
           )}
         </div>
-        {/* pagination */}
-        {/* <div className="flex justify-center mt-8">
-          <Pagination
-            page={page}
-            totalPages={Math.ceil(totalPages)}
-            onChange={setPage}
-          />
-        </div> */}
       </div>
     </div>
   );
