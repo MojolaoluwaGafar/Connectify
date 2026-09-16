@@ -24,6 +24,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   const [inputText, setInputText] = useState("");
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Extract recipient details and match ID from current conversation prop
@@ -109,9 +110,38 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
         setIsOtherUserTyping(false);
       }
     };
+
+    const handleSendMessageError = (payload: any) => {
+      if (payload?.conversationId !== matchId) {
+        return;
+      }
+
+      console.error("Failed to send message:", payload?.message);
+    };
+
+    const handleOnlineUsers = (onlineUserIds: string[]) => {
+      setIsOtherUserOnline(
+        onlineUserIds.includes(String(selectedUser?.userId)),
+      );
+    };
+    const handleUserOnline = (userId: string) => {
+      if (userId === String(selectedUser?.userId)) {
+        setIsOtherUserOnline(true);
+      }
+    };
+
+    const handleUserOffline = (userId: string) => {
+      if (userId === String(selectedUser?.userId)) {
+        setIsOtherUserOnline(false);
+      }
+    };
     socket.on("receive_message", handleIncomingMessage);
     socket.on("user_typing", handleUserTyping);
     socket.on("user_stop_typing", handleUserStopTyping);
+    socket.on("online_users", handleOnlineUsers);
+    socket.on("user_online", handleUserOnline);
+    socket.on("user_offline", handleUserOffline);
+    socket.on("send_message_error", handleSendMessageError);
 
     socket.emit("join_conversation", matchId);
     return () => {
@@ -119,10 +149,13 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
 
       socket.emit("leave_conversation", matchId);
 
+      socket.off("online_users", handleOnlineUsers);
+      socket.off("user_online", handleUserOnline);
+      socket.off("user_offline", handleUserOffline);
       socket.off("receive_message", handleIncomingMessage);
       socket.off("user_typing", handleUserTyping);
       socket.off("user_stop_typing", handleUserStopTyping);
-
+      socket.off("send_message_error", handleSendMessageError);
       if (typingTimer.current) {
         clearTimeout(typingTimer.current);
       }
@@ -226,11 +259,23 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
           </div>
 
           {/* Status Indicators (Responsive Badges) */}
-          <div className="bg-[#fef3c7] rounded-md py-0.5 px-2 text-orange-500 hidden md:hidden lg:block text-[11px]">
-            Demo replies
+          <div
+            className={`bg-purple-50 rounded-md py-0.5 px-2 text-purple-600 hidden md:hidden lg:block text-[11px] ${
+              isOtherUserOnline
+                ? "bg-purple-50 text-purple-600"
+                : "bg-gray-100 text-gray-500"
+            }`}
+          >
+            {isOtherUserOnline ? "Active" : "Offline"}
           </div>
-          <div className="bg-purple-50 rounded-md py-0.5 px-2 text-purple-600 block md:block lg:hidden w-20 h-6 items-center justify-center text-center text-[11px]">
-            Active
+          <div
+            className={`bg-purple-50 rounded-md py-0.5 px-2 block md:block lg:hidden w-20 h-6 items-center justify-center text-center text-[11px]  ${
+              isOtherUserOnline
+                ? "bg-purple-50 text-purple-600"
+                : "bg-gray-100 text-gray-500"
+            }`}
+          >
+            {isOtherUserOnline ? "Active" : "Offline"}
           </div>
         </div>
 
