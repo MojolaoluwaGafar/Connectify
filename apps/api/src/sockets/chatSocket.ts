@@ -97,6 +97,8 @@ socket.on(
     conversationId: string;
     content: string;
   }) => {
+
+    console.log("SEND_MESSAGE EVENT RECEIVED");
     const userId = socket.data.userId as string | undefined;
 
     if (!userId || !conversationId) {
@@ -109,6 +111,16 @@ socket.on(
         userId,
         { content },
       );
+
+      console.log("EMITTING RECEIVE MESSAGE:", {
+  conversationId,
+  message,
+});
+console.log(
+  "ROOM MEMBERS:",
+  conversationId,
+  io.sockets.adapter.rooms.get(conversationId),
+);
 
       io.to(conversationId).emit('receive_message', {
         conversationId,

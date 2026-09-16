@@ -37,9 +37,9 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
       setInputText("");
       return;
     }
-
-    setIsOtherUserTyping(false);
-    setIsTyping(false);
+setIsOtherUserTyping(false);
+setIsTyping(false);
+setIsOtherUserOnline(false);
 
     let cancelled = false;
 
@@ -66,6 +66,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     });
 
     const handleIncomingMessage = (payload: any) => {
+      console.log("RECEIVED MESSAGE FROM SOCKET:", payload);
       const conversationId = payload?.conversationId ?? payload?.matchId;
 
       if (conversationId !== matchId) {
@@ -87,7 +88,13 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
           (message) => message.id === nextMessage.id,
         );
 
-        return alreadyExists ? current : [...current, nextMessage];
+          const updatedMessages = alreadyExists
+    ? current
+    : [...current, nextMessage];
+
+  console.log("MESSAGES STATE:", updatedMessages);
+
+  return updatedMessages;
       });
     };
 
@@ -135,6 +142,17 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
         setIsOtherUserOnline(false);
       }
     };
+
+const handleConversationJoined = (payload: any) => {
+  console.log("JOINED CONVERSATION:", payload);
+};
+
+const handleJoinError = (payload: any) => {
+  console.error("JOIN CONVERSATION ERROR:", payload);
+};
+
+socket.on("conversation_joined", handleConversationJoined);
+socket.on("join_conversation_error", handleJoinError);
     socket.on("receive_message", handleIncomingMessage);
     socket.on("user_typing", handleUserTyping);
     socket.on("user_stop_typing", handleUserStopTyping);
@@ -150,6 +168,8 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
       socket.emit("leave_conversation", matchId);
 
       socket.off("online_users", handleOnlineUsers);
+      socket.off("conversation_joined", handleConversationJoined);
+socket.off("join_conversation_error", handleJoinError);
       socket.off("user_online", handleUserOnline);
       socket.off("user_offline", handleUserOffline);
       socket.off("receive_message", handleIncomingMessage);
@@ -214,6 +234,11 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     const outboundText = inputText.trim();
 
     setInputText("");
+    console.log("SENDING MESSAGE:", {
+  connected: socket.connected,
+  matchId,
+  outboundText,
+});
 
     socket.emit("send_message", {
       conversationId: matchId,
