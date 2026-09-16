@@ -1,30 +1,47 @@
 import { type Server, type Socket } from 'socket.io';
 import {
+  assertParticipant,
   markRead,
   sendMessageService,
 } from '../modules/conversations/conversations.service.js';
-
 type ConversationEvent = {
   conversationId: string;
-};
-
-type MessagePayload = {
-  conversationId: string;
-  content: string;
-  createdAt?: string;
-  id?: string;
 };
 
 const normalizeConversationId = (conversationId: string | number) =>
   String(conversationId);
 
 export function registerChatHandlers(socket: Socket, io: Server) {
-  socket.on('join_conversation', (conversationId: string | number) => {
+socket.on(
+  'join_conversation',
+  async (conversationId: string | number) => {
     const roomId = normalizeConversationId(conversationId);
-    if (!roomId) return;
+    const userId = socket.data.userId as string | undefined;
 
-    socket.join(roomId);
-  });
+    if (!roomId || !userId) {
+      return;
+    }
+
+    try {
+      await assertParticipant(roomId, userId);
+
+      socket.join(roomId);
+
+
+      socket.emit('conversation_joined', {
+        conversationId: roomId,
+      });
+    } catch (error) {
+      socket.emit('join_conversation_error', {
+        conversationId: roomId,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to join conversation',
+      });
+    }
+  },
+);
 
   socket.on('leave_conversation', (conversationId: string | number) => {
     const roomId = normalizeConversationId(conversationId);
@@ -33,59 +50,91 @@ export function registerChatHandlers(socket: Socket, io: Server) {
     socket.leave(roomId);
   });
 
-  socket.on('typing_start', ({ conversationId }: ConversationEvent) => {
+ socket.on(
+  'typing_start',
+  async ({ conversationId }: ConversationEvent) => {
     const userId = socket.data.userId as string | undefined;
-    if (!conversationId || !userId) return;
 
-    socket.to(conversationId).emit('user_typing', { conversationId, userId });
-    socket.to(conversationId).emit('typing_start', { conversationId, userId });
-  });
-
-  socket.on('typing_stop', ({ conversationId }: ConversationEvent) => {
-    const userId = socket.data.userId as string | undefined;
-    if (!conversationId || !userId) return;
-
-    socket
-      .to(conversationId)
-      .emit('user_stop_typing', { conversationId, userId });
-    socket.to(conversationId).emit('typing_stop', { conversationId, userId });
-  });
-
-  socket.on('send_message', async (data: MessagePayload) => {
-    const senderId = socket.data.userId as string | undefined;
-    if (!data.conversationId || !senderId || !data.content) return;
-
-    try {
-      const message = await sendMessageService(data.conversationId, senderId, {
-        text: data.content,
-      });
-
-      io.to(data.conversationId).emit('receive_message', message);
-    } catch (error) {
-      socket.emit('send_message_error', {
-        conversationId: data.conversationId,
-        message:
-          error instanceof Error ? error.message : 'Failed to send message',
-      });
-    }
-  });
-
-  socket.on('mark_read', async ({ conversationId }: ConversationEvent) => {
-    const userId = socket.data.userId as string | undefined;
     if (!conversationId || !userId) return;
 
     try {
-      await markRead(conversationId, userId);
-      io.to(conversationId).emit('conversation_read', {
+      await assertParticipant(conversationId, userId);
+
+      socket.to(conversationId).emit('user_typing', {
         conversationId,
         userId,
       });
     } catch {
-      // Read receipts aren't critical — fail silently rather than error the socket.
+      return;
     }
-  });
+  },
+);
+socket.on(
+  'typing_stop',
+  async ({ conversationId }: ConversationEvent) => {
+    const userId = socket.data.userId as string | undefined;
 
-  socket.on('disconnect', () => {
-    // Socket cleanup happens in the main connection handler.
-  });
+    if (!conversationId || !userId) return;
+
+    try {
+      await assertParticipant(conversationId, userId);
+
+      socket.to(conversationId).emit('user_stop_typing', {
+        conversationId,
+        userId,
+      });
+    } catch {
+      return;
+    }
+  },
+);
+socket.on(
+  'send_message',
+  async ({
+    conversationId,
+    content,
+  }: {
+    conversationId: string;
+    content: string;
+  }) => {
+
+    console.log("SEND_MESSAGE EVENT RECEIVED");
+    const userId = socket.data.userId as string | undefined;
+
+    if (!userId || !conversationId) {
+      return;
+    }
+
+    try {
+      const message = await sendMessageService(
+        conversationId,
+        userId,
+        { content },
+      );
+
+      console.log("EMITTING RECEIVE MESSAGE:", {
+  conversationId,
+  message,
+});
+console.log(
+  "ROOM MEMBERS:",
+  conversationId,
+  io.sockets.adapter.rooms.get(conversationId),
+);
+
+      io.to(conversationId).emit('receive_message', {
+        conversationId,
+        ...message,
+      });
+    } catch (error) {
+      socket.emit('send_message_error', {
+        conversationId,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to send message',
+      });
+    }
+  },
+);
 }

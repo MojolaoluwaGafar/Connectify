@@ -7,6 +7,7 @@ import {
 } from '../../API/Services/Likes/likes';
 import { useAuth } from '../authContext/useAuth';
 import { LikesContext } from './likeContext';
+import { invalidateQuery } from '../../hooks/useApiQuery';
 
 function LikesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -23,10 +24,6 @@ function LikesProvider({ children }: { children: ReactNode }) {
     setLikedIds(new Set(liked.map((profile) => profile.id)));
   }
 
-  // Runs whenever the logged-in user changes (login, logout, session
-  // rehydration on mount). `ignore` guards against a slow-resolving
-  // request for a stale `user` overwriting state after a newer one has
-  // already started (e.g. rapid logout/login while a fetch is in flight).
   useEffect(() => {
     let ignore = false;
 
@@ -37,7 +34,7 @@ function LikesProvider({ children }: { children: ReactNode }) {
       }
       const liked = await getLikedByMe(user.id);
       if (!ignore) {
-        setLikedIds(new Set(liked.map((p) => p.id)));
+        setLikedIds(new Set(liked.map((p) => p.userId)));
       }
     }
 
@@ -48,39 +45,45 @@ function LikesProvider({ children }: { children: ReactNode }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-  // Liking and un-liking both go through here. Liking someone now always
-  // unlocks messaging with them — if it also
-  // happens to be a mutual like, the bigger "It's a Match!" modal takes
-  // priority over the smaller "You liked them" one.
+
   async function toggleLike(profile: DiscoverProfile) {
     if (!user) return;
-    console.log("TOGGLE LIKE:", profile);
 
     if (likedIds.has(profile.id)) {
-      await unlikeUser(user.id, profile.userId);
-      console.log("PROFILE BEING UNLIKED:", profile);
-      console.log("CURRENT USER:", user.id);
-     
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(profile.id);
-        return next;
-      });
+      try {
+        await unlikeUser(user.id, profile.userId);
+        setLikedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(profile.id);
+          return next;
+        });
+        // Un-syncs LikesPage's cached "You Liked" list from this action
+        // so it refetches fresh data next time it's viewed, instead of
+        // relying solely on the local likedIds filter to hide it.
+        invalidateQuery(`you-liked:${user.id}`);
+      } catch (error) {
+        console.error('Failed to unlike profile:', error);
+      }
       return;
     }
 
-    // ill come back to you later 
-    const data = await likeUser(user.id, profile.userId);
-     console.log("PROFILE BEING LIKED:", profile, "RESPONSE:", data);
-    setLikedIds((prev) => new Set(prev).add(profile.id));
-    
-    if (data.matched) {
-      setJustMatched(profile);
-    } else {
-      setJustLiked(profile);
-    }
+    try {
+      const data = await likeUser(user.id, profile.userId);
+      setLikedIds((prev) => new Set(prev).add(profile.id));
 
-    // setJustMatched(profile);
+      // The "You Liked" cache in LikesPage has no way to know this new
+      // like happened — without this, the profile won't appear there
+      // until the cache naturally expires (staleTime) or a hard reload.
+      invalidateQuery(`you-liked:${user.id}`);
+
+      if (data.matched) {
+        setJustMatched(profile);
+      } else {
+        setJustLiked(profile);
+      }
+    } catch (error) {
+      console.error('Failed to like profile:', error);
+    }
   }
 
   return (
@@ -101,12 +104,3 @@ function LikesProvider({ children }: { children: ReactNode }) {
 }
 
 export default LikesProvider;
-
-
-
-// {
-//   "email":"timilehingafar@gmail.com",
-//   "password": "P@ss1234%"
-// }
-
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYTE2MGM0NmNiNTg2Y2M5MjliZTg3ZCIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzg5MzQ1MzM3LCJleHAiOjE3ODk5NTAxMzd9.Un6lvt-nHZfCtev4ii8KDa07GbbUHu-0aIu_eLQDvOE

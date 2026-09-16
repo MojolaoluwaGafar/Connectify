@@ -171,7 +171,7 @@ export default function ProfileEditPage() {
         profilePicture,
       });
 
-      console.log('Profile saved:', response);
+      console.log('Profile saved:', Response);
 
       await refreshProfile();
 
