@@ -8,13 +8,6 @@ type ConversationEvent = {
   conversationId: string;
 };
 
-type MessagePayload = {
-  conversationId: string;
-  content: string;
-  createdAt?: string;
-  id?: string;
-};
-
 const normalizeConversationId = (conversationId: string | number) =>
   String(conversationId);
 
@@ -33,6 +26,7 @@ socket.on(
       await assertParticipant(roomId, userId);
 
       socket.join(roomId);
+
 
       socket.emit('conversation_joined', {
         conversationId: roomId,
@@ -56,24 +50,79 @@ socket.on(
     socket.leave(roomId);
   });
 
-  socket.on('typing_start', ({ conversationId }: ConversationEvent) => {
+ socket.on(
+  'typing_start',
+  async ({ conversationId }: ConversationEvent) => {
     const userId = socket.data.userId as string | undefined;
+
     if (!conversationId || !userId) return;
 
-   socket.to(conversationId).emit('user_typing', {
-  conversationId,
-  userId,
-});
-  });
+    try {
+      await assertParticipant(conversationId, userId);
 
-socket.on('typing_stop', ({ conversationId }: ConversationEvent) => {
-  const userId = socket.data.userId as string | undefined;
+      socket.to(conversationId).emit('user_typing', {
+        conversationId,
+        userId,
+      });
+    } catch {
+      return;
+    }
+  },
+);
+socket.on(
+  'typing_stop',
+  async ({ conversationId }: ConversationEvent) => {
+    const userId = socket.data.userId as string | undefined;
 
-  if (!conversationId || !userId) return;
+    if (!conversationId || !userId) return;
 
-  socket.to(conversationId).emit('user_stop_typing', {
+    try {
+      await assertParticipant(conversationId, userId);
+
+      socket.to(conversationId).emit('user_stop_typing', {
+        conversationId,
+        userId,
+      });
+    } catch {
+      return;
+    }
+  },
+);
+socket.on(
+  'send_message',
+  async ({
     conversationId,
-    userId,
-  });
-});
+    content,
+  }: {
+    conversationId: string;
+    content: string;
+  }) => {
+    const userId = socket.data.userId as string | undefined;
+
+    if (!userId || !conversationId) {
+      return;
+    }
+
+    try {
+      const message = await sendMessageService(
+        conversationId,
+        userId,
+        { content },
+      );
+
+      io.to(conversationId).emit('receive_message', {
+        conversationId,
+        ...message,
+      });
+    } catch (error) {
+      socket.emit('send_message_error', {
+        conversationId,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to send message',
+      });
+    }
+  },
+);
 }
