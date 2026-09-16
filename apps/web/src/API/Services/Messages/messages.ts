@@ -7,21 +7,26 @@ function extractConversations(data: unknown): Conversation[] {
   if (typeof data === 'object' && data !== null) {
     const payload = data as {
       items?: unknown;
-      data?: { items?: unknown };
+      data?: unknown;
     };
 
     if (Array.isArray(payload.items)) {
       return payload.items as Conversation[];
     }
 
-    if (Array.isArray(payload.data?.items)) {
-      return payload.data.items as Conversation[];
+    if (Array.isArray(payload.data)) {
+      return payload.data as Conversation[];
+    }
+
+    // Kept for safety in case some other endpoint nests as { data: { items } }
+    const nested = payload.data as { items?: unknown } | undefined;
+    if (Array.isArray(nested?.items)) {
+      return nested!.items as Conversation[];
     }
   }
 
   return [];
 }
-
 export async function canMessage(
   _userId: string,
   _targetId: string,

@@ -108,11 +108,17 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                   {/* Left Side: Avatar and Preview Details */}
                   <div className="flex gap-3">
                     {/* User Profile Avatar */}
-                    <img
-                      src={person.profilePicture || ''}
-                      alt={person.fullName}
-                      className="rounded-full w-12 h-12 object-cover"
-                    />
+                    {person.profilePicture ? (
+                      <img
+                        src={person.profilePicture}
+                        alt={person.fullName}
+                        className="rounded-full w-12 h-12 object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-sm font-medium text-white">
+                        {person.fullName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
 
                     {/* Text Metadata Container */}
                     <div className="flex flex-col gap-1">

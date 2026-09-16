@@ -1,40 +1,45 @@
-import { Like } from "../../model/likes.js";
-import { Profile } from "../../model/profile.js";
-import mongoose from "mongoose";
+import { Like } from '../../model/likes.js';
+import { Profile } from '../../model/profile.js';
+import mongoose from 'mongoose';
 
 export async function likeProfile(likerId: string, likedUserId: string) {
   // I (by I, i mean Chidera ) removed the payload validation for now if any error occurs later add in the payload thank you
 
-  // temporal: testing for matches 
-  const existingLike = await Like.findOne({likerId: likedUserId,
-    likedUserId: likerId
+  // temporal: testing for matches
+  const existingLike = await Like.findOne({
+    likerId: likedUserId,
+    likedUserId: likerId,
   });
-  const matched = !!existingLike
-  console.log("EXISTING LIKES", existingLike);
-  
+  const matched = !!existingLike;
+  console.log('EXISTING LIKES', existingLike);
 
-
-  const like = new Like({
-    likerId: likerId,
-    likedUserId: likedUserId,
-  });
-  await like.save();
+  try {
+    const like = new Like({ likerId, likedUserId });
+    await like.save();
+  } catch (error: any) {
+    // Duplicate key = this exact like already exists — treat as a no-op
+    // success rather than an error. This can legitimately happen from a
+    // double-click, a retried request, or (as here) frontend/DB state
+    // having drifted apart after an earlier failed unlike.
+    if (error?.code !== 11000) {
+      throw error;
+    }
+  }
 
   return {
-    message: "Profile liked successfully.",
-    status: "success",
-    likerId: likerId,
-    likedUserId: likedUserId,
-    // temporally added to test matches 
-    matched: matched,
+    message: 'Profile liked successfully.',
+    status: 'success',
+    likerId,
+    likedUserId,
+    matched,
   };
 }
 
 export async function unlikeProfile(likerId: string, likedUserId: string) {
   await Like.deleteOne({ likerId: likerId, likedUserId: likedUserId });
   return {
-    message: "Profile unliked successfully.",
-    status: "success",
+    message: 'Profile unliked successfully.',
+    status: 'success',
     likerId: likerId,
     likedUserId: likedUserId,
   };
@@ -45,12 +50,12 @@ export async function likedByMe(likerId: string) {
     likerId: new mongoose.Types.ObjectId(likerId),
   });
 
-  console.log("LIKES FOUND:", likes);
-  console.log("LIKER ID:", likerId);
+  console.log('LIKES FOUND:', likes);
+  console.log('LIKER ID:', likerId);
 
   const likedUserIds = likes.map((like) => like.likedUserId);
 
-  console.log("LIKED USER IDS:", likedUserIds);
+  console.log('LIKED USER IDS:', likedUserIds);
 
   const profiles = await Profile.find({
     userId: { $in: likedUserIds },
@@ -66,16 +71,14 @@ export async function likedByMe(likerId: string) {
 export const whoLikedMe = async (userId: string) => {
   const likes = await Like.find({
     likedUserId: new mongoose.Types.ObjectId(userId),
-  }).sort({createdAt: -1});
-  
-  console.log("WHO LIKED ME LIKES", likes);
-  
+  });
+  console.log('WHO LIKED ME LIKES', likes);
+
   const likerIds = likes.map((like) => like.likerId);
-  console.log("WHO LIKED ME LIKER IDS:", likerIds);
-  
+  console.log('WHO LIKED ME LIKER IDS:', likerIds);
 
   const profiles = await Profile.find({ userId: { $in: likerIds } });
-   console.log("WHO LIKED ME PROFILES:", profiles);
+  console.log('WHO LIKED ME PROFILES:', profiles);
 
   return profiles.map((profile) => ({
     ...profile.toObject(),
@@ -84,7 +87,7 @@ export const whoLikedMe = async (userId: string) => {
   }));
 };
 
-export const getMatches = async (userId: string)=>{
+export const getMatches = async (userId: string) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
   // Find everyone I liked
@@ -111,5 +114,5 @@ export const getMatches = async (userId: string)=>{
     ...profile.toObject(),
     id: profile.userId.toString(),
     userId: profile.userId.toString(),
-  })); 
-}
+  }));
+};
