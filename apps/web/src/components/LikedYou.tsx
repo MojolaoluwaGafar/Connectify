@@ -1,16 +1,15 @@
-import {useState, useEffect} from "react"
-import type { DiscoverProfile } from "../types";
-import { getWhoLikedMe } from "../API/Services/Likes/likes";
-import { useAuth } from "../context/authContext/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import type { DiscoverProfile } from '../types';
+import { getWhoLikedMe } from '../API/Services/Likes/likes';
+import { useAuth } from '../context/authContext/useAuth';
+import { useNavigate } from 'react-router-dom';
 
-
-export const WhoLikedYou =()=>{
-    const navigate = useNavigate()
-    const {user} = useAuth()
-    const [likedYou, setLikedYou] = useState<DiscoverProfile[]>([])
-    useEffect(()=>{
-        if(!user) return;
+export const WhoLikedYou = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [likedYou, setLikedYou] = useState<DiscoverProfile[]>([]);
+  useEffect(() => {
+    if (!user) return;
 
         const fetchWhoLikedMe = async()=>{
             try {
@@ -31,40 +30,39 @@ export const WhoLikedYou =()=>{
         return null;
     }
 
-    return (
-      <div>
-        {/* starts here  */}
-        <div className="border rounded-2xl p-4 text-sm space-y-3 border-stroke-primary w-full lg:w-[250px]">
-          <div className="flex justify-between items-center">
-            <h2 className="font-fraunces font-semibold font-600 text-[16px] text-black">
-              Who liked you
-            </h2>
-            <button className="font-geist text-[#7C3AED] font-semibold text-[12px] font-600 cursor-pointer hover:border hover:border-gray-300 p-2 rounded-lg"
-            onClick={()=> navigate('/likes')}>
-              See All
-            </button>
-          </div>
-          {/* Who liked you heading */}
-          {likedYou.map((profile) => (
-            <div
-              key={profile.id}
-              className="flex gap-3 items-center font-geist"
-            >
-              <img
-                className="size-10 rounded-full object-cover"
-                src={profile.profilePicture || "/profile-picture.png"}
-                alt={profile.fullName}
-              />
+  return (
+    <div>
+      {/* starts here  */}
+      <div className="border rounded-2xl p-4 text-sm space-y-3 border-stroke-primary w-full">
+        <div className="flex justify-between items-center">
+          <h2 className="font-fraunces font-semibold font-600 text-[16px] text-black">
+            Who liked you
+          </h2>
+          <button
+            className="font-geist text-[#7C3AED] font-semibold text-[12px] font-600 cursor-pointer hover:border hover:border-gray-300 p-2 rounded-lg"
+            onClick={() => navigate('/likes')}
+          >
+            See All
+          </button>
+        </div>
+        {/* Who liked you heading */}
+        {likedYou.map((profile) => (
+          <div key={profile.id} className="flex gap-3 items-center font-geist">
+            <img
+              className="size-10 rounded-full object-cover"
+              src={profile.profilePicture || '/profile-picture.png'}
+              alt={profile.fullName}
+            />
 
-              <div className="grow">
-                <h2 className="text-black text-md font-semibold font-600 text-[14px]">
-                  {profile.fullName.split(" ")[0]}, {profile.age}
-                </h2>
+            <div className="grow">
+              <h2 className="text-black text-md font-semibold font-600 text-[14px]">
+                {profile.fullName.split(' ')[0]}, {profile.age}
+              </h2>
 
-                <p className="font-400 font-regular text-[12px]">
-                  {profile.location}
-                </p>
-              </div>
+              <p className="font-400 font-regular text-[12px]">
+                {profile.location}
+              </p>
+            </div>
 
               <div>
                 <button className="border border-stroke-primary px-3 py-1 text-sm rounded-lg font-semibold text-black text-[12px] font-600 hover:bg-gray-100" 
