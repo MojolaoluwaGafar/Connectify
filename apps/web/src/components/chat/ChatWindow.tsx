@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { useEffect, useRef, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPaperPlane, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
-import { useAuth } from '../../context/authContext/useAuth';
-import { socket } from '../../lib/socket';
-
+import { useAuth } from "../../context/authContext/useAuth";
+import { socket } from "../../lib/socket";
+import {
+  getMessages,
+  markConversationRead,
+} from "../../API/Services/Messages/messages";
 // TypeScript interface for component props
 interface ChatWindowProps {
   conversation: any;
@@ -18,7 +21,10 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   // State to hold active chat messages array
   const [messages, setMessages] = useState<any[]>([]);
   // State to hold current value of text input
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
+  const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Extract recipient details and match ID from current conversation prop
   const selectedUser = conversation?.otherUser;
@@ -27,58 +33,160 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   useEffect(() => {
     if (!matchId) {
       setMessages([]);
-      setInputText('');
+      setInputText("");
       return;
     }
 
+    setIsOtherUserTyping(false);
+    setIsTyping(false);
+
+    let cancelled = false;
+
+    async function loadMessages() {
+      try {
+        const data = await getMessages(matchId);
+
+        if (!cancelled) {
+          setMessages(data);
+        }
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+
+        if (!cancelled) {
+          setMessages([]);
+        }
+      }
+    }
+
+    loadMessages();
+
+    markConversationRead(matchId).catch((error) => {
+      console.error("Failed to mark conversation as read:", error);
+    });
+
     const handleIncomingMessage = (payload: any) => {
-      const conversationId = payload?.conversationId ?? payload?.matchId
+      const conversationId = payload?.conversationId ?? payload?.matchId;
+
       if (conversationId !== matchId) {
-        return
+        return;
       }
 
       const nextMessage = {
-        id: payload?.id ?? `${conversationId}-${payload?.senderId ?? 'socket'}-${Date.now()}`,
+        id:
+          payload?.id ??
+          `${conversationId}-${payload?.senderId ?? "socket"}-${Date.now()}`,
         matchId: conversationId,
-        senderId: String(payload?.senderId ?? ''),
-        text: payload?.content ?? payload?.text ?? '',
+        senderId: String(payload?.senderId ?? ""),
+        text: payload?.content ?? payload?.text ?? "",
         sentAt: payload?.createdAt ?? new Date().toISOString(),
-      }
+      };
 
       setMessages((current) => {
-        const alreadyExists = current.some((message) => message.id === nextMessage.id)
-        return alreadyExists ? current : [...current, nextMessage]
-      })
-    }
+        const alreadyExists = current.some(
+          (message) => message.id === nextMessage.id,
+        );
 
-    socket.on('receive_message', handleIncomingMessage)
-    socket.on('new_message', handleIncomingMessage)
+        return alreadyExists ? current : [...current, nextMessage];
+      });
+    };
 
-    socket.emit('join_conversation', matchId)
+    const handleUserTyping = (payload: any) => {
+      if (payload?.conversationId !== matchId) {
+        return;
+      }
 
+      if (payload?.userId === String(selectedUser?.userId)) {
+        setIsOtherUserTyping(true);
+      }
+    };
+
+    const handleUserStopTyping = (payload: any) => {
+      if (payload?.conversationId !== matchId) {
+        return;
+      }
+
+      if (payload?.userId === String(selectedUser?.userId)) {
+        setIsOtherUserTyping(false);
+      }
+    };
+    socket.on("receive_message", handleIncomingMessage);
+    socket.on("user_typing", handleUserTyping);
+    socket.on("user_stop_typing", handleUserStopTyping);
+
+    socket.emit("join_conversation", matchId);
     return () => {
-      socket.emit('leave_conversation', matchId)
-      socket.off('receive_message', handleIncomingMessage)
-      socket.off('new_message', handleIncomingMessage)
-    }
-  }, [matchId])
+      cancelled = true;
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+      socket.emit("leave_conversation", matchId);
 
-    if (!inputText.trim() || !selectedUser || !user || !matchId) {
+      socket.off("receive_message", handleIncomingMessage);
+      socket.off("user_typing", handleUserTyping);
+      socket.off("user_stop_typing", handleUserStopTyping);
+
+      if (typingTimer.current) {
+        clearTimeout(typingTimer.current);
+      }
+
+      setIsOtherUserTyping(false);
+      setIsTyping(false);
+    };
+  }, [matchId]);
+
+  const handleInputChange = (value: string) => {
+    setInputText(value);
+
+    if (!matchId || !selectedUser) {
       return;
     }
 
-    const outboundText = inputText.trim();
-    setInputText('');
+    if (!isTyping) {
+      socket.emit("typing_start", {
+        conversationId: matchId,
+      });
 
-    socket.emit('send_message', {
+      setIsTyping(true);
+    }
+
+    if (typingTimer.current) {
+      clearTimeout(typingTimer.current);
+    }
+
+    typingTimer.current = setTimeout(() => {
+      socket.emit("typing_stop", {
+        conversationId: matchId,
+      });
+
+      setIsTyping(false);
+    }, 1500);
+  };
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!inputText.trim() || !selectedUser || !matchId) {
+      return;
+    }
+
+    if (typingTimer.current) {
+      clearTimeout(typingTimer.current);
+    }
+
+    if (isTyping) {
+      socket.emit("typing_stop", {
+        conversationId: matchId,
+      });
+
+      setIsTyping(false);
+    }
+
+    const outboundText = inputText.trim();
+
+    setInputText("");
+
+    socket.emit("send_message", {
       conversationId: matchId,
-      senderId: Number(user.id),
       content: outboundText,
-    })
-  }
+    });
+  };
 
   return (
     <div className="lg:flex">
@@ -106,10 +214,13 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
             {/* Recipient Details */}
             <div className="flex flex-col">
               <p className="font-semibold text-[15px] font-[Geist]">
-                {selectedUser?.fullName || 'Select a Profile'}
+                {selectedUser?.fullName || "Select a Profile"}
               </p>
+
               <p className="text-[13px] text-gray-500 font-[Geist]">
-                {selectedUser?.location || 'No active location'}
+                {isOtherUserTyping
+                  ? "Typing..."
+                  : selectedUser?.location || "No active location"}
               </p>
             </div>
           </div>
@@ -137,23 +248,23 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
 
               {messages.map((msg) => {
                 // Determine if message belongs to logged-in user
-                const isUser = msg.senderId === user?.id;
+                const isUser = msg.senderId === String(user?.id);
 
                 return (
                   <div
                     key={msg.id}
                     className={`flex flex-col max-w-[75%] ${
                       isUser
-                        ? 'self-end items-end' // Align user messages right
-                        : 'self-start items-start' // Align incoming messages left
+                        ? "self-end items-end" // Align user messages right
+                        : "self-start items-start" // Align incoming messages left
                     }`}
                   >
                     {/* Message Bubble Styling */}
                     <div
                       className={`rounded-2xl px-4 py-2 text-sm shadow-sm ${
                         isUser
-                          ? 'bg-purple-600 text-white rounded-br-none'
-                          : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                          ? "bg-purple-600 text-white rounded-br-none"
+                          : "bg-gray-100 text-gray-800 rounded-bl-none"
                       }`}
                     >
                       {msg.text}
@@ -171,7 +282,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => selectedUser && setInputText('Ask about music')}
+              onClick={() => selectedUser && setInputText("Ask about music")}
               className="border border-solid rounded-3xl py-1 px-2 border-[#1c1524]/[0.0784] text-sm max-w-34 h-8.25 hover:bg-gray-50"
             >
               Ask about music
@@ -179,7 +290,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
 
             <button
               type="button"
-              onClick={() => selectedUser && setInputText('Talk about Travel')}
+              onClick={() => selectedUser && setInputText("Talk about Travel")}
               className="border border-solid rounded-3xl py-1 px-2 border-[#1c1524]/[0.0784] text-[13px] max-w-34 max-h-8.25 hover:bg-gray-50"
             >
               Talk about Travel
@@ -187,7 +298,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
 
             <button
               type="button"
-              onClick={() => selectedUser && setInputText('Talk about Art')}
+              onClick={() => selectedUser && setInputText("Talk about Art")}
               className="border border-solid rounded-3xl py-1 px-2 border-[#1c1524]/[0.0784] text-[13px] max-w-33.5 max-h-8.25 hover:bg-gray-50"
             >
               Talk about Art
@@ -195,7 +306,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
 
             <button
               type="button"
-              onClick={() => selectedUser && setInputText('Hello')}
+              onClick={() => selectedUser && setInputText("Hello")}
               className="border border-solid rounded-3xl py-1 px-2 border-[#1c1524]/[0.0784] text-[13px] max-w-34 max-h-8.25 hover:bg-gray-50"
             >
               Say Simple Hello
@@ -207,12 +318,12 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
             <input
               type="text"
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value)}
               disabled={!selectedUser}
               placeholder={
                 selectedUser
-                  ? `Write a genuine message to ${selectedUser.fullName.split(' ')[0]}`
-                  : 'Select a Profile'
+                  ? `Write a genuine message to ${selectedUser.fullName.split(" ")[0]}`
+                  : "Select a Profile"
               }
               className="w-full border-solid rounded-3xl border border-[#1c1524]/[0.0784] px-4 focus:outline-purple-600 disabled:bg-gray-50 disabled:cursor-not-allowed text-sm"
             />

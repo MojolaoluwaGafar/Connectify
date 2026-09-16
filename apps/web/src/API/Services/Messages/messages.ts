@@ -36,12 +36,10 @@ export async function canMessage(
 }
 
 export async function getConversations(
-  userId: string,
+  
 ): Promise<Conversation[]> {
   try {
-    const { data } = await api.get('/api/v1/conversations', {
-      params: { userId },
-    });
+    const { data } = await api.get('/api/v1/conversations');
     return extractConversations(data);
   } catch (error: unknown) {
     const status =
@@ -56,8 +54,21 @@ export async function getConversations(
     throw error;
   }
 }
+export async function getMessages(conversationId: string) {
+  const { data } = await api.get(
+    `/api/v1/conversations/${conversationId}/messages`,
+  );
+
+  return Array.isArray(data?.data) ? data.data : [];
+}
+export async function markConversationRead(conversationId: string) {
+  await api.post(`/api/v1/conversations/${conversationId}/read`);
+}
 
 export const MessagesService = {
   canMessage,
+  getMessages,
   getConversations,
+  markConversationRead,
+
 };

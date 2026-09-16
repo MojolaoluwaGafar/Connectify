@@ -28,9 +28,6 @@ import { MatchesModal } from './components/MatchModal';
 import LikesProvider from './context/likeContext/LikesProvider';
 import { connectSocket, disconnectSocket } from './lib/socket';
 
-import { ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css";
-
 // Everything that needs to know "is someone logged in" (the auth gate modal,
 // the likes/matches state) lives inside AuthProvider so it can read that.
 function Providers({ children }: { children: ReactNode }) {
