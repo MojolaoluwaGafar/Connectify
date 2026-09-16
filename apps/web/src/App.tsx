@@ -1,5 +1,11 @@
 import { useEffect, type ReactNode } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import DiscoveryPage from './pages/DiscoveryPage';
 import ProtectedRoutes from './layout/ProtectedRoutes';
 import MainLayout from './layout/MainLayout';
@@ -28,13 +34,32 @@ import { MatchesModal } from './components/MatchModal';
 import LikesProvider from './context/likeContext/LikesProvider';
 import { connectSocket, disconnectSocket } from './lib/socket';
 
-import { ToastContainer } from "react-toastify"
+import { ToastContainer, toast } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 
 // Everything that needs to know "is someone logged in" (the auth gate modal,
 // the likes/matches state) lives inside AuthProvider so it can read that.
 function Providers({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!location.state?.loginSuccess) return;
+
+    toast.success('Login Successful!', {
+      style: {
+        backgroundColor: '#4caf50',
+        color: '#fff',
+        borderRadius: '8px',
+        fontWeight: 'bold',
+      },
+      position: 'top-left',
+    });
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location, navigate]);
+
   // const { data } = getUser();
   // console.log(data);
 
@@ -142,6 +167,10 @@ export default function App() {
                 <Route path="*" element={<PageNotFound></PageNotFound>} />
               </Route>
             </Routes>
+            
+            
+            <ToastContainer  position='top-center' autoClose={3000} hideProgressBar={false}
+            newestOnTop={false} closeOnClick pauseOnHover draggable />
           </Providers>
         </AuthProvider>
       </BrowserRouter>

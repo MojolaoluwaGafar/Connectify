@@ -25,7 +25,6 @@ const LikesPage = () => {
   const {
     data: likedYouData,
     loading: isLikedYouLoading,
-    isRefetching: isLikedYouRefetching,
   } = useApiQuery(fetchWhoLikedMe, 'Could not load your likes.', {
     enabled: Boolean(user),
     cacheKey: user ? `liked-you:${user.id}` : null,
@@ -35,7 +34,6 @@ const LikesPage = () => {
   const {
     data: youLikedData,
     loading: isYouLikedLoading,
-    isRefetching: isYouLikedRefetching,
   } = useApiQuery(fetchLikedByMe, 'Could not load your likes.', {
     enabled: Boolean(user),
     cacheKey: user ? `you-liked:${user.id}` : null,
@@ -58,9 +56,6 @@ const LikesPage = () => {
       ? isLikedYouLoading && likedYouData === null
       : isYouLikedLoading && youLikedData === null;
 
-  const isRefetching =
-    tab === 'liked-you' ? isLikedYouRefetching : isYouLikedRefetching;
-
   const list = tab === 'liked-you' ? likedYou : youLiked;
 
   return (
@@ -75,9 +70,9 @@ const LikesPage = () => {
               {tab === 'liked-you'
                 ? 'People who liked you'
                 : 'People you liked'}
-              {isRefetching && (
+              {/* {isRefetching && (
                 <span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-200 border-t-theme" />
-              )}
+              )} */}
             </h1>
 
             <p className="mt-2  font-[inter]  tracking-normal leading-[100%] font-normal text-[16px] text-[#655E75]  ">
