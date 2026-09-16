@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
 
@@ -16,6 +16,12 @@ import ProfileCard from '../components/ui/ProfileCard';
 import { useAuth } from '../context/authContext/useAuth';
 import { useLikes } from '../context/likeContext/useLikes';
 import { getMatches } from '../API/Services/Matches/matches';
+import { useApiQuery } from '../hooks/useApiQuery';
+
+function sharedCount(a: DiscoverProfile, b: DiscoverProfile) {
+  return a.interests.filter((interest) => b.interests.includes(interest))
+    .length;
+}
 
 export default function ViewProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -25,85 +31,103 @@ export default function ViewProfilePage() {
   const { likedIds, toggleLike } = useLikes();
   const { requireAuth } = useAuthGate();
 
-  const [target, setTarget] = useState<DiscoverProfile | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [matches, setMatches] = useState<DiscoverProfile[]>([]);
+  // --- Target profile ---
+  const fetchProfile = useCallback(() => getProfileById(id!), [id]);
 
-  const [suggestions, setSuggestions] = useState<DiscoverProfile[]>([]);
+  const { data: target, loading: isProfileLoading } = useApiQuery(
+    fetchProfile,
+    'Could not load this profile.',
+    {
+      enabled: Boolean(id),
+      cacheKey: id ? `profile:${id}` : null,
+      staleTime: 30_000,
+    },
+  );
 
-  const [canMessage, setCanMessage] = useState(false);
+  // --- Matches ---
+  // likedIds.size is folded into the cache key so a like/unlike anywhere
+  // in the app (which changes likedIds) forces this to refetch rather
+  // than trusting a cached matches list that predates the action.
+  const fetchMatches = useCallback(() => getMatches(user!.id), [user]);
 
-  function sharedCount(a: DiscoverProfile, b: DiscoverProfile) {
-    return a.interests.filter((interest) => b.interests.includes(interest))
-      .length;
-  }
+  const { data: matchesData } = useApiQuery(
+    fetchMatches,
+    'Could not load matches.',
+    {
+      enabled: Boolean(user),
+      cacheKey: user ? `matches:${user.id}:${likedIds.size}` : null,
+      staleTime: 30_000,
+    },
+  );
 
-  useEffect(() => {
-    if (!user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoading(false);
-      return;
-    }
+  const matches = matchesData ?? [];
 
-    setLoading(true);
+  const isMatchedWithTarget = target
+    ? matches.some((match) => match.id === target.id)
+    : false;
 
-    getMatches(user.id)
-      .then((res) => {
-        setMatches(res);
-      })
-      .catch((error) => {
-        console.error('Failed to get matches:', error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [user, likedIds]);
+  // --- Suggestions ---
+  const fetchSuggestions = useCallback(async () => {
+    if (!target) return [];
 
-  useEffect(() => {
-    if (!id) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
-    getProfileById(id).then(async (profile) => {
-      setTarget(profile);
-      console.log('TARGET PROFILE:', profile);
-      setLoading(false);
-
-      setLoading(false);
-      if (profile) {
-        const res = await getDiscoverProfiles({
-          excludeUserId: user?.id,
-          pageSize: 3,
-        });
-
-        setSuggestions(
-          res.items
-            .filter((person) => person.id !== profile.id)
-            .sort((a, b) => sharedCount(b, profile) - sharedCount(a, profile))
-            .slice(0, 3),
-        );
-
-        if (user) {
-          setCanMessage(await checkCanMessage(user.id, profile.id));
-        }
-      }
+    const res = await getDiscoverProfiles({
+      excludeUserId: user?.id,
+      pageSize: 3,
     });
-  }, [id, user]);
 
-  useEffect(() => {
-    if (user && target) {
-      checkCanMessage(user.id, target.id).then(setCanMessage);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [likedIds]);
+    return res.items
+      .filter((person) => person.id !== target.id)
+      .sort((a, b) => sharedCount(b, target) - sharedCount(a, target))
+      .slice(0, 3);
+  }, [target, user?.id]);
 
-  if (loading)
+  const { data: suggestionsData } = useApiQuery(
+    fetchSuggestions,
+    'Could not load suggestions.',
+    {
+      enabled: Boolean(target),
+      cacheKey: target
+        ? `suggestions:${target.id}:${user?.id ?? 'anon'}`
+        : null,
+      staleTime: 60_000,
+    },
+  );
+
+  const suggestions = suggestionsData ?? [];
+
+  // --- Can-message check ---
+  // Note: this is currently doing the same job as isMatchedWithTarget
+  // above via a different path (a direct backend check vs. deriving from
+  // the matches list). Worth consolidating to one source of truth later.
+  const fetchCanMessage = useCallback(
+    () => checkCanMessage(user!.id, target!.id),
+    [user, target],
+  );
+
+  const { data: canMessageData } = useApiQuery(
+    fetchCanMessage,
+    'Could not check messaging status.',
+    {
+      enabled: Boolean(user && target),
+      cacheKey:
+        user && target
+          ? `can-message:${user.id}:${target.id}:${likedIds.size}`
+          : null,
+      staleTime: 30_000,
+    },
+  );
+
+  const canMessage = canMessageData ?? false;
+
+  if (isProfileLoading && !target) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
       </div>
     );
+  }
 
-  if (!target && !loading) {
+  if (!target) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <p className="font-display text-xl font-semibold text-ink-900">
@@ -119,13 +143,8 @@ export default function ViewProfilePage() {
       </div>
     );
   }
-  if (!target) return null;
 
-  const isLiked = likedIds.has(target?.userId || '');
-
-  console.log('PROFILE USER ID:', target?.userId);
-  console.log('LIKED IDS:', [...likedIds]);
-  console.log('IS LIKED:', likedIds.has(target?.userId || ''));
+  const isLiked = likedIds.has(target.id);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -143,8 +162,8 @@ export default function ViewProfilePage() {
         {/* Profile image */}
         <div className="overflow-hidden rounded-3xl border border-stroke-primary shadow-sm bg-gray-100">
           <img
-            src={target?.profilePicture ?? '/profile-picture.png'}
-            alt={target?.fullName}
+            src={target.profilePicture ?? '/profile-picture.png'}
+            alt={target.fullName}
             className="aspect-4/5 w-full object-cover"
           />
         </div>
@@ -156,17 +175,17 @@ export default function ViewProfilePage() {
           </p>
 
           <h1 className="font-display text-3xl font-semibold text-ink-900 sm:text-4xl">
-            {target?.fullName}
-            {target?.age ? `, ${target.age}` : ''}
+            {target.fullName}
+            {target.age ? `, ${target.age}` : ''}
           </h1>
 
           <p className="mt-2 flex items-center gap-1.5 text-ink-500">
             <MapPin size={15} />
-            {target?.location}
+            {target.location}
           </p>
 
           {/* Occupation */}
-          {target?.occupation && (
+          {target.occupation && (
             <div className="mt-6 rounded-2xl bg-theme-shade/20 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-theme">
                 Works as
@@ -179,14 +198,14 @@ export default function ViewProfilePage() {
           )}
 
           {/* Interests */}
-          {target?.interests?.length > 0 && (
+          {target.interests?.length > 0 && (
             <div className="mt-6">
               <p className="text-xs font-semibold uppercase tracking-wide text-theme">
                 Interests
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {target?.interests.map((interest) => (
+                {target.interests.map((interest) => (
                   <Chip key={interest} label={interest} as="span" />
                 ))}
               </div>
@@ -200,7 +219,7 @@ export default function ViewProfilePage() {
             </p>
 
             <p className="mt-2 text-sm leading-relaxed text-ink-700">
-              {target?.about}
+              {target.about}
             </p>
           </div>
 
@@ -221,16 +240,14 @@ export default function ViewProfilePage() {
               {isLiked ? 'Liked' : 'Like profile'}
             </Button>
 
-            {matches ? (
+            {isMatchedWithTarget ? (
               <Button
                 variant="outline"
                 icon={<MessageCircle size={16} />}
                 className="border-stroke-primary! text-theme! hover:bg-theme-shade/20!"
                 onClick={() =>
                   navigate('/messages', {
-                    state: {
-                      openProfileId: target?.id,
-                    },
+                    state: { openProfileId: target.id },
                   })
                 }
               >
