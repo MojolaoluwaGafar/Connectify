@@ -101,7 +101,7 @@ const Matches = () => {
             matches.map((profile: DiscoverProfile) => (
               <div
                 key={profile.id}
-                className="group relative overflow-hidden rounded-2xl border border-stroke-primary text-sm shadow-sm transition-all duration-300 hover:shadow-lg"
+                className="group relative overflow-hidden rounded-2xl border border-stroke-primary text-sm shadow-sm transition-all duration-300 hover:shadow-lg relative"
               >
                 {/* Profile image */}
                 <div className="w-full h-[260px] sm:h-[280px] md:h-[300px] lg:h-[320px] xl:h-[340px] overflow-hidden bg-gray-100">
@@ -113,7 +113,7 @@ const Matches = () => {
                 </div>
 
                 {/* Profile content */}
-                <div className="p-4 sm:p-5 lg:p-6 flex flex-col gap-3">
+                <div className="p-4 sm:p-5 lg:p-6 flex flex-col gap-3 h-55">
                   {/* Profile avatar and name */}
                   <div className="flex items-center gap-3">
                     <img
@@ -148,18 +148,18 @@ const Matches = () => {
                   </div>
 
                   {/* Profile action buttons */}
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-4">
+                  <div className="flex items-center justify-between px-4 sm:gap-3 absolute bottom-2 left-0 w-full">
                     {/* Start chat button */}
                     <button
                       onClick={() => navigate("/messages")}
-                      className="bg-theme text-white font-medium font-geist py-2.5 px-2 sm:px-4 rounded-lg text-sm hover:bg-[#6941C6] transition-colors"
+                      className="bg-theme text-white font-medium font-geist py-2.5 px-2 sm:px-4 rounded-lg text-sm hover:bg-[#6941C6] transition-colors w-[182px]"
                     >
                       Start Chat
                     </button>
 
                     {/* View profile button */}
                     <button
-                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-2 sm:px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors"
+                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-2 sm:px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors w-[182px]"
                       onClick={() => navigate(`/profile/${profile.id}`)}
                     >
                       View Profile
