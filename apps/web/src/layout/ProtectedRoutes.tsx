@@ -7,6 +7,11 @@ import { useAuth } from '../context/authContext/useAuth';
 // Profile). Guests are bounced to /login and sent back after they sign in.
 // TODO: BACKEND — this currently checks localStorage-derived state; with a
 // real backend it'll check a verified JWT/session cookie instead.
+//
+// Note: this only checks auth, not profile completeness — users without a
+// (complete) profile can still freely browse /home, /messages, etc. The
+// no-profile / incomplete-profile redirect only applies to the /profile
+// route itself (see MyProfilepage.tsx).
 interface Props {
   children: ReactNode;
 }

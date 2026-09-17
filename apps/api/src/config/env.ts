@@ -22,7 +22,7 @@ const environmentSchema = z.object({
     .trim()
     .min(1, 'Set MONGODB_URI to your MongoDB Atlas connection string.'),
 
-  JWT_SECRET_KEY: z.string().default('dev-secret-change-me'),
+  JWT_SECRET_KEY: z.string(),
   JWT_EXPIRES_IN: z.string().default('7d'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   
