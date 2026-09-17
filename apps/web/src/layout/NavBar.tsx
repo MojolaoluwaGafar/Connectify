@@ -5,10 +5,10 @@ import { useAuth } from "../context/authContext/useAuth";
 
 interface NavbarProps {
   isLoggedIn: boolean;
-  userInitial?: string; // e.g. "M" for the avatar circle
+  userInitial?: string; // e.g. "M" for the avatar circle — used as a fallback when there's no photo
+  userPhoto?: string | null; // profile picture URL — shown instead of the initial when provided
   userName?: string;
   email?: string;
-  profileImage?: string | null; // URL of the user's profile image
 }
 
 // Links shown when the user is logged out (public/landing navbar).
@@ -32,9 +32,9 @@ const appLinks = [
 export default function Navbar({
   isLoggedIn,
   userInitial,
+  userPhoto,
   userName,
   email,
-  profileImage,
 }: NavbarProps) {
   // Controls whether the mobile full-width menu is open
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -52,7 +52,12 @@ export default function Navbar({
   // Current route, used to highlight the active nav link
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+
+  const { logout, profile } = useAuth();
+
+  // Use the userPhoto prop first.
+  // If it isn't provided, use the profile picture from auth context.
+  const profilePicture = userPhoto || profile?.profilePicture;
 
   // Close the profile dropdown when clicking anywhere outside it
   useEffect(() => {
@@ -64,9 +69,11 @@ export default function Navbar({
         setProfileOpen(false);
       }
     }
+
     if (profileOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [profileOpen]);
 
@@ -74,6 +81,7 @@ export default function Navbar({
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
+
       if (
         mobileMenuRef.current &&
         !mobileMenuRef.current.contains(target) &&
@@ -83,25 +91,33 @@ export default function Navbar({
         setMobileOpen(false);
       }
     }
+
     if (mobileOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [mobileOpen]);
 
   function goToSection(id: string) {
     setMobileOpen(false);
+
     if (location.pathname !== "/") {
       navigate("/");
+
       requestAnimationFrame(() => {
         setTimeout(
           () =>
-            document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }),
+            document.getElementById(id)?.scrollIntoView({
+              behavior: "smooth",
+            }),
           60,
         );
       });
     } else {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById(id)?.scrollIntoView({
+        behavior: "smooth",
+      });
     }
   }
 
@@ -124,7 +140,7 @@ export default function Navbar({
     // "relative" here lets the mobile dropdown below position itself
     // relative to this header instead of the whole page
     <header className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white">
-      <div className="mx-auto max-w-7xl flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           to={isLoggedIn ? "/home" : "/"}
@@ -138,6 +154,7 @@ export default function Navbar({
           {isLoggedIn
             ? appLinks.map((link) => {
                 const active = location.pathname === link.href;
+
                 return (
                   <Link
                     key={link.label}
@@ -174,10 +191,10 @@ export default function Navbar({
                 onClick={() => setProfileOpen((o) => !o)}
                 className="flex items-center gap-1 rounded-full"
               >
-                {profileImage ? (
+                {profilePicture ? (
                   <img
-                    src={profileImage}
-                    alt="Profile"
+                    src={profilePicture}
+                    alt={userName || "Profile"}
                     className="h-9 w-9 rounded-full object-cover"
                   />
                 ) : (
@@ -185,8 +202,10 @@ export default function Navbar({
                     {userInitial}
                   </span>
                 )}
+
                 <ChevronDown size={16} className="text-gray-500" />
               </button>
+
               {/* Dropdown menu — only rendered when profileOpen is true */}
               {profileOpen && (
                 <div className="absolute right-0 mt-2 w-64 rounded-lg border border-gray-100 bg-white shadow-lg">
@@ -194,25 +213,28 @@ export default function Navbar({
                     <p className="text-sm font-semibold text-gray-900">
                       {userName}
                     </p>
-                    <p className="text-sm text-gray-500">{email}</p>
+
+                    <p className="break-all text-sm text-gray-500">{email}</p>
                   </div>
 
                   <Link
                     to="/profile"
                     onClick={() => setProfileOpen(false)}
-                    className=" px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex gap-2 items-center"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <User size={16} />
                     View profile
                   </Link>
+
                   <Link
                     to="/settings"
                     onClick={() => setProfileOpen(false)}
-                    className="flex gap-2 items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <Settings size={16} />
                     Settings
                   </Link>
+
                   <div className="border-t border-gray-100 py-1">
                     <button
                       onClick={requestLogout}
@@ -234,6 +256,7 @@ export default function Navbar({
               >
                 Login
               </Link>
+
               {/* Solid purple Sign Up button */}
               <Link
                 to="/signup"
@@ -247,11 +270,19 @@ export default function Navbar({
 
         {/* Mobile-only row: avatar (if logged in) + hamburger/close icon */}
         <div className="flex items-center gap-3 md:hidden">
-          {isLoggedIn && (
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-medium text-white">
-              {userInitial}
-            </span>
-          )}
+          {isLoggedIn &&
+            (profilePicture ? (
+              <img
+                src={profilePicture}
+                alt={userName || "Profile"}
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-medium text-white">
+                {userInitial}
+              </span>
+            ))}
+
           {/* Toggles mobileOpen; icon swaps between hamburger and X */}
           <button
             ref={mobileButtonRef}
@@ -276,6 +307,7 @@ export default function Navbar({
             <span className="font-serif text-xl font-semibold text-gray-900">
               Connectify
             </span>
+
             <button
               onClick={() => setMobileOpen(false)}
               aria-label="Close menu"
@@ -319,6 +351,7 @@ export default function Navbar({
               >
                 Login
               </Link>
+
               <Link
                 to="/signup"
                 onClick={() => setMobileOpen(false)}
@@ -342,6 +375,7 @@ export default function Navbar({
                 <User size={18} />
                 View profile
               </Link>
+
               <button
                 onClick={requestLogout}
                 className="flex items-center gap-3 text-left text-base font-medium text-red-600"
@@ -349,15 +383,6 @@ export default function Navbar({
                 <LogOut size={18} />
                 Log out
               </button>
-              {/* <div className="border-t border-gray-100 py-1">
-                    <button
-                      onClick={handleLogout}
-                      // onClick={() => setProfileOpen(false)}
-                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <LogOut size={16} />
-                      Log out
-                    </button> */}
             </div>
           )}
         </div>
@@ -377,14 +402,14 @@ export default function Navbar({
             <div className="mt-6 flex w-full flex-col gap-3">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
-                className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className=" w-full rounded-md border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
 
               <button
                 onClick={confirmLogout}
-                className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
                 Log out
               </button>

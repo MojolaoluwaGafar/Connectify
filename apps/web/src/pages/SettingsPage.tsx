@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { useAuth } from '../context/authContext/useAuth';
-import { useNavigate } from 'react-router-dom';
-
+import { useState } from "react";
+import { useAuth } from "../context/authContext/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const Settings = () => {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const { logout } = useAuth();
   const [newMatches, setNewMatches] = useState(() => {
@@ -29,10 +28,10 @@ const Settings = () => {
 
     setDeleteModalOpen(false);
     setAccountDeleted(true);
-        setTimeout(() => {
-        navigate("/signup");
-      }, 2000);
-    };
+    setTimeout(() => {
+      navigate("/signup");
+    }, 2000);
+  };
 
   const handleLogout = async () => {
     setLogoutModalOpen(false);
@@ -41,7 +40,7 @@ const Settings = () => {
 
     setLoggedOut(true);
 
-       setTimeout(() => {
+    setTimeout(() => {
       navigate("/signup");
     }, 2000);
   };
@@ -227,7 +226,6 @@ const Settings = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
               color="#ef4444"
-
             >
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
@@ -276,7 +274,7 @@ const Settings = () => {
       {/* Logout Modal */}
       {logoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
-          <div className="flex h-70 w-full max-w-lg flex-col items-center justify-center rounded-xl bg-white p-10 shadow-xl">
+          <div className="flex h-70 w-full max-w-lg flex-col            items-center justify-center rounded-xl bg-white p-10 shadow-xl">
             <h2 className="text-lg font-semibold text-gray-900">Log out?</h2>
             <p className="mt-2 text-center text-sm text-gray-500">
               Are you sure you want to log out of your account?
