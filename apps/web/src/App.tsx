@@ -54,9 +54,6 @@ function Providers({ children }: { children: ReactNode }) {
     navigate(location.pathname, { replace: true, state: null });
   }, [location, navigate]);
 
-  // const { data } = getUser();
-  // console.log(data);
-
   useEffect(() => {
     if (!user?.id) {
       disconnectSocket();

@@ -9,7 +9,7 @@ import {
 import { useAuth } from '../authContext/useAuth';
 import { LikesContext } from './likeContext';
 import { invalidateQuery } from '../../hooks/useApiQuery';
-import {themedToast} from '../../utils/ToastFeedback';
+import { themedToast } from '../../utils/ToastFeedback';
 
 function LikesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -25,12 +25,6 @@ function LikesProvider({ children }: { children: ReactNode }) {
       setLikedIds(new Set());
       setLikedMeIds(new Set());
       return;
-    }
-
-    try{
-
-    }catch(error){
-      
     }
 
     const [liked, likedMe] = await Promise.all([
@@ -88,8 +82,10 @@ function LikesProvider({ children }: { children: ReactNode }) {
           return next;
         });
         invalidateQuery(`you-liked:${user.id}`);
+        themedToast.info(`You unliked ${profile.fullName}.`);
       } catch (error) {
         console.error('Failed to unlike profile:', error);
+        themedToast.error('Could not unlike this profile. Please try again.');
       }
       return;
     }
@@ -101,15 +97,18 @@ function LikesProvider({ children }: { children: ReactNode }) {
 
       // The backend tells us whether this like completed a mutual pair.
       // Trust it over the local Sets, since likedMeIds could be stale if
-      // they liked us after our last fetch.
+      // they liked us after our last fetch. A match already gets its own
+      // MatchModal, so only the non-match case needs a toast here.
       if (data.matched) {
         setLikedMeIds((prev) => new Set(prev).add(profile.id));
         setJustMatched(profile);
       } else {
         setJustLiked(profile);
+        themedToast.success(`You liked ${profile.fullName}.`);
       }
     } catch (error) {
       console.error('Failed to like profile:', error);
+      themedToast.error('Could not like this profile. Please try again.');
     }
   }
 

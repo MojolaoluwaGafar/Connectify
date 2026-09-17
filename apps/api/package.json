@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@connecti/shared": "0.1.0",
     "@getbrevo/brevo": "^6.0.3",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.11.0",
