@@ -11,6 +11,7 @@ import { useApiQuery } from '../hooks/useApiQuery';
 import { WhoLikedYou } from '../components/LikedYou';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { ProfileCardSkeletonGrid } from '../components/ui/ProfileCardSkeleton';
 
 const PAGESIZE = 8;
 
@@ -60,6 +61,8 @@ const DiscoveryPage = () => {
   });
 
   const profiles: DiscoverProfile[] = data?.items ?? [];
+
+  console.log('DiscoveryPage profiles:', profiles);
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGESIZE);
 
@@ -106,8 +109,8 @@ const DiscoveryPage = () => {
             </div>
 
             {isLoading || isRefetching ? (
-              <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed my-2 rounded-2xl min-h-96 space-y-4 p-5 sm:p-10 md:p-16 lg:p-20 w-full max-w-7xl mx-auto">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+              <div className="col-span-full flex flex-col items-center justify-center text-center my-2 rounded-2xl min-h-96 space-y-4 p-5 w-full max-w-7xl mx-auto">
+                <ProfileCardSkeletonGrid count={6} />
               </div>
             ) : profiles.length > 0 ? (
               <div className="w-full">
