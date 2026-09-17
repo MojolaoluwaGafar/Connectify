@@ -1,3 +1,4 @@
+import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
@@ -16,6 +17,9 @@ export function createApp() {
 
   app.disable('x-powered-by');
   app.use(helmet());
+  // Shrinks JSON responses before they go over the wire — the biggest,
+  // cheapest win for users on slow or expensive mobile data.
+  app.use(compression());
   app.use(
     cors({
       origin: env.corsOrigins,

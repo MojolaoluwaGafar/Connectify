@@ -10,9 +10,7 @@ const redirectToLogin = () => {
 };
 
 const apiBaseUrl =
-  import.meta.env.VITE_BASE_URL ??
-  import.meta.env.VITE_API_URL ??
-  "http://localhost:3001";
+  import.meta.env.VITE_BASE_URL;
 
 const api = axios.create({
   baseURL: apiBaseUrl,

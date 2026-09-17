@@ -80,6 +80,21 @@ export async function logout(): Promise<void> {
   clearAuth();
 }
 
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await api.post('/api/v1/auth/change-password', {
+    currentPassword,
+    newPassword,
+  });
+}
+
+export async function deleteAccount(): Promise<void> {
+  await api.delete('/api/v1/auth/account');
+  clearAuth();
+}
+
 export async function getCurrentUser(): Promise<User | null> {
   const { data } = await api.get('/api/v1/auth/me');
   return (data?.data as User | null) ?? null;

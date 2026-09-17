@@ -108,7 +108,39 @@ export const resendVerificationSchema = z.object({
   }),
 });
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string({
+      message: "Enter your current password",
+    }),
+    newPassword: z
+      .string({
+        message: "Enter your new password",
+      })
+      .min(8, {
+        message: "Password must be at least 8 characters long",
+      })
+      .regex(/[A-Z]/, {
+        message: "Password must contain at least one uppercase letter",
+      })
+      .regex(/[a-z]/, {
+        message: "Password must contain at least one lowercase letter",
+      })
+      .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+        message: "Password must contain at least one special character",
+      })
+      .regex(/\d/, {
+        message: "Password must contain at least one number",
+      }),
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: "New password must be different from your current password",
+    path: ["newPassword"],
+  });
+
 export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 

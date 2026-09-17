@@ -85,7 +85,7 @@ const DiscoveryPage = () => {
           <p className="mt-2 text-sm text-red-600">{discoveryError}</p>
         )}
         <main className="flex lg:flex-row flex-col gap-10 lg:mt-5 w-full justify-between">
-          <div className=" space-y-4 lg:w-3/4">
+          <div className="py-3 lg:py-0 space-y-4 lg:w-3/4">
             <FilterProfiles
               className="lg:hidden"
               setTab={setTab}

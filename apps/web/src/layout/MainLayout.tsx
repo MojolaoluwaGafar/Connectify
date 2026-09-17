@@ -15,10 +15,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     <div className="h-screen grid grid-rows-[auto_1fr_auto]">
       <Navbar
         isLoggedIn={Boolean(user)}
-        userInitial={user?.fullName[0]}
-        userName={user?.fullName}
+        userInitial={profile?.fullName?.[0]}
+        userName={profile?.fullName}
         email={user?.email}
-        profileImage={profile?.profilePicture}
+        userPhoto={profile?.profilePicture}
       />
 
       <main>

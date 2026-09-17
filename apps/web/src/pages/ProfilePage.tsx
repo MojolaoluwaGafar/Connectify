@@ -214,7 +214,9 @@ export default function ViewProfilePage() {
               </Button>
             ) : (
               <p className="text-sm text-ink-500">
-                Like their profile to start a conversation.
+                {isLiked
+                  ? "You'll be able to message once they like you back."
+                  : 'Like their profile to start a conversation.'}
               </p>
             )}
           </div>

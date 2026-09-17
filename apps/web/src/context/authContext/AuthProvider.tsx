@@ -64,6 +64,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   }
 
+  async function changePassword(currentPassword: string, newPassword: string) {
+    await api.changePassword(currentPassword, newPassword);
+  }
+
+  async function deleteAccount() {
+    await api.deleteAccount();
+    setUser(null);
+    setProfile(null);
+  }
+
   async function signup(fullName: string, email: string, password: string) {
     await api.signUp(fullName, email, password);
     // Note: no user/session yet — signUp only creates the account and sends
@@ -107,7 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         requestPasswordReset,
         resetPassword,
         setUserAfterVerification,
-        
+        changePassword,
+        deleteAccount,
+
       }}
     >
       {children}
