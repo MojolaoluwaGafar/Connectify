@@ -3,7 +3,6 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
 
 import type { DiscoverProfile } from '../types/index';
-
 import {
   getDiscoverProfiles,
   getProfileById,
