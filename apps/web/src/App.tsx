@@ -34,8 +34,10 @@ import { MatchesModal } from './components/MatchModal';
 import LikesProvider from './context/likeContext/LikesProvider';
 import { connectSocket, disconnectSocket } from './lib/socket';
 
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
+import "./toast.css"
+import { themedToast } from './utils/ToastFeedback';
 
 // Everything that needs to know "is someone logged in" (the auth gate modal,
 // the likes/matches state) lives inside AuthProvider so it can read that.
@@ -47,19 +49,7 @@ function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!location.state?.loginSuccess) return;
 
-    toast.success('Login Successful!', {
-      //use key className to add custom toast design example is below
-      className : "LoginSuccessToastStyle",
-      //inline
-      // style: {
-      //   backgroundColor: '#4caf50',
-      //   color: '#fff',
-      //   borderRadius: '8px',
-      //   fontWeight: 'bold',
-      // },
-      //position for toast container placement
-      position: 'top-left',
-    });
+    themedToast.success('Login Successful!');
 
     navigate(location.pathname, { replace: true, state: null });
   }, [location, navigate]);
