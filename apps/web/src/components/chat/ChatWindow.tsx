@@ -25,6 +25,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Extract recipient details and match ID from current conversation prop
@@ -185,6 +186,12 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     };
   }, [matchId]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
+
   const handleInputChange = (value: string) => {
     setInputText(value);
 
@@ -305,7 +312,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
         </div>
 
         {/* Chat Messages Feed Container */}
-        <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-3 md:bg-white lg:bg-white sm:bg-gray-50 bg-gray-50 justify-start [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none] px-3">
+        <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-3 md:bg-white lg:bg-white sm:bg-gray-50 bg-gray-50 justify-start [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none] px-2">
           {/* Empty State Banner when no messages exist */}
           {messages.length === 0 ? (
             <div className="flex justify-center h-11 text-purple-600 bg-purple-100 lg:rounded-3xl md:rounded-3xl rounded-lg p-3 text-sm max-w-[90%] mx-auto w-full text-center border md:border-none lg:border-none border-solid border-gray-200">
@@ -313,9 +320,9 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
             </div>
           ) : (
             /* Rendered Message List */
-            <div className="w-full min-h-full flex flex-col gap-3 my-auto justify-start">
+            <div className="w-full flex flex-col gap-3 justify-start">
+              {" "}
               <p className="text-center text-[11px] text-slate-500">TODAY</p>
-
               {messages.map((msg) => {
                 // Determine if message belongs to logged-in user
                 const isUser = msg.senderId === String(user?.id);
@@ -323,32 +330,32 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
                 return (
                   <div
                     key={msg.id}
-                    className={`flex flex-col max-w-[75%] ${
-                      isUser
-                        ? "self-end items-end" // Align user messages right
-                        : "self-start items-start" // Align incoming messages left
+                    className={`flex w-full min-w-0 ${
+                      isUser ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {/* Message Bubble Styling */}
                     <div
-                      className={`rounded-2xl px-4 py-2 text-sm shadow-sm max-w-[230px] ${
+                      className={`max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[60%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words [overflow-wrap:anywhere] ${
                         isUser
                           ? "bg-purple-600 text-white rounded-br-none"
                           : "bg-gray-100 text-gray-800 rounded-bl-none"
                       }`}
                     >
-                      <p className="w-full">{msg.text}</p>
+                      <p className="whitespace-pre-wrap break-words">
+                        {msg.text}
+                      </p>
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Bar & Preset Quick-Reply Chips */}
         {messages.length === 0 && (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 px-2">
             {/* Quick Starter Chips */}
 
             <button
