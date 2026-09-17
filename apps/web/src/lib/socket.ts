@@ -14,6 +14,18 @@ export const socket = io(socketUrl, {
   reconnectionAttempts: 5,
 })
 
+socket.on('connect', () => {
+  console.log('SOCKET CONNECTED:', socket.id);
+});
+
+socket.on('connect_error', (error) => {
+  console.error('SOCKET CONNECTION ERROR:', error.message);
+});
+
+socket.on('disconnect', (reason) => {
+  console.log('SOCKET DISCONNECTED:', reason);
+});
+
 export const connectSocket = () => {
   const token = getAuthToken()
 

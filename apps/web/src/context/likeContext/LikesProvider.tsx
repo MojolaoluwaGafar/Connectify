@@ -1,47 +1,45 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { DiscoverProfile } from '../../types/index';
-
 import {
   getLikedByMe,
+  getWhoLikedMe,
   likeUser,
   unlikeUser,
 } from '../../API/Services/Likes/likes';
-
 import { useAuth } from '../authContext/useAuth';
 import { LikesContext } from './likeContext';
-
-import { toast } from 'react-toastify';
+import { invalidateQuery } from '../../hooks/useApiQuery';
+import {themedToast} from '../../utils/ToastFeedback';
 
 function LikesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const [justMatched, setJustMatched] =
-    useState<DiscoverProfile | null>(null);
-  const [justLiked, setJustLiked] =
-    useState<DiscoverProfile | null>(null);
+  // Who liked *me*. Combined with likedIds this gives us matches without
+  // a separate /matches request — a match is simply a like in both Sets.
+  const [likedMeIds, setLikedMeIds] = useState<Set<string>>(new Set());
+  const [justMatched, setJustMatched] = useState<DiscoverProfile | null>(null);
+  const [justLiked, setJustLiked] = useState<DiscoverProfile | null>(null);
 
   async function refreshLikes() {
     if (!user) {
       setLikedIds(new Set());
+      setLikedMeIds(new Set());
       return;
     }
 
-    try {
-      const liked = await getLikedByMe(user.id);
+    try{
 
-      setLikedIds(
-        new Set(liked.map((profile) => profile.userId)),
-      );
-    } catch (error) {
-      console.error('Failed to refresh likes:', error);
-
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Could not load your likes.',
-      );
+    }catch(error){
+      
     }
+
+    const [liked, likedMe] = await Promise.all([
+      getLikedByMe(user.id),
+      getWhoLikedMe(user.id),
+    ]);
+
+    setLikedIds(new Set(liked.map((p) => p.id)));
+    setLikedMeIds(new Set(likedMe.map((p) => p.id)));
   }
 
   useEffect(() => {
@@ -50,27 +48,18 @@ function LikesProvider({ children }: { children: ReactNode }) {
     async function run() {
       if (!user) {
         setLikedIds(new Set());
+        setLikedMeIds(new Set());
         return;
       }
 
-      try {
-        const liked = await getLikedByMe(user.id);
+      const [liked, likedMe] = await Promise.all([
+        getLikedByMe(user.id),
+        getWhoLikedMe(user.id),
+      ]);
 
-        if (!ignore) {
-          setLikedIds(
-            new Set(liked.map((profile) => profile.userId)),
-          );
-        }
-      } catch (error) {
-        if (!ignore) {
-          console.error('Failed to load likes:', error);
-
-          toast.error(
-            error instanceof Error
-              ? error.message
-              : 'Could not load your likes.',
-          );
-        }
+      if (!ignore) {
+        setLikedIds(new Set(liked.map((p) => p.id)));
+        setLikedMeIds(new Set(likedMe.map((p) => p.id)));
       }
     }
 
@@ -79,58 +68,48 @@ function LikesProvider({ children }: { children: ReactNode }) {
     return () => {
       ignore = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // A match is mutual: I liked them and they liked me.
+  function isMatch(profileId: string) {
+    return likedIds.has(profileId) && likedMeIds.has(profileId);
+  }
+
   async function toggleLike(profile: DiscoverProfile) {
-    if (!user) {
-      toast.error('Please log in to like a profile.');
+    if (!user) return;
+
+    if (likedIds.has(profile.userId)) {
+      try {
+        await unlikeUser(user.id, profile.userId);
+        setLikedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(profile.id);
+          return next;
+        });
+        invalidateQuery(`you-liked:${user.id}`);
+      } catch (error) {
+        console.error('Failed to unlike profile:', error);
+      }
       return;
     }
 
     try {
-      const isCurrentlyLiked = likedIds.has(profile.id);
-
-      if (isCurrentlyLiked) {
-        await unlikeUser(user.id, profile.userId);
-
-        setLikedIds((prev) => {
-          const next = new Set(prev);
-          next.delete(profile.id);
-          next.delete(profile.userId);
-          return next;
-        });
-
-        setJustLiked(null);
-
-        toast.success(`You unliked ${profile.fullName}.`);
-
-        return;
-      }
-
       const data = await likeUser(user.id, profile.userId);
+      setLikedIds((prev) => new Set(prev).add(profile.id));
+      invalidateQuery(`you-liked:${user.id}`);
 
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        next.add(profile.id);
-        next.add(profile.userId);
-        return next;
-      });
-
+      // The backend tells us whether this like completed a mutual pair.
+      // Trust it over the local Sets, since likedMeIds could be stale if
+      // they liked us after our last fetch.
       if (data.matched) {
+        setLikedMeIds((prev) => new Set(prev).add(profile.id));
         setJustMatched(profile);
-        toast.success(`It's a match with ${profile.fullName}!`);
       } else {
         setJustLiked(profile);
-        toast.success(`You liked ${profile.fullName}.`);
       }
     } catch (error) {
-      console.error('Like action failed:', error);
-
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Could not update your like. Please try again.',
-      );
+      console.error('Failed to like profile:', error);
     }
   }
 
@@ -138,6 +117,8 @@ function LikesProvider({ children }: { children: ReactNode }) {
     <LikesContext.Provider
       value={{
         likedIds,
+        likedMeIds,
+        isMatch,
         toggleLike,
         justMatched,
         clearMatch: () => setJustMatched(null),

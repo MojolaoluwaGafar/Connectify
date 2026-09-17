@@ -14,7 +14,7 @@ import {
   type RegisterInput,
 } from "../../../../../packages/shared/src/schemas/auth";
 import { useState, useRef } from "react";
-import { toast } from "react-toastify";
+import { themedToast } from "../../utils/ToastFeedback";
 import axios from "axios";
 
 const SignupPage = () => {
@@ -48,7 +48,7 @@ const SignupPage = () => {
 
     await signup(data.fullName, data.email, data.password);
 
-    toast.success("Account created successfully!");
+    themedToast.success("Account created successfully!");
 
     navigate("/verify-email", {
       state: { email: data.email },
@@ -64,7 +64,7 @@ const SignupPage = () => {
       }
 
     setSignupError(message);
-    toast.error(message);
+    themedToast.error(message);
   } finally {
     setIsLoading(false);
   }
@@ -201,7 +201,7 @@ const SignupPage = () => {
                       credentialResponse.credential,
                     );
 
-                    toast.success("Google sign-in successful!");
+                    themedToast.success("Google sign-in successful!");
 
                     navigate("/");
                   } catch (error) {
@@ -216,14 +216,14 @@ const SignupPage = () => {
                                : "Google login failed. Please try again.";
 
                           setSignupError(message);
-                          toast.error(message);
+                          themedToast.error(message);
                       }
                       }}
                     onError={() => {
                         const message = "Google login failed. Please try again.";
 
                         setSignupError(message);
-                        toast.error(message);
+                        themedToast.error(message);
                      }}
               />
             </div>

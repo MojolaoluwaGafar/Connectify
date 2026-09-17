@@ -17,7 +17,7 @@ import { useAuth } from '../../context/authContext/useAuth';
 import { SparkleIcon, UsersIcon } from 'lucide-react';
 import { MessageIcon } from '../../components/auth/Icons';
 import PasswordInput from '../../components/auth/PasswordInput';
-import { toast } from 'react-toastify';
+import { themedToast } from '../../utils/ToastFeedback';
 import axios from 'axios';
 
 const LoginPage = () => {
@@ -52,6 +52,7 @@ const LoginPage = () => {
       setLoginError('');
 
       await login(data.email, data.password);
+
       navigate('/home', {
         replace: true,
         state: { loginSuccess: true },
@@ -69,17 +70,7 @@ const LoginPage = () => {
 
       setLoginError(message);
 
-      toast.error(message, {
-      // custome style
-      // className : "",
-        style: {
-          backgroundColor: "#f44336",
-          color: "#fff",
-          borderRadius: "8px",
-          fontWeight: "bold",
-          padding: "12px 20px"
-        }
-    });
+      themedToast.error(message);
         // setLoginError(message);
     }
   };

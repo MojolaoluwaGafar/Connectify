@@ -16,7 +16,7 @@ import {
   UsersIcon,
   MessageIcon,
 } from '../../components/auth/Icons';
-import { toast } from 'react-toastify';
+import { themedToast } from '../../utils/ToastFeedback';
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
@@ -54,7 +54,7 @@ const ResetPasswordPage = () => {
       data.newPassword,
     );
 
-    toast.success('Password reset successfully!');
+    themedToast.success('Password reset successfully! You can now log in.');
 
     navigate('/login', {
       state: {
@@ -68,7 +68,7 @@ const ResetPasswordPage = () => {
         : 'Something went wrong. Please try again.';
 
     setApiError(message);
-    toast.error(message);
+    themedToast.error(message);
   }
 };
 

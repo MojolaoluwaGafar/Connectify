@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { connectDatabase } from './config/database.js'
 import { Server, type Socket } from 'socket.io'
 
 import { env } from './config/env.js'
@@ -81,8 +82,18 @@ export const startSocketServer = (port = env.SOCKET_PORT) => {
   })
 }
 
-if (process.argv[1]?.endsWith('chatServer.ts') || process.argv[1]?.endsWith('chatServer.js')) {
-  startSocketServer()
+if (
+  process.argv[1]?.endsWith('chatServer.ts') ||
+  process.argv[1]?.endsWith('chatServer.js')
+) {
+  connectDatabase()
+    .then(() => {
+      startSocketServer()
+    })
+    .catch((error) => {
+      console.error('Failed to start chat server:', error)
+      process.exit(1)
+    })
 }
 
 export { server, onlineUsers }

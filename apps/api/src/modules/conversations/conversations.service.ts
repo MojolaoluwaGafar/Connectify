@@ -61,11 +61,18 @@ async function areMutuallyLiked(userIdA: string, userIdB: string) {
 // Authorizes that `userId` belongs to this conversation AND that the
 // two users are still a mutual match — someone unliking after the fact
 // should lose message access, same as canMessage() presumably enforces.
-async function assertParticipant(conversationId: string, userId: string) {
+export async function assertParticipant(
+  conversationId: string,
+  userId: string,
+) {
   const parsed = parseConversationId(conversationId);
 
   if (!parsed) {
-    throw new AppError(404, 'CONVERSATION_NOT_FOUND', 'Conversation not found');
+    throw new AppError(
+      404,
+      'CONVERSATION_NOT_FOUND',
+      'Conversation not found',
+    );
   }
 
   const [a, b] = parsed;
@@ -79,6 +86,7 @@ async function assertParticipant(conversationId: string, userId: string) {
   }
 
   const otherUserId = userId === a ? b : a;
+
   const matched = await areMutuallyLiked(userId, otherUserId);
 
   if (!matched) {

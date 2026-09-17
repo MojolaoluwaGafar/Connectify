@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageIcon } from '../../components/auth/Icons';
 
 import { useAuth } from '../../context/authContext/useAuth';
-import { toast } from 'react-toastify';
+import { themedToast } from '../../utils/ToastFeedback';
 
 const VerifyEmailPage = () => {
   const [isVerifying, setIsVerifying] = useState(false);
@@ -88,7 +88,7 @@ const VerifyEmailPage = () => {
   if (enteredCode.length < 6) {
     setError('Please enter the 6-digit verification code.');
 
-    toast.error('Please enter the 6-digit verification code.');
+    themedToast.error('Please enter the 6-digit verification code.');
 
     return;
   }
@@ -101,7 +101,7 @@ const VerifyEmailPage = () => {
   try {
     await verifyEmail(email, enteredCode);
 
-    toast.success('Email verified successfully!');
+    themedToast.success('Email verified successfully!');
 
     navigate('/login', {
       state: { verified: true },
@@ -114,7 +114,7 @@ const VerifyEmailPage = () => {
 
     setError(message);
 
-    toast.error(message);
+    themedToast.error(message);
 
     setCode(['', '', '', '', '', '']);
 
@@ -141,7 +141,7 @@ const VerifyEmailPage = () => {
 
     setCode(['', '', '', '', '', '']);
 
-    toast.success('A new verification code has been sent.');
+    themedToast.success('A new verification code has been sent.');
 
     setTimeout(() => {
       inputRefs.current[0]?.focus();
@@ -154,7 +154,7 @@ const VerifyEmailPage = () => {
 
     setError(message);
 
-    toast.error(message);
+    themedToast.error(message);
   } finally {
     setIsResending(false);
   }

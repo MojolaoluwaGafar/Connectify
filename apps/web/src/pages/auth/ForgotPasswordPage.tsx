@@ -12,7 +12,7 @@ import {
 } from '../../../../../packages/shared/src/schemas/auth';
 
 import { useAuth } from '../../context/authContext/useAuth';
-import { toast } from 'react-toastify';
+import { themedToast } from '../../utils/ToastFeedback';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ const ForgotPasswordPage = () => {
 
     await requestPasswordReset(data.email);
 
-    toast.success('Password reset link sent successfully!');
+    themedToast.success('Password reset link sent successfully!');
 
     navigate('/check-email', {
       state: {
@@ -51,7 +51,7 @@ const ForgotPasswordPage = () => {
         : 'Something went wrong. Please try again.';
 
     setApiError(message);
-    toast.error(message);
+    themedToast.error(message);
   }
 };
 

@@ -1,9 +1,9 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { useEffect, useState } from "react";
 
-import { useAuth } from '../../context/authContext/useAuth';
-import { getConversations } from '../../API/Services/Messages/messages';
+import { useAuth } from "../../context/authContext/useAuth";
+import { getConversations } from "../../API/Services/Messages/messages";
 
 // TypeScript interface for component props
 interface ConversationListProps {
@@ -15,7 +15,7 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
   const { user } = useAuth();
 
   // State to handle local search input filtering
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   // State to hold fetched conversation items
   const [conversations, setConversations] = useState<any[]>([]);
   // Loading indicator state while fetching API data
@@ -33,10 +33,10 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
 
       try {
         // Retrieve conversation threads for active user ID from mock API
-        const data = await getConversations(user.id);
+        const data = await getConversations();
         setConversations(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Failed to load conversations:', error);
+        console.error("Failed to load conversations:", error);
       } finally {
         // Ensure loading spinner/text turns off after API finishes
         setLoading(false);
@@ -108,11 +108,17 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                   {/* Left Side: Avatar and Preview Details */}
                   <div className="flex gap-3">
                     {/* User Profile Avatar */}
-                    <img
-                      src={person.profilePicture || ''}
-                      alt={person.fullName}
-                      className="rounded-full w-12 h-12 object-cover"
-                    />
+                    {person.profilePicture ? (
+                      <img
+                        src={person.profilePicture}
+                        alt={person.fullName}
+                        className="rounded-full w-12 h-12 object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-sm font-medium text-white">
+                        {person.fullName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
 
                     {/* Text Metadata Container */}
                     <div className="flex flex-col gap-1">
@@ -122,8 +128,8 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                       </p>
 
                       {/* Last Message Preview Text (or Default Icebreaker) */}
-                      <p className="text-[13px] text-gray-500 font-[Geist]">
-                        {lastMessage?.text || 'Start a conversation'}
+                      <p className="text-[13px] text-gray-500 font-[Geist] truncate w-40">
+                        {lastMessage?.text || "Start a conversation"}
                       </p>
                     </div>
                   </div>
@@ -134,8 +140,8 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                       <p className="font-bold text-sm h-4">
                         {/* Format ISO timestamp to short local time (e.g. 10:45 AM) */}
                         {new Date(lastMessage.sentAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
+                          hour: "2-digit",
+                          minute: "2-digit",
                         })}
                       </p>
                     )}
