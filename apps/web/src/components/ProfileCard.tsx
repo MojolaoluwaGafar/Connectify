@@ -59,26 +59,20 @@ export const ProfileCard = ({ profiles }: Props) => {
               <div className="absolute bottom-2 left-0 flex w-full justify-between gap-2 px-3">
                 <button
                   className="w-full rounded-lg border border-stroke-primary px-3 py-1 text-xs font-inter font-medium text-black"
-                  onClick={() => navigate(`/profile/${profile.userId}`)}
+                  onClick={() => navigate(`/profile/${profile.id}`)}
                 >
                   View Profile
                 </button>
 
                 <button
                   className={`flex w-full items-center justify-center gap-2 rounded-lg border border-stroke-primary px-3 py-1 text-sm font-medium text-white ${
-                    isLiked
-                      ? 'bg-gray-900'
-                      : 'bg-theme hover:bg-purple-700'
+                    isLiked ? 'bg-gray-900' : 'bg-theme hover:bg-purple-700'
                   }`}
                   onClick={() => toggleLike(profile)}
                 >
                   <img
                     className="size-4"
-                    src={
-                      isLiked
-                        ? '/vector.svg'
-                        : '/icon-heart.svg'
-                    }
+                    src={isLiked ? '/vector.svg' : '/icon-heart.svg'}
                     alt=""
                   />
 

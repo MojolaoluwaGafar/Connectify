@@ -3,8 +3,9 @@ import { getMatches } from '../API/Services/Matches/matches';
 import { useAuth } from '../context/authContext/useAuth';
 import type { DiscoverProfile } from '../types';
 
-import { useNavigate } from "react-router-dom";
-import { useLikes } from "../context/likeContext/useLikes";
+import { useNavigate } from 'react-router-dom';
+import { useLikes } from '../context/likeContext/useLikes';
+import { ProfileCardSkeletonGrid } from '../components/ui/ProfileCardSkeleton';
 
 const Matches = () => {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const Matches = () => {
         setMatches(res);
       })
       .catch((error) => {
-        console.error("Failed to get matches:", error);
+        console.error('Failed to get matches:', error);
       })
       .finally(() => {
         setLoading(false);
@@ -62,8 +63,8 @@ const Matches = () => {
         <div className="grid lg:grid-cols-3 md:grid-cols-2 flex-col gap-4 w-full max-w-7xl mx-auto ">
           {/* Loading state */}
           {loading ? (
-            <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed my-2 rounded-2xl min-h-96 space-y-4 p-5 sm:p-10 md:p-16 lg:p-20 w-full max-w-7xl mx-auto">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+            <div className="col-span-full flex flex-col items-center justify-center text-center my-2 rounded-2xl min-h-96 space-y-4 p-5 w-full max-w-7xl mx-auto">
+              <ProfileCardSkeletonGrid count={3} />
             </div>
           ) : matches.length === 0 ? (
             /* Empty state */
@@ -82,7 +83,7 @@ const Matches = () => {
                 </h2>
 
                 <p className="font-geist text-[#655E75] mt-2 text-sm sm:text-base">
-                  When you and someone else like each other, they'll show{" "}
+                  When you and someone else like each other, they'll show{' '}
                   <br className="hidden md:block" />
                   up here so you can start chatting.
                 </p>
@@ -91,7 +92,7 @@ const Matches = () => {
               {/* Discover people button */}
               <button
                 className="border border-[#655e7579] px-5 py-2 font-geist rounded-xl text-sm text-black font-semibold hover:bg-gray-100"
-                onClick={() => navigate("/home")}
+                onClick={() => navigate('/home')}
               >
                 Discover People
               </button>
@@ -101,7 +102,7 @@ const Matches = () => {
             matches.map((profile: DiscoverProfile) => (
               <div
                 key={profile.id}
-                className="group relative overflow-hidden rounded-2xl border border-stroke-primary text-sm shadow-sm transition-all duration-300 hover:shadow-lg"
+                className="group relative overflow-hidden rounded-2xl border border-stroke-primary text-sm shadow-sm transition-all duration-300 hover:shadow-lg relative"
               >
                 {/* Profile image */}
                 <div className="w-full h-[260px] sm:h-[280px] md:h-[300px] lg:h-[320px] xl:h-[340px] overflow-hidden bg-gray-100">
@@ -113,7 +114,7 @@ const Matches = () => {
                 </div>
 
                 {/* Profile content */}
-                <div className="p-4 sm:p-5 lg:p-6 flex flex-col gap-3">
+                <div className="p-4 sm:p-5 lg:p-6 flex flex-col gap-3 h-55">
                   {/* Profile avatar and name */}
                   <div className="flex items-center gap-3">
                     <img
@@ -148,10 +149,10 @@ const Matches = () => {
                   </div>
 
                   {/* Profile action buttons */}
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-4">
+                  <div className="flex items-center justify-between px-4 sm:gap-3 absolute bottom-2 left-0 w-full">
                     {/* Start chat button */}
                     <button
-                      onClick={() => navigate("/messages")}
+                      onClick={() => navigate('/messages')}
                       className="bg-theme text-white font-medium font-geist py-2.5 px-2 sm:px-4 rounded-lg text-sm hover:bg-[#6941C6] transition-colors"
                     >
                       Start Chat
@@ -159,7 +160,7 @@ const Matches = () => {
 
                     {/* View profile button */}
                     <button
-                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-2 sm:px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors"
+                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-2 sm:px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors w-[182px]"
                       onClick={() => navigate(`/profile/${profile.id}`)}
                     >
                       View Profile

@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express'
 
 import * as likesService from './likes.service.js'
-import { LikeActionResultSchema } from '../../../../../packages/shared/src/api.js';
 
 export const likesController = {
   like: async (request: Request, response: Response) => {

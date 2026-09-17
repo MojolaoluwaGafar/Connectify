@@ -1,9 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
 
 import type { DiscoverProfile } from '../types/index';
-import { canMessage as checkCanMessage } from '../API/Services/Messages/messages';
 import {
   getDiscoverProfiles,
   getProfileById,
@@ -15,7 +14,6 @@ import Button from '../components/ui/Button';
 import ProfileCard from '../components/ui/ProfileCard';
 import { useAuth } from '../context/authContext/useAuth';
 import { useLikes } from '../context/likeContext/useLikes';
-import { getMatches } from '../API/Services/Matches/matches';
 import { useApiQuery } from '../hooks/useApiQuery';
 
 function sharedCount(a: DiscoverProfile, b: DiscoverProfile) {
@@ -28,7 +26,8 @@ export default function ViewProfilePage() {
   const navigate = useNavigate();
 
   const { user } = useAuth();
-  const { likedIds, toggleLike } = useLikes();
+  const { likedIds, isMatch, toggleLike } = useLikes();
+
   const { requireAuth } = useAuthGate();
 
   // --- Target profile ---
@@ -44,34 +43,14 @@ export default function ViewProfilePage() {
     },
   );
 
-  // --- Matches ---
-  // likedIds.size is folded into the cache key so a like/unlike anywhere
-  // in the app (which changes likedIds) forces this to refetch rather
-  // than trusting a cached matches list that predates the action.
-  const fetchMatches = useCallback(() => getMatches(user!.id), [user]);
-
-  const { data: matchesData } = useApiQuery(
-    fetchMatches,
-    'Could not load matches.',
-    {
-      enabled: Boolean(user),
-      cacheKey: user ? `matches:${user.id}:${likedIds.size}` : null,
-      staleTime: 30_000,
-    },
-  );
-
-  const matches = matchesData ?? [];
-
-  const isMatchedWithTarget = target
-    ? matches.some((match) => match.id === target.id)
-    : false;
-
   // --- Suggestions ---
+  const userId = user?.id;
+
   const fetchSuggestions = useCallback(async () => {
     if (!target) return [];
 
     const res = await getDiscoverProfiles({
-      excludeUserId: user?.id,
+      excludeUserId: userId,
       pageSize: 3,
     });
 
@@ -79,7 +58,7 @@ export default function ViewProfilePage() {
       .filter((person) => person.id !== target.id)
       .sort((a, b) => sharedCount(b, target) - sharedCount(a, target))
       .slice(0, 3);
-  }, [target, user?.id]);
+  }, [target, userId]);
 
   const { data: suggestionsData } = useApiQuery(
     fetchSuggestions,
@@ -87,37 +66,13 @@ export default function ViewProfilePage() {
     {
       enabled: Boolean(target),
       cacheKey: target
-        ? `suggestions:${target.id}:${user?.id ?? 'anon'}`
+        ? `suggestions:${target.id}:${userId ?? 'anon'}`
         : null,
       staleTime: 60_000,
     },
   );
 
   const suggestions = suggestionsData ?? [];
-
-  // --- Can-message check ---
-  // Note: this is currently doing the same job as isMatchedWithTarget
-  // above via a different path (a direct backend check vs. deriving from
-  // the matches list). Worth consolidating to one source of truth later.
-  const fetchCanMessage = useCallback(
-    () => checkCanMessage(user!.id, target!.id),
-    [user, target],
-  );
-
-  const { data: canMessageData } = useApiQuery(
-    fetchCanMessage,
-    'Could not check messaging status.',
-    {
-      enabled: Boolean(user && target),
-      cacheKey:
-        user && target
-          ? `can-message:${user.id}:${target.id}:${likedIds.size}`
-          : null,
-      staleTime: 30_000,
-    },
-  );
-
-  const canMessage = canMessageData ?? false;
 
   if (isProfileLoading && !target) {
     return (
@@ -144,7 +99,8 @@ export default function ViewProfilePage() {
     );
   }
 
-  const isLiked = likedIds.has(target.id);
+  const isLiked = likedIds.has(target?.userId);
+  const isMatchedWithTarget = isMatch(target?.userId);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -240,7 +196,7 @@ export default function ViewProfilePage() {
               {isLiked ? 'Liked' : 'Like profile'}
             </Button>
 
-            {isMatchedWithTarget ? (
+            {(isMatchedWithTarget || canMessage) ? (
               <Button
                 variant="outline"
                 icon={<MessageCircle size={16} />}

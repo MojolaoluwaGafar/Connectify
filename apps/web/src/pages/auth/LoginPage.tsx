@@ -17,6 +17,7 @@ import { useAuth } from '../../context/authContext/useAuth';
 import { SparkleIcon, UsersIcon } from 'lucide-react';
 import { MessageIcon } from '../../components/auth/Icons';
 import PasswordInput from '../../components/auth/PasswordInput';
+import { toast } from 'react-toastify';
 
 const LoginPage = () => {
   const location = useLocation();
@@ -50,14 +51,30 @@ const LoginPage = () => {
       setLoginError('');
 
       await login(data.email, data.password);
-
-      navigate('/home', { replace: true });
+      
+      navigate('/home', {
+        replace: true,
+        state: { loginSuccess: true },
+      });
     } catch (error) {
-      setLoginError(
-        error instanceof Error
-          ? error.message
-          : 'Incorrect email or password.',
-      );
+      
+      const message =
+      error instanceof Error ? error.message : 'Incorrect email or password.';
+
+      setLoginError(message);
+
+      toast.error(message, {
+      // custome style
+      // className : "",
+        style: {
+          backgroundColor: "#f44336",
+          color: "#fff",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          padding: "12px 20px"
+        }
+    });
+        // setLoginError(message);
     }
   };
 
@@ -218,6 +235,7 @@ const LoginPage = () => {
 
                     navigate('/home', {
                       replace: true,
+                      state: { loginSuccess: true },
                     });
                   } catch (error) {
                     console.error(
