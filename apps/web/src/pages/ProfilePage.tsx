@@ -196,7 +196,7 @@ export default function ViewProfilePage() {
               {isLiked ? 'Liked' : 'Like profile'}
             </Button>
 
-            {(isMatchedWithTarget || canMessage) ? (
+            {isMatchedWithTarget ? (
               <Button
                 variant="outline"
                 icon={<MessageCircle size={16} />}
