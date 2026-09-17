@@ -8,6 +8,7 @@ import { getLikedByMe, getWhoLikedMe } from '../API/Services/Likes/likes';
 
 import { useAuth } from '../context/authContext/useAuth';
 import { useApiQuery } from '../hooks/useApiQuery';
+import { ProfileCardSkeletonGrid } from '../components/ui/ProfileCardSkeleton';
 
 type Tab = 'liked-you' | 'you-liked';
 
@@ -117,8 +118,8 @@ const LikesPage = () => {
         <div className="mt-8  ">
           {isLoading ? (
             /* LOADING STATE — only when the active tab truly has nothing yet */
-            <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed my-2 rounded-2xl min-h-96 space-y-4 p-5 sm:p-10 md:p-16 lg:p-20 w-full max-w-7xl mx-auto">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+            <div className="col-span-full flex flex-col items-center justify-center text-center my-2 rounded-2xl min-h-96 space-y-4 p-5 w-full max-w-7xl mx-auto">
+              <ProfileCardSkeletonGrid count={6} />
             </div>
           ) : list.length === 0 ? (
             /* EMPTY STATE */

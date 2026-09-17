@@ -8,15 +8,8 @@ import type { ProfileInput } from './profiles.validation.js';
 export async function createProfile(userId: string, data: ProfileInput) {
   const profilePicture = data.profilePicture;
 
-  const {
-    fullName,
-    gender,
-    interests,
-    occupation,
-    about,
-    age,
-    location,
-  } = data;
+  const { fullName, gender, interests, occupation, about, age, location } =
+    data;
 
   const updatedProfile = await Profile.findOneAndUpdate(
     { userId: new mongoose.Types.ObjectId(userId) },
@@ -62,32 +55,21 @@ export async function listProfiles(
   currentUserId?: string,
 ) {
   const page = Math.max(Number(query.page) || 1, 1);
-  const pageSize = Math.min(
-    Math.max(Number(query.pageSize) || 8, 1),
-    50,
-  );
+  const pageSize = Math.min(Math.max(Number(query.pageSize) || 8, 1), 50);
 
   const skip = (page - 1) * pageSize;
 
-  const search =
-    typeof query.search === 'string' ? query.search.trim() : '';
+  const search = typeof query.search === 'string' ? query.search.trim() : '';
 
   const tab =
-    query.tab === 'near-me' || query.tab === 'new'
-      ? query.tab
-      : 'all';
+    query.tab === 'near-me' || query.tab === 'new' ? query.tab : 'all';
 
   const excludeUserId =
-    typeof query.excludeUserId === 'string'
-      ? query.excludeUserId
-      : '';
+    typeof query.excludeUserId === 'string' ? query.excludeUserId : '';
 
   const baseFilter: Record<string, unknown> = {};
 
-  if (
-    excludeUserId &&
-    mongoose.isValidObjectId(excludeUserId)
-  ) {
+  if (excludeUserId && mongoose.isValidObjectId(excludeUserId)) {
     baseFilter.userId = {
       $ne: new mongoose.Types.ObjectId(excludeUserId),
     };
@@ -111,10 +93,7 @@ export async function listProfiles(
   }
 
   if (tab === 'near-me') {
-    if (
-      !currentUserId ||
-      !mongoose.isValidObjectId(currentUserId)
-    ) {
+    if (!currentUserId || !mongoose.isValidObjectId(currentUserId)) {
       throw new Error(
         'A valid signed-in user is required for nearby discovery',
       );
@@ -136,11 +115,7 @@ export async function listProfiles(
   }
 
   const profileQuery = Profile.find(baseFilter)
-    .sort(
-      tab === 'new'
-        ? { createdAt: -1 }
-        : { _id: -1 },
-    )
+    .sort(tab === 'new' ? { createdAt: -1 } : { _id: -1 })
     .skip(skip)
     .limit(pageSize);
 
@@ -149,12 +124,7 @@ export async function listProfiles(
     Profile.countDocuments(baseFilter),
   ]);
 
-  return formatDiscoveryResult(
-    items,
-    total,
-    page,
-    pageSize,
-  );
+  return formatDiscoveryResult(items, total, page, pageSize);
 }
 
 function formatDiscoveryResult(
@@ -174,9 +144,7 @@ function formatDiscoveryResult(
       isComplete: isProfileComplete(item),
       joinedDaysAgo: item.createdAt
         ? Math.floor(
-            (Date.now() -
-              new Date(item.createdAt).getTime()) /
-              86400000,
+            (Date.now() - new Date(item.createdAt).getTime()) / 86400000,
           )
         : 0,
     })),
@@ -198,9 +166,7 @@ export async function getProfileById(userId: string) {
   return item ? formatProfile(item) : null;
 }
 
-export async function getCurrentProfile(
-  userId: string | undefined,
-) {
+export async function getCurrentProfile(userId: string | undefined) {
   if (!userId) {
     return null;
   }
@@ -208,30 +174,28 @@ export async function getCurrentProfile(
   return getProfileById(userId);
 }
 
-export function isProfileComplete(
-  item: Record<string, any>,
-): boolean {
+export function isProfileComplete(item: Record<string, any>): boolean {
   const interests = item.interests ?? [];
 
   return Boolean(
     typeof item.fullName === 'string' &&
-      item.fullName.trim().length >= 2 &&
-      typeof item.age === 'number' &&
-      Number.isInteger(item.age) &&
-      item.age >= 18 &&
-      item.age <= 100 &&
-      typeof item.gender === 'string' &&
-      item.gender.length > 0 &&
-      typeof item.location === 'string' &&
-      item.location.trim().length > 0 &&
-      typeof item.about === 'string' &&
-      item.about.trim().length >= 10 &&
-      Array.isArray(interests) &&
-      interests.length > 0 &&
-      typeof item.occupation === 'string' &&
-      item.occupation.trim().length > 0 &&
-      typeof item.profilePicture === 'string' &&
-      item.profilePicture.trim().length > 0,
+    item.fullName.trim().length >= 2 &&
+    typeof item.age === 'number' &&
+    Number.isInteger(item.age) &&
+    item.age >= 18 &&
+    item.age <= 100 &&
+    typeof item.gender === 'string' &&
+    item.gender.length > 0 &&
+    typeof item.location === 'string' &&
+    item.location.trim().length > 0 &&
+    typeof item.about === 'string' &&
+    item.about.trim().length >= 10 &&
+    Array.isArray(interests) &&
+    interests.length > 0 &&
+    typeof item.occupation === 'string' &&
+    item.occupation.trim().length > 0 &&
+    typeof item.profilePicture === 'string' &&
+    item.profilePicture.trim().length > 0,
   );
 }
 
