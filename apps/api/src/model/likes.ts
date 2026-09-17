@@ -28,4 +28,8 @@ LikeSchema.index(
     {unique:true}
 )
 
+// Compound index above can't serve a lookup filtered on likedUserId alone
+// (e.g. "who liked me") — that needs its own index.
+LikeSchema.index({ likedUserId: 1 })
+
 export const Like = mongoose.model<LikeInt>("Like", LikeSchema)

@@ -14,6 +14,19 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>()
 
+// Buckets are only ever read/written for IPs that are still making requests,
+// so without this sweep every distinct IP that's ever hit the server stays
+// in memory forever.
+const SWEEP_INTERVAL_MS = 5 * 60_000
+setInterval(() => {
+  const now = Date.now()
+  for (const [ip, bucket] of buckets) {
+    if (bucket.resetAt <= now) {
+      buckets.delete(ip)
+    }
+  }
+}, SWEEP_INTERVAL_MS).unref()
+
 export function rateLimiter(options: RateLimitOptions = {}): RequestHandler {
   const windowMs = options.windowMs ?? 60_000
   const maxRequests = options.maxRequests ?? 120
