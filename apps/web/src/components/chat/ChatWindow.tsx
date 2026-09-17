@@ -331,13 +331,13 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
                   >
                     {/* Message Bubble Styling */}
                     <div
-                      className={`rounded-2xl px-4 py-2 text-sm shadow-sm ${
+                      className={`rounded-2xl px-4 py-2 text-sm shadow-sm max-w-[230px] ${
                         isUser
                           ? "bg-purple-600 text-white rounded-br-none"
                           : "bg-gray-100 text-gray-800 rounded-bl-none"
                       }`}
                     >
-                      {msg.text}
+                      <p className="w-full">{msg.text}</p>
                     </div>
                   </div>
                 );
