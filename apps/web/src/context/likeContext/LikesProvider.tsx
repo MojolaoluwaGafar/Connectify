@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../authContext/useAuth';
 import { LikesContext } from './likeContext';
 import { invalidateQuery } from '../../hooks/useApiQuery';
+import {themedToast} from '../../utils/ToastFeedback';
 
 function LikesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -24,6 +25,12 @@ function LikesProvider({ children }: { children: ReactNode }) {
       setLikedIds(new Set());
       setLikedMeIds(new Set());
       return;
+    }
+
+    try{
+
+    }catch(error){
+      
     }
 
     const [liked, likedMe] = await Promise.all([

@@ -153,14 +153,14 @@ const Matches = () => {
                     {/* Start chat button */}
                     <button
                       onClick={() => navigate('/messages')}
-                      className="bg-theme text-white font-medium font-geist py-2.5 px-2 sm:px-4 rounded-lg text-sm hover:bg-[#6941C6] transition-colors"
+                      className="bg-theme text-white font-medium font-geist py-2.5 px-2 sm:px-4 rounded-lg text-sm hover:bg-[#6941C6] transition-colors w-[50%]"
                     >
                       Start Chat
                     </button>
 
                     {/* View profile button */}
                     <button
-                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-2 sm:px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors w-[182px]"
+                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-2 sm:px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors w-[50%]"
                       onClick={() => navigate(`/profile/${profile.id}`)}
                     >
                       View Profile

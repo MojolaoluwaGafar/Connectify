@@ -17,7 +17,10 @@ import { useLikes } from '../context/likeContext/useLikes';
 import { useApiQuery } from '../hooks/useApiQuery';
 
 function sharedCount(a: DiscoverProfile, b: DiscoverProfile) {
-  return a.interests.filter((interest) => b.interests.includes(interest))
+  const aInterests = a.interests ?? a.interest ?? [];
+  const bInterests = b.interests ?? b.interest ?? [];
+
+  return aInterests.filter((interest) => bInterests.includes(interest))
     .length;
 }
 
@@ -203,7 +206,7 @@ export default function ViewProfilePage() {
                 className="border-stroke-primary! text-theme! hover:bg-theme-shade/20!"
                 onClick={() =>
                   navigate('/messages', {
-                    state: { openProfileId: target.id },
+                    state: { selectedUser: target },
                   })
                 }
               >

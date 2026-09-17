@@ -14,19 +14,22 @@ import {
   type RegisterInput,
 } from "../../../../../packages/shared/src/schemas/auth";
 import { useState, useRef } from "react";
+import { themedToast } from "../../utils/ToastFeedback";
+import axios from "axios";
 
 const SignupPage = () => {
   const navigate = useNavigate();
   const { signup, googleLogin } = useAuth();
 
   const [signupError, setSignupError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const googleContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors,isSubmitting },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -37,22 +40,35 @@ const SignupPage = () => {
   });
 
   const submit = async (data: RegisterInput) => {
-    try {
-      await signup(data.fullName, data.email, data.password);
+  if (isLoading) return;
 
-      navigate("/verify-email", {
-        state: { email: data.email },
-      });
-    } catch (error) {
-      console.error("User not Created", error);
+  try {
+    setIsLoading(true);
+    setSignupError("");
 
-      if (error instanceof Error) {
-        setSignupError(error.message);
-      } else {
-        setSignupError("Something went wrong. Please try again.");
+    await signup(data.fullName, data.email, data.password);
+
+    themedToast.success("Account created successfully!");
+
+    navigate("/verify-email", {
+      state: { email: data.email },
+    });
+  } catch (error) {
+    console.error("User not Created", error);
+
+   let message = '';
+      if (axios.isAxiosError(error)) {
+        message = error.response?.data?.error?.message 
+      } else if (error instanceof Error) {
+        message = error.message;
       }
-    }
-  };
+
+    setSignupError(message);
+    themedToast.error(message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleGoogleLogin = () => {
     setSignupError("");
@@ -133,11 +149,13 @@ const SignupPage = () => {
             )}
 
             <Button
-              type="submit"
-              className="mt-1.5 w-full bg-[#6B30CE] hover:bg-[#5F2AB8]"
+            type="submit"
+            disabled={isSubmitting}
+            isLoading={isSubmitting}
+  
             >
-              Create Account
-            </Button>
+           {isSubmitting ? 'Creating account...' : 'Create Account'}
+           </Button>
           </form>
 
           <div className="my-6 flex items-center gap-3 text-xs font-semibold tracking-wide text-gray-400">
@@ -183,6 +201,8 @@ const SignupPage = () => {
                       credentialResponse.credential,
                     );
 
+                    themedToast.success("Google sign-in successful!");
+
                     navigate("/");
                   } catch (error) {
                     console.error(
@@ -190,18 +210,21 @@ const SignupPage = () => {
                       error,
                     );
 
-                    setSignupError(
-                      error instanceof Error
-                        ? error.message
-                        : "Google login failed. Please try again.",
-                    );
-                  }
-                }}
-                onError={() => {
-                  setSignupError(
-                    "Google login failed. Please try again.",
-                  );
-                }}
+                    const message =
+                         error instanceof Error
+                               ? error.message
+                               : "Google login failed. Please try again.";
+
+                          setSignupError(message);
+                          themedToast.error(message);
+                      }
+                      }}
+                    onError={() => {
+                        const message = "Google login failed. Please try again.";
+
+                        setSignupError(message);
+                        themedToast.error(message);
+                     }}
               />
             </div>
           </div>

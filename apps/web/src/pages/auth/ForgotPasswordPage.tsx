@@ -12,6 +12,7 @@ import {
 } from '../../../../../packages/shared/src/schemas/auth';
 
 import { useAuth } from '../../context/authContext/useAuth';
+import { themedToast } from '../../utils/ToastFeedback';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -31,24 +32,28 @@ const ForgotPasswordPage = () => {
   });
 
   const submit = async (data: ForgotPasswordInput) => {
-    try {
-      setApiError('');
+  try {
+    setApiError('');
 
-      await requestPasswordReset(data.email);
+    await requestPasswordReset(data.email);
 
-      navigate('/check-email', {
-        state: {
-          email: data.email,
-        },
-      });
-    } catch (error) {
-      setApiError(
-        error instanceof Error
-          ? error.message
-          : 'Something went wrong. Please try again.',
-      );
-    }
-  };
+    themedToast.success('Password reset link sent successfully!');
+
+    navigate('/check-email', {
+      state: {
+        email: data.email,
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Something went wrong. Please try again.';
+
+    setApiError(message);
+    themedToast.error(message);
+  }
+};
 
   return (
     <div className="min-h-screen flex">

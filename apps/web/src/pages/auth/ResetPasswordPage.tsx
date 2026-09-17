@@ -16,6 +16,7 @@ import {
   UsersIcon,
   MessageIcon,
 } from '../../components/auth/Icons';
+import { themedToast } from '../../utils/ToastFeedback';
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
@@ -44,28 +45,32 @@ const ResetPasswordPage = () => {
   });
 
   const submit = async (data: ResetPasswordInput) => {
-    try {
-      setApiError('');
+  try {
+    setApiError('');
 
-      await resetPassword(
-        data.email,
-        data.token,
-        data.newPassword,
-      );
+    await resetPassword(
+      data.email,
+      data.token,
+      data.newPassword,
+    );
 
-      navigate('/login', {
-        state: {
-          passwordReset: true,
-        },
-      });
-    } catch (error) {
-      setApiError(
-        error instanceof Error
-          ? error.message
-          : 'Something went wrong. Please try again.',
-      );
-    }
-  };
+    themedToast.success('Password reset successfully! You can now log in.');
+
+    navigate('/login', {
+      state: {
+        passwordReset: true,
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Something went wrong. Please try again.';
+
+    setApiError(message);
+    themedToast.error(message);
+  }
+};
 
   return (
     <div className="min-h-screen flex">

@@ -16,7 +16,7 @@ const profileImageUpload = multer({
 });
 profilesRouter.get('/',authMiddleware, profilesController.list)
 profilesRouter.get('/me/profile', authMiddleware, profilesController.getMe)
-profilesRouter.get('/:profileId', profilesController.getById)
+profilesRouter.get('/:profileId', authMiddleware, profilesController.getById)
 profilesRouter.post(
 	'/createProfile',
 	authMiddleware,

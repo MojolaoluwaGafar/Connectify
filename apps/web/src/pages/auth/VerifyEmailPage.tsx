@@ -4,8 +4,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageIcon } from '../../components/auth/Icons';
 
 import { useAuth } from '../../context/authContext/useAuth';
+import { themedToast } from '../../utils/ToastFeedback';
 
 const VerifyEmailPage = () => {
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const { verifyEmail, resendVerificationCode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -75,39 +78,87 @@ const VerifyEmailPage = () => {
     inputRefs.current[focusIndex]?.focus();
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (
+  event: React.FormEvent<HTMLFormElement>,
+) => {
+  event.preventDefault();
 
-    const enteredCode = code.join('');
+  const enteredCode = code.join('');
 
-    if (enteredCode.length < 6) {
-      setError('Please enter the 6-digit verification code.');
-      return;
-    }
+  if (enteredCode.length < 6) {
+    setError('Please enter the 6-digit verification code.');
 
-    try {
-      await verifyEmail(email, enteredCode);
-      navigate('/login', { state: { verified: true } });
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Invalid verification code. Please try again.',
-      );
-      setCode(['', '', '', '', '', '']);
-      setTimeout(() => inputRefs.current[0]?.focus(), 0);
-    }
+    themedToast.error('Please enter the 6-digit verification code.');
 
-  };
+    return;
+  }
 
-  const handleResend = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-   await resendVerificationCode(email);
+  if (isVerifying) return;
+
+  setIsVerifying(true);
+  setError('');
+
+  try {
+    await verifyEmail(email, enteredCode);
+
+    themedToast.success('Email verified successfully!');
+
+    navigate('/login', {
+      state: { verified: true },
+    });
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'Invalid verification code. Please try again.';
+
+    setError(message);
+
+    themedToast.error(message);
+
     setCode(['', '', '', '', '', '']);
-    setError('');
-    setTimeout(() => inputRefs.current[0]?.focus(), 0);
-  };
 
+    setTimeout(() => {
+      inputRefs.current[0]?.focus();
+    }, 0);
+  } finally {
+    setIsVerifying(false);
+  }
+};
+
+  const handleResend = async (
+  event: React.MouseEvent<HTMLButtonElement>,
+) => {
+  event.preventDefault();
+
+  if (isResending) return;
+
+  setIsResending(true);
+  setError('');
+
+  try {
+    await resendVerificationCode(email);
+
+    setCode(['', '', '', '', '', '']);
+
+    themedToast.success('A new verification code has been sent.');
+
+    setTimeout(() => {
+      inputRefs.current[0]?.focus();
+    }, 0);
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'Could not resend the verification code.';
+
+    setError(message);
+
+    themedToast.error(message);
+  } finally {
+    setIsResending(false);
+  }
+};
   return (
     <div className="min-h-screen flex">
       {/* =========================
@@ -203,11 +254,12 @@ const VerifyEmailPage = () => {
             {/* Verify button */}
 
             <button
-              type="submit"
-              className="w-full bg-[#6B30CE] hover:bg-[#5F2AB8] text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm shadow-purple-300"
-            >
-              Verify email
-            </button>
+             type="submit"
+             disabled={isVerifying}
+             className="w-full bg-[#6B30CE] hover:bg-[#5F2AB8] text-white font-semibold py-2.5 rounded-lg     transition-colors shadow-sm shadow-purple-300 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+          {isVerifying ? 'Verifying...' : 'Verify email'}
+          </button>
           </form>
 
           {/* Resend */}
@@ -215,11 +267,12 @@ const VerifyEmailPage = () => {
           <p className="mt-6 text-center text-sm text-gray-500">
             Didn't get a code?{' '}
             <button
-              type="button"
-              onClick={handleResend}
-              className="font-medium text-[#6B30CE] hover:text-[#5F2AB8] hover:underline"
+            type="button"
+            onClick={handleResend}
+            disabled={isResending}
+            className="font-medium text-[#6B30CE] hover:text-[#5F2AB8] hover:underline disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Resend code
+            {isResending ? 'Sending...' : 'Resend code'}
             </button>
           </p>
 

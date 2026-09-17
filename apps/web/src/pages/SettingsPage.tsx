@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../context/authContext/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { themedToast } from '../utils/ToastFeedback';
 
 
 const Settings = () => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
    const navigate = useNavigate();
 
   const { logout } = useAuth();
@@ -35,17 +37,34 @@ const Settings = () => {
     };
 
   const handleLogout = async () => {
+  if (isLoggingOut) return;
+
+  setIsLoggingOut(true);
+
+  try {
     setLogoutModalOpen(false);
 
     await logout();
 
     setLoggedOut(true);
 
-       setTimeout(() => {
-      navigate("/signup");
-    }, 2000);
-  };
+    themedToast.success('You have been logged out successfully.');
 
+    setTimeout(() => {
+      navigate('/signup');
+    }, 2000);
+  } catch (error) {
+    console.error('Logout failed:', error);
+
+    themedToast.error(
+      error instanceof Error
+        ? error.message
+        : 'Logout failed. Please try again.',
+    );
+  } finally {
+    setIsLoggingOut(false);
+  }
+};
   return (
     <>
       <main
