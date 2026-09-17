@@ -38,7 +38,7 @@ const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 import { MatchesModal } from './components/MatchModal';
 import LikesProvider from './context/likeContext/LikesProvider';
-import { connectSocket, disconnectSocket } from './lib/socket';
+import { connectSocket, disconnectSocket, getActiveConversationId, socket } from './lib/socket';
 
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
@@ -69,6 +69,10 @@ function Providers({ children }: { children: ReactNode }) {
   }, [location, navigate]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (!user?.id) {
       disconnectSocket();
       console.log('no user found');
@@ -80,6 +84,29 @@ function Providers({ children }: { children: ReactNode }) {
 
     return () => {
       disconnectSocket();
+    };
+  }, [user?.id]);
+
+  // Global "new message" notification — fires no matter which page the
+  // user is on. Suppressed only when they already have that exact
+  // conversation open, since ChatWindow renders the message live there.
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleNewMessageNotification = (payload: {
+      conversationId: string;
+      senderName: string;
+      text: string;
+    }) => {
+      if (payload.conversationId === getActiveConversationId()) return;
+
+      themedToast.info(`New message from ${payload.senderName}`);
+    };
+
+    socket.on('new_message_notification', handleNewMessageNotification);
+
+    return () => {
+      socket.off('new_message_notification', handleNewMessageNotification);
     };
   }, [user?.id]);
 

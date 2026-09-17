@@ -10,6 +10,7 @@ import { useAuth } from '../authContext/useAuth';
 import { LikesContext } from './likeContext';
 import { invalidateQuery } from '../../hooks/useApiQuery';
 import { themedToast } from '../../utils/ToastFeedback';
+import { socket } from '../../lib/socket';
 
 function LikesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -63,6 +64,26 @@ function LikesProvider({ children }: { children: ReactNode }) {
       ignore = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // Realtime push for the person who liked first: when the other side
+  // likes back, the REST response only tells *them* about the match — we
+  // learn about it here instead of waiting for a refetch.
+  useEffect(() => {
+    if (!user) return;
+
+    const handleNewMatch = (data: { profile: DiscoverProfile }) => {
+      const profile = data.profile;
+
+      setLikedMeIds((prev) => new Set(prev).add(profile.userId));
+      setJustMatched(profile);
+    };
+
+    socket.on('new_match', handleNewMatch);
+
+    return () => {
+      socket.off('new_match', handleNewMatch);
+    };
   }, [user]);
 
   // A match is mutual: I liked them and they liked me.

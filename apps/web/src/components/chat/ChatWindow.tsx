@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaperPlane, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 import { useAuth } from "../../context/authContext/useAuth";
-import { socket } from "../../lib/socket";
+import { socket, setActiveConversationId } from "../../lib/socket";
 import {
   getMessages,
   markConversationRead,
@@ -36,11 +36,13 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     if (!matchId) {
       setMessages([]);
       setInputText("");
+      setActiveConversationId(null);
       return;
     }
     setIsOtherUserTyping(false);
     setIsTyping(false);
     setIsOtherUserOnline(false);
+    setActiveConversationId(matchId);
 
     let cancelled = false;
 
@@ -163,9 +165,16 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     socket.on("send_message_error", handleSendMessageError);
 
     socket.emit("join_conversation", matchId);
+    // The "who's online" snapshot is only pushed automatically at the
+    // moment a socket connects, which usually happens long before this
+    // ChatWindow mounts — ask for a fresh one now so status is correct
+    // even if the other user was already online.
+    socket.emit("get_online_users");
+
     return () => {
       cancelled = true;
 
+      setActiveConversationId(null);
       socket.emit("leave_conversation", matchId);
 
       socket.off("online_users", handleOnlineUsers);

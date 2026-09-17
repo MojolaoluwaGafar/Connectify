@@ -2,8 +2,10 @@ import { type Server, type Socket } from 'socket.io';
 import {
   assertParticipant,
   markRead,
+  parseConversationId,
   sendMessageService,
 } from '../modules/conversations/conversations.service.js';
+import { Profile } from '../model/profile.js';
 type ConversationEvent = {
   conversationId: string;
 };
@@ -126,6 +128,24 @@ console.log(
         conversationId,
         ...message,
       });
+
+      // Anyone with this ChatWindow open already got the message above via
+      // the conversation room. This second, lighter event goes to the
+      // recipient's personal room so the rest of the app (wherever they
+      // are) can surface a notification even when that room isn't joined.
+      const parsed = parseConversationId(conversationId);
+      const recipientId = parsed?.find((id) => id !== userId);
+
+      if (recipientId) {
+        const senderProfile = await Profile.findOne({ userId }).lean();
+
+        io.to(recipientId).emit('new_message_notification', {
+          conversationId,
+          senderId: userId,
+          senderName: senderProfile?.fullName ?? 'Someone',
+          text: message.text,
+        });
+      }
     } catch (error) {
       socket.emit('send_message_error', {
         conversationId,
