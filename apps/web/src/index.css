@@ -26,3 +26,49 @@ body::-webkit-scrollbar,
   height: 0;
   display: none;
 }
+
+.LoginSuccessToastStyle {
+  background-color: #4caf50;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: bold;
+  padding: 12px 20px;
+}
+
+/* toast.css */
+
+.Toastify__toast {
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.Toastify__toast--success {
+  background: #6b30ce;
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: #dc2626;
+  color: white;
+}
+
+.Toastify__toast--warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.Toastify__toast--info {
+  background: #2563eb;
+  color: white;
+}
+
+.Toastify__close-button {
+  color: white;
+  opacity: 0.8;
+}
+
+.Toastify__progress-bar {
+  background: rgba(255, 255, 255, 0.7);
+}

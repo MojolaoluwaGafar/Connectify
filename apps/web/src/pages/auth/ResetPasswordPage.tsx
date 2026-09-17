@@ -16,6 +16,7 @@ import {
   UsersIcon,
   MessageIcon,
 } from '../../components/auth/Icons';
+import { toast } from 'react-toastify';
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
@@ -44,28 +45,32 @@ const ResetPasswordPage = () => {
   });
 
   const submit = async (data: ResetPasswordInput) => {
-    try {
-      setApiError('');
+  try {
+    setApiError('');
 
-      await resetPassword(
-        data.email,
-        data.token,
-        data.newPassword,
-      );
+    await resetPassword(
+      data.email,
+      data.token,
+      data.newPassword,
+    );
 
-      navigate('/login', {
-        state: {
-          passwordReset: true,
-        },
-      });
-    } catch (error) {
-      setApiError(
-        error instanceof Error
-          ? error.message
-          : 'Something went wrong. Please try again.',
-      );
-    }
-  };
+    toast.success('Password reset successfully!');
+
+    navigate('/login', {
+      state: {
+        passwordReset: true,
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Something went wrong. Please try again.';
+
+    setApiError(message);
+    toast.error(message);
+  }
+};
 
   return (
     <div className="min-h-screen flex">

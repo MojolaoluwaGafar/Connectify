@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-// import type { DiscoverProfile } from '../types';
 
 import ProfileCard from '../components/discover/ProfileCard';
 import { useNavigate } from 'react-router-dom';
@@ -23,54 +22,57 @@ const LikesPage = () => {
 
   const fetchLikedByMe = useCallback(() => getLikedByMe(user!.id), [user]);
 
-  const { data: likedYouData, loading: isLikedYouLoading } = useApiQuery(
-    fetchWhoLikedMe,
-    'Could not load your likes.',
-    {
-      enabled: Boolean(user),
-      cacheKey: user ? `liked-you:${user.id}` : null,
-      staleTime: 30_000,
-    },
-  );
+  const {
+    data: likedYouData,
+    loading: isLikedYouLoading,
+  } = useApiQuery(fetchWhoLikedMe, 'Could not load your likes.', {
+    enabled: Boolean(user),
+    cacheKey: user ? `liked-you:${user.id}` : null,
+    staleTime: 30_000,
+  });
 
-  const { data: youLikedData, loading: isYouLikedLoading } = useApiQuery(
-    fetchLikedByMe,
-    'Could not load your likes.',
-    {
-      enabled: Boolean(user),
-      cacheKey: user ? `you-liked:${user.id}` : null,
-      staleTime: 30_000,
-    },
-  );
+  const {
+    data: youLikedData,
+    loading: isYouLikedLoading,
+  } = useApiQuery(fetchLikedByMe, 'Could not load your likes.', {
+    enabled: Boolean(user),
+    cacheKey: user ? `you-liked:${user.id}` : null,
+    staleTime: 30_000,
+  });
 
   const likedYou = likedYouData ?? [];
 
-  // The old effect mutated a local copy whenever a like was toggled
-  // elsewhere in the app. Filtering here instead keeps the hook's cache
-  // as the single source of truth — a stale/unfiltered list is never
-  // shown after switching tabs or remounting.
   const youLiked = useMemo(
     () => (youLikedData ?? []).filter((profile) => likedIds.has(profile.id)),
     [youLikedData, likedIds],
   );
 
-  const isLoading = tab === 'liked-you' ? isLikedYouLoading : isYouLikedLoading;
+  // Only block with the full spinner when the active tab has genuinely
+  // nothing to show yet. Once data exists (even from a previous mount's
+  // cache), tab switches and background refreshes never tear the grid
+  // down — they just show a small "refreshing" indicator instead.
+  const isLoading =
+    tab === 'liked-you'
+      ? isLikedYouLoading && likedYouData === null
+      : isYouLikedLoading && youLikedData === null;
 
   const list = tab === 'liked-you' ? likedYou : youLiked;
 
   return (
-    <div className='container flex items-center mx-auto'>
-      <div className="min-h-screen ">
+    <div className="min-h-screen ">
       {/* MAIN */}
       <main className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 text-[#655E75]">
         {/* TITLE + TABS */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           {/* TITLE */}
           <div>
-            <h1 className="text-2xl font-bold font-fraunces tracking-normal leading-[100%] text-[#1C1524] md:text-3xl">
+            <h1 className="text-2xl font-bold font-fraunces tracking-normal leading-[100%] text-[#1C1524] md:text-3xl flex items-center gap-2">
               {tab === 'liked-you'
                 ? 'People who liked you'
                 : 'People you liked'}
+              {/* {isRefetching && (
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-200 border-t-theme" />
+              )} */}
             </h1>
 
             <p className="mt-2  font-[inter]  tracking-normal leading-[100%] font-normal text-[16px] text-[#655E75]  ">
@@ -109,8 +111,8 @@ const LikesPage = () => {
         {/* PROFILE AREA */}
         <div className="mt-8  ">
           {isLoading ? (
-            /* LOADING STATE */
-            <div className="min-h-96 rounded-2xl border border-dashed border-gray-300  flex flex-col items-center justify-center p-10 text-center">
+            /* LOADING STATE — only when the active tab truly has nothing yet */
+            <div className="col-span-full flex flex-col items-center justify-center text-center border border-[#655e756e] border-dashed my-2 rounded-2xl min-h-96 space-y-4 p-5 sm:p-10 md:p-16 lg:p-20 w-full max-w-7xl mx-auto">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
             </div>
           ) : list.length === 0 ? (
@@ -138,13 +140,12 @@ const LikesPage = () => {
             /* PROFILE CARDS */
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
               {list.map((profile) => (
-                <ProfileCard key={profile.id} profile={profile} />
+                <ProfileCard key={profile.userId} profile={profile} />
               ))}
             </div>
           )}
         </div>
       </main>
-    </div>
     </div>
   );
 };

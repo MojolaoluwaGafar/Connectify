@@ -17,6 +17,8 @@ import { useAuth } from '../../context/authContext/useAuth';
 import { SparkleIcon, UsersIcon } from 'lucide-react';
 import { MessageIcon } from '../../components/auth/Icons';
 import PasswordInput from '../../components/auth/PasswordInput';
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const LoginPage = () => {
   const location = useLocation();
@@ -36,7 +38,7 @@ const LoginPage = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -50,14 +52,35 @@ const LoginPage = () => {
       setLoginError('');
 
       await login(data.email, data.password);
-
-      navigate('/home', { replace: true });
+      navigate('/home', {
+        replace: true,
+        state: { loginSuccess: true },
+      });
     } catch (error) {
-      setLoginError(
-        error instanceof Error
-          ? error.message
-          : 'Incorrect email or password.',
-      );
+      
+      // const message =
+      // error instanceof Error ? error.response?.data?.error?.message : 'Incorrect email or password.';
+      let message = '';
+      if (axios.isAxiosError(error)) {
+        message = error.response?.data?.error?.message 
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
+      setLoginError(message);
+
+      toast.error(message, {
+      // custome style
+      // className : "",
+        style: {
+          backgroundColor: "#f44336",
+          color: "#fff",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          padding: "12px 20px"
+        }
+    });
+        // setLoginError(message);
     }
   };
 
@@ -159,11 +182,13 @@ const LoginPage = () => {
             {/* Continue button */}
 
             <Button
-              type="submit"
-              className="w-full bg-[#6B30CE] hover:bg-[#5F2AB8]"
+            type="submit"
+            disabled={isSubmitting}
+            isLoading={isSubmitting}
+            className="w-full bg-[#6B30CE] hover:bg-[#5F2AB8]"
             >
-              Continue
-            </Button>
+            {isSubmitting ? 'Signing in...' : 'Continue'}
+           </Button>
           </form>
 
           {/* OR divider */}
@@ -218,6 +243,7 @@ const LoginPage = () => {
 
                     navigate('/home', {
                       replace: true,
+                      state: { loginSuccess: true },
                     });
                   } catch (error) {
                     console.error(

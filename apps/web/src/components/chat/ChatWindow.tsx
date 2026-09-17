@@ -4,6 +4,7 @@ import { faPaperPlane, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 import { useAuth } from '../../context/authContext/useAuth';
 import { socket } from '../../lib/socket';
+// import { toast } from 'react-toastify';
 
 // TypeScript interface for component props
 interface ChatWindowProps {

@@ -13,8 +13,12 @@ const MessagesPage = () => {
     async function loadConversations() {
       if (!user) return;
 
+      console.log(user);
+
       try {
         const data = await getConversations(user.id);
+
+        console.log('CONVERSATIONS DATA', data);
 
         const selectedUser = location.state?.selectedUser;
 
@@ -45,7 +49,7 @@ const MessagesPage = () => {
 
   return (
     <div className="md:w-11/12 w-full lg:w-11/12 container mx-auto md:my-10 mt-0 lg:my-10 lg:flex">
-      <div className="lg:flex mx-auto lg:w-[1216px]">
+      <div className="lg:flex mx-auto lg:w-304">
         <div
           className={`${selectedConversation ? 'hidden lg:block' : 'block'}`}
         >
