@@ -51,6 +51,7 @@ const LoginPage = () => {
       setLoginError('');
 
       await login(data.email, data.password);
+      
       navigate('/home', {
         replace: true,
         state: { loginSuccess: true },

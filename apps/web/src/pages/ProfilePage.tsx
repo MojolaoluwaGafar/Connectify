@@ -15,6 +15,7 @@ import ProfileCard from '../components/ui/ProfileCard';
 import { useAuth } from '../context/authContext/useAuth';
 import { useLikes } from '../context/likeContext/useLikes';
 import { getMatches } from '../API/Services/Matches/matches';
+import { canMessage as checkCanMessage } from '../API/Services/Messages/messages';
 import { useApiQuery } from '../hooks/useApiQuery';
 
 function sharedCount(a: DiscoverProfile, b: DiscoverProfile) {
@@ -66,11 +67,13 @@ export default function ViewProfilePage() {
     : false;
 
   // --- Suggestions ---
+  const userId = user?.id;
+
   const fetchSuggestions = useCallback(async () => {
     if (!target) return [];
 
     const res = await getDiscoverProfiles({
-      excludeUserId: user?.id,
+      excludeUserId: userId,
       pageSize: 3,
     });
 
@@ -78,7 +81,7 @@ export default function ViewProfilePage() {
       .filter((person) => person.id !== target.id)
       .sort((a, b) => sharedCount(b, target) - sharedCount(a, target))
       .slice(0, 3);
-  }, [target, user?.id]);
+  }, [target, userId]);
 
   const { data: suggestionsData } = useApiQuery(
     fetchSuggestions,
@@ -86,7 +89,7 @@ export default function ViewProfilePage() {
     {
       enabled: Boolean(target),
       cacheKey: target
-        ? `suggestions:${target.id}:${user?.id ?? 'anon'}`
+        ? `suggestions:${target.id}:${userId ?? 'anon'}`
         : null,
       staleTime: 60_000,
     },
@@ -239,7 +242,7 @@ export default function ViewProfilePage() {
               {isLiked ? 'Liked' : 'Like profile'}
             </Button>
 
-            {isMatchedWithTarget ? (
+            {(isMatchedWithTarget || canMessage) ? (
               <Button
                 variant="outline"
                 icon={<MessageCircle size={16} />}
