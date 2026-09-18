@@ -9,13 +9,14 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev -w @connecti/api\" \"npm run dev -w @connecti/web\"",
+    "dev": "concurrently \"npm run dev -w @connecti/api\" \"npm run dev:socket -w @connecti/api\" \"npm run dev -w @connecti/web\"",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev:api": "npm run dev -w @connecti/api",
-    "dev:web": "npm run dev -w @connecti/web"
+    "dev:web": "npm run dev -w @connecti/web",
+    "dev:socket": "npm run dev -w @connecti/socket"
   },
   "devDependencies": {
     "@types/google.accounts": "^0.0.18",

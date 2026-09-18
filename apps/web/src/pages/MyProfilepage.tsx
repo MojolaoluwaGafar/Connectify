@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MapPin,
   Briefcase,
@@ -9,19 +9,22 @@ import {
   Sparkles,
   Compass,
   X,
-} from "lucide-react";
+} from 'lucide-react';
 
 import { getWhoLikedMe } from '../API/Services/Likes/likes';
 import { getMatches } from '../API/Services/Matches/matches';
-import { useAuth } from "../context/authContext/useAuth";
+import { useAuth } from '../context/authContext/useAuth';
 
-import Avatar from "../components/ui/Avatar";
-import Button from "../components/ui/Button";
-import Chip from "../components/ui/Chip";
-import { useLikes } from "../context/likeContext/useLikes";
+import Avatar from '../components/ui/Avatar';
+import Button from '../components/ui/Button';
+import Chip from '../components/ui/Chip';
+import { useLikes } from '../context/likeContext/useLikes';
 
 export default function MyProfilePage() {
   const { user, profile } = useAuth();
+
+  console.log('MyProfilePage user:', user);
+  console.log('MyProfilePage profile:', profile);
   const { likedIds } = useLikes();
   const navigate = useNavigate();
 
@@ -32,11 +35,11 @@ export default function MyProfilePage() {
 
   const [imageOpen, setImageOpen] = useState(false);
 
-  useEffect(() => {
-    if (!profile) {
-      navigate("/profile/edit", { replace: true });
-    }
-  }, [profile, navigate]);
+  // useEffect(() => {
+  //   if (!profile) {
+  //     navigate('/profile/edit', { replace: true });
+  //   }
+  // }, [profile, navigate]);
 
   useEffect(() => {
     if (!user) return;
@@ -51,26 +54,29 @@ export default function MyProfilePage() {
     );
   }, [user, likedIds]);
 
-  if (!profile || !user) return null;
+  if (!profile) {
+    navigate('/profile/edit', { replace: true });
+    return null;
+  }
 
   const statCards = [
     {
-      label: "People who liked you",
+      label: 'People who liked you',
       value: stats.likedYou,
       icon: <HeartHandshake size={18} />,
-      to: "/likes",
+      to: '/likes',
     },
     {
-      label: "Profiles you liked",
+      label: 'Profiles you liked',
       value: likedIds.size,
       icon: <Heart size={18} />,
-      to: "/likes",
+      to: '/likes',
     },
     {
-      label: "Matches",
+      label: 'Matches',
       value: stats.matches,
       icon: <Sparkles size={18} />,
-      to: "/matches",
+      to: '/matches',
     },
   ];
 
@@ -96,7 +102,7 @@ export default function MyProfilePage() {
 
               <Button
                 icon={<Pencil size={14} />}
-                onClick={() => navigate("/profile/edit")}
+                onClick={() => navigate('/profile/edit')}
               >
                 Edit profile
               </Button>
@@ -104,7 +110,7 @@ export default function MyProfilePage() {
 
             <h1 className="mt-4 font-display text-2xl font-semibold text-[#1c1524]">
               {profile.fullName}
-              {profile.age ? `, ${profile.age}` : ""}
+              {profile.age ? `, ${profile.age}` : ''}
             </h1>
 
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-primary">
@@ -178,7 +184,7 @@ export default function MyProfilePage() {
 
           <Button
             icon={<Compass size={16} />}
-            onClick={() => navigate("/home")}
+            onClick={() => navigate('/home')}
           >
             Discover people
           </Button>
