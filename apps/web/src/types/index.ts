@@ -87,4 +87,5 @@ export interface Conversation {
   matchId: string;
   otherUser: DiscoverProfile;
   lastMessage: Message | null;
+  unreadCount: number;
 }

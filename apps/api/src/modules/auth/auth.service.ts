@@ -70,12 +70,12 @@ export async function registerUser(payload: unknown) {
   const verificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
 
   // Development only: show verification code in backend terminal
-  console.log("====================================");
-  console.log("📧 VERIFICATION CODE");
-  console.log(`Email: ${data.email}`);
-  console.log(`Code: ${verificationCode}`);
-  console.log("Expires: 10 minutes");
-  console.log("====================================");
+  // console.log("====================================");
+  // console.log("📧 VERIFICATION CODE");
+  // console.log(`Email: ${data.email}`);
+  // console.log(`Code: ${verificationCode}`);
+  // console.log("Expires: 10 minutes");
+  // console.log("====================================");
 
   const newUser = await User.create({
     fullName: data.fullName,
@@ -218,15 +218,15 @@ export async function loginUser(payload: unknown) {
 }
 
 export async function forgotPassword(payload: unknown) {
-  console.log("FORGOT PASSWORD FUNCTION CALLED");
+  // console.log("FORGOT PASSWORD FUNCTION CALLED");
 
   const data = forgotPasswordSchema.parse(payload);
 
-  console.log(`Forgot password email: ${data.email}`);
+  // console.log(`Forgot password email: ${data.email}`);
 
   const user = await User.findOne({ email: data.email });
 
-  console.log(`User found: ${!!user}`);
+  // console.log(`User found: ${!!user}`);
 
   if (!user) {
     return {
@@ -245,12 +245,12 @@ export async function forgotPassword(payload: unknown) {
   await user.save();
 
   // Development only: show reset code in backend terminal
-  console.log("====================================");
-  console.log("🔐 PASSWORD RESET CODE");
-  console.log(`Email: ${user.email}`);
-  console.log(`Code: ${resetToken}`);
-  console.log("Expires: 10 minutes");
-  console.log("====================================");
+  // console.log("====================================");
+  // console.log("🔐 PASSWORD RESET CODE");
+  // console.log(`Email: ${user.email}`);
+  // console.log(`Code: ${resetToken}`);
+  // console.log("Expires: 10 minutes");
+  // console.log("====================================");
 
     await sendForgetPasswordVerificationEmail(
     user.email,
@@ -433,12 +433,12 @@ export async function resendVerificationCode(payload: unknown) {
   await sendVerificationEmail(user.email, user.fullName, verificationCode);
 
   // Development only: show new verification code in backend terminal
-  console.log("====================================");
-  console.log("📧 RESENT VERIFICATION CODE");
-  console.log(`Email: ${user.email}`);
-  console.log(`Code: ${verificationCode}`);
-  console.log("Expires: 10 minutes");
-  console.log("====================================");
+  // console.log("====================================");
+  // console.log("📧 RESENT VERIFICATION CODE");
+  // console.log(`Email: ${user.email}`);
+  // console.log(`Code: ${verificationCode}`);
+  // console.log("Expires: 10 minutes");
+  // console.log("====================================");
 
   return {
     message:

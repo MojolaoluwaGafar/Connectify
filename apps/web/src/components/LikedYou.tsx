@@ -22,7 +22,7 @@ export const WhoLikedYou = () => {
                 const result = await getWhoLikedMe(user.id);
                 setLikedYou(result.slice(0,3));
 
-                console.log("WHO LIKED ME RESULT", result);
+                // console.log("WHO LIKED ME RESULT", result);
 
             } catch (error) {
                 console.error("FAILED TO GET WHO LIKED ME", error);

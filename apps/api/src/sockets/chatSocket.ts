@@ -60,12 +60,15 @@ socket.on(
     if (!conversationId || !userId) return;
 
     try {
-      await assertParticipant(conversationId, userId);
+      const recipientId = await assertParticipant(conversationId, userId);
 
-      socket.to(conversationId).emit('user_typing', {
-        conversationId,
-        userId,
-      });
+      const payload = { conversationId, userId };
+
+      // The room only has whoever currently has this exact chat open.
+      // Also push to the recipient's personal room so a "typing…" status
+      // can show up in their conversation list even when they don't.
+      socket.to(conversationId).emit('user_typing', payload);
+      io.to(recipientId).emit('user_typing', payload);
     } catch {
       return;
     }
@@ -79,12 +82,12 @@ socket.on(
     if (!conversationId || !userId) return;
 
     try {
-      await assertParticipant(conversationId, userId);
+      const recipientId = await assertParticipant(conversationId, userId);
 
-      socket.to(conversationId).emit('user_stop_typing', {
-        conversationId,
-        userId,
-      });
+      const payload = { conversationId, userId };
+
+      socket.to(conversationId).emit('user_stop_typing', payload);
+      io.to(recipientId).emit('user_stop_typing', payload);
     } catch {
       return;
     }
@@ -100,7 +103,7 @@ socket.on(
     content: string;
   }) => {
 
-    console.log("SEND_MESSAGE EVENT RECEIVED");
+    // console.log("SEND_MESSAGE EVENT RECEIVED");
     const userId = socket.data.userId as string | undefined;
 
     if (!userId || !conversationId) {
@@ -114,15 +117,15 @@ socket.on(
         { content },
       );
 
-      console.log("EMITTING RECEIVE MESSAGE:", {
-  conversationId,
-  message,
-});
-console.log(
-  "ROOM MEMBERS:",
-  conversationId,
-  io.sockets.adapter.rooms.get(conversationId),
-);
+      // console.log("EMITTING RECEIVE MESSAGE:", {
+      //   conversationId,
+      //   message,
+      // });
+      // console.log(
+      //   "ROOM MEMBERS:",
+      //   conversationId,
+      //   io.sockets.adapter.rooms.get(conversationId),
+      // );
 
       io.to(conversationId).emit('receive_message', {
         conversationId,
