@@ -1,7 +1,19 @@
 import compression from 'compression';
 import cors from 'cors';
-import express from 'express';
-import helmet from 'helmet';
+import express, { type RequestHandler } from 'express';
+import helmetImport from 'helmet';
+
+// helmet's own type declarations describe its ESM shape even under the CJS
+// `require` condition. Depending on the exact TS/resolver combination (this
+// reproduces under `moduleResolution: NodeNext` but not in every
+// environment — it surfaced on Vercel's build, not locally, until forced),
+// that mismatch makes TS infer the import as the whole module namespace
+// object instead of the callable default export. The runtime value is
+// correct regardless (confirmed against helmet's actual CJS output), so
+// this asserts past the bad upstream type rather than working around it.
+const helmet = helmetImport as unknown as (
+  options?: Record<string, unknown>,
+) => RequestHandler;
 
 import { env } from './config/env.js';
 import { errorHandler } from './http/error-handler.js';
