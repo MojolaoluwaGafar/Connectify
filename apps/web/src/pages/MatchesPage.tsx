@@ -13,8 +13,11 @@ const Matches = () => {
   // Get the currently logged-in user
   const { user } = useAuth();
 
-  // Get the IDs of profiles the user has liked
-  const { likedIds } = useLikes();
+  // Get the IDs of profiles the user has liked, and the IDs of people who
+  // liked the user back — the latter changes in realtime (see
+  // LikesProvider's "new_match" socket listener) whenever someone the user
+  // already liked matches with them, so this page doesn't need a reload.
+  const { likedIds, likedMeIds } = useLikes();
 
   // Store the profiles that are actual matches
   const [matches, setMatches] = useState<DiscoverProfile[]>([]);
@@ -42,7 +45,7 @@ const Matches = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [user, likedIds]);
+  }, [user, likedIds, likedMeIds]);
 
   return (
     <div className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 text-[#655E75]">

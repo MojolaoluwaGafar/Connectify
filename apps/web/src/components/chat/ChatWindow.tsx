@@ -25,7 +25,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Extract recipient details and match ID from current conversation prop
@@ -196,9 +196,15 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   }, [matchId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
+    // Scroll only this container's own scrollbar to its latest message.
+    // scrollIntoView() on an end-marker element bubbles up through every
+    // scrollable ancestor, including the page itself, which was dragging
+    // the whole ChatWindow out of view on the surrounding layout whenever
+    // a message came in or went out.
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    container.scrollTop = container.scrollHeight;
   }, [messages]);
 
   const handleInputChange = (value: string) => {
@@ -321,7 +327,10 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
         </div>
 
         {/* Chat Messages Feed Container */}
-        <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-3 md:bg-white lg:bg-white sm:bg-gray-50 bg-gray-50 justify-start [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none] px-2">
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 p-5 overflow-y-auto flex flex-col gap-3 md:bg-white lg:bg-white sm:bg-gray-50 bg-gray-50 justify-start [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none] px-2"
+        >
           {/* Empty State Banner when no messages exist */}
           {messages.length === 0 ? (
             <div className="flex justify-center h-11 text-purple-600 bg-purple-100 lg:rounded-3xl md:rounded-3xl rounded-lg p-3 text-sm max-w-[90%] mx-auto w-full text-center border md:border-none lg:border-none border-solid border-gray-200">
@@ -359,7 +368,6 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
               })}
             </div>
           )}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Bar & Preset Quick-Reply Chips */}
