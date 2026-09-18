@@ -5,7 +5,10 @@ services:
     runtime: node
     plan: free
     rootDir: .
-    buildCommand: npm install && npm run build -w @connecti/shared && npm run build -w @connecti/api
+    # --include=dev: NODE_ENV=production below makes npm default to
+    # omitting devDependencies on install, which would silently drop
+    # typescript itself and every @types/* package the build needs.
+    buildCommand: npm install --include=dev && npm run build -w @connecti/shared && npm run build -w @connecti/api
     startCommand: npm run start -w @connecti/api
     envVars:
       - key: NODE_ENV
@@ -47,7 +50,7 @@ services:
     runtime: node
     plan: free
     rootDir: .
-    buildCommand: npm install && npm run build -w @connecti/shared && npm run build -w @connecti/api
+    buildCommand: npm install --include=dev && npm run build -w @connecti/shared && npm run build -w @connecti/api
     startCommand: npm run start:socket -w @connecti/api
     envVars:
       - key: NODE_ENV
@@ -69,7 +72,10 @@ services:
     name: connecti-web
     runtime: static
     rootDir: .
-    buildCommand: npm install && npm run build -w @connecti/shared && npm run build -w @connecti/web
+    # Static-site builds on Render also default NODE_ENV to production,
+    # which would otherwise skip the devDependencies (vite, typescript,
+    # etc.) this build actually needs.
+    buildCommand: npm install --include=dev && npm run build -w @connecti/shared && npm run build -w @connecti/web
     staticPublishPath: apps/web/dist
     envVars:
       - key: VITE_BASE_URL
