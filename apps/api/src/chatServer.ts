@@ -91,11 +91,20 @@ const getUserIdFromSocket = (socket: Socket) => {
 }
 
 io.on('connection', (socket: Socket) => {
+  const token = getTokenFromSocket(socket)
   const userId = getUserIdFromSocket(socket)
 
+  console.log('SOCKET AUTH DEBUG:', {
+    socketId: socket.id,
+    hasToken: Boolean(token),
+    tokenLength: token?.length,
+    userId,
+  })
+
   if (!userId) {
-   socket.disconnect(true)
-   return
+    console.log('SOCKET AUTH FAILED')
+    socket.disconnect(true)
+    return
   }
 
   socket.data.userId = userId

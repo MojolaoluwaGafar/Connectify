@@ -57,9 +57,12 @@ export default function ViewProfilePage() {
       pageSize: 3,
     });
 
-    return res.items
-      .filter((person) => person.id !== target.id)
-      .sort((a, b) => sharedCount(b, target) - sharedCount(a, target))
+    return res
+      .filter((person: DiscoverProfile) => person.id !== target.id)
+      .sort(
+        (a: DiscoverProfile, b: DiscoverProfile) =>
+          sharedCount(b, target) - sharedCount(a, target),
+      )
       .slice(0, 3);
   }, [target, userId]);
 
@@ -241,7 +244,7 @@ export default function ViewProfilePage() {
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {suggestions.map((profile) => (
+            {suggestions.map((profile: DiscoverProfile) => (
               <ProfileCard
                 key={profile.id}
                 profile={profile}

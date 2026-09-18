@@ -1,6 +1,9 @@
-import { ProfileListResponseSchema } from '@connecti/shared';
 import api from '../../api';
 import type { DiscoverProfile, ICreateProfile, Profile } from '../../../types';
+
+interface ProfileListResponse {
+  data: DiscoverProfile[];
+}
 
 export interface ProfileListFilters {
   search?: string;
@@ -39,7 +42,7 @@ export const ProfileServices = {
     const { data } = await api.get('/api/v1/profiles', {
       params: filters,
     });
-    const response = ProfileListResponseSchema.parse(data);
+    const response = data as ProfileListResponse;
 
     return response.data;
   },
