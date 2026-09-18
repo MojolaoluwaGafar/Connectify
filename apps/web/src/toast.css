@@ -1,24 +1,108 @@
-/* Success toast */
+/* Card-style toasts: white surface, colored accent + icon chip per type,
+   instead of react-toastify's flat solid-color banners — matches the
+   rounded white-card language used everywhere else in the app. */
+
+.Toastify__toast-container {
+  width: auto;
+  max-width: 92vw;
+}
+
+.Toastify__toast {
+  min-height: unset;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow:
+    0 10px 30px -8px rgba(28, 21, 36, 0.18),
+    0 2px 6px -1px rgba(28, 21, 36, 0.08);
+  font-family: var(--font-geist, 'Geist', sans-serif);
+}
+
+.Toastify__toast-body {
+  padding: 0;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.Toastify__toast-body > div:last-child {
+  color: #1c1524;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Icon chip — a small colored circle instead of a bare glyph */
+.Toastify__toast-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  margin-inline-end: 0;
+}
+
+.Toastify__close-button {
+  align-self: center;
+  opacity: 0.4;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.Toastify__close-button:hover {
+  opacity: 0.9;
+  transform: scale(1.1);
+}
+
+.Toastify__progress-bar {
+  height: 3px;
+  border-radius: 0 0 16px 16px;
+}
+
+/* Success */
 .toast-success {
-  background-color: #7c3aed !important;
-  color: #fff !important;
-  font-weight: bold;
+  border-left: 3px solid #7c3aed;
+}
+.toast-success .Toastify__toast-icon {
+  background: #f2e9fe;
+  color: #7c3aed;
+}
+.toast-success .Toastify__progress-bar {
+  background: linear-gradient(90deg, #7c3aed, #a172f2);
 }
 
-/* Error toast */
+/* Error */
 .toast-error {
-  background-color: #f44336 !important;
-  color: #fff !important;
+  border-left: 3px solid #f44336;
+}
+.toast-error .Toastify__toast-icon {
+  background: #fdecea;
+  color: #f44336;
+}
+.toast-error .Toastify__progress-bar {
+  background: linear-gradient(90deg, #f44336, #ff7a6e);
 }
 
-/* Info toast */
+/* Info */
 .toast-info {
-  background-color: #2196f3 !important;
-  color: #fff !important;
+  border-left: 3px solid #2196f3;
+}
+.toast-info .Toastify__toast-icon {
+  background: #e8f3fe;
+  color: #2196f3;
+}
+.toast-info .Toastify__progress-bar {
+  background: linear-gradient(90deg, #2196f3, #6ec2ff);
 }
 
-/* Warning toast */
+/* Warning */
 .toast-warning {
-  background-color: #ff9800 !important;
-  color: #fff !important;
+  border-left: 3px solid #ff9800;
+}
+.toast-warning .Toastify__toast-icon {
+  background: #fff3e0;
+  color: #ff9800;
+}
+.toast-warning .Toastify__progress-bar {
+  background: linear-gradient(90deg, #ff9800, #ffc266);
 }

@@ -40,7 +40,7 @@ import { MatchesModal } from './components/MatchModal';
 import LikesProvider from './context/likeContext/LikesProvider';
 import { connectSocket, disconnectSocket, getActiveConversationId, socket } from './lib/socket';
 
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, Bounce } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import "./toast.css"
 import { themedToast } from './utils/ToastFeedback';
@@ -203,7 +203,7 @@ export default function App() {
             </Suspense>
 
             <ToastContainer  position='top-center' autoClose={3000} hideProgressBar={false}
-            newestOnTop={false} closeOnClick pauseOnHover draggable />
+            newestOnTop={false} closeOnClick pauseOnHover draggable transition={Bounce} />
           </Providers>
         </AuthProvider>
       </BrowserRouter>
