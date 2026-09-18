@@ -21,8 +21,8 @@ services:
         value: 7d
       - key: INTERNAL_SOCKET_SECRET
         generateValue: true
-      # The frontend is hosted on Vercel, not Render (see connecti-web
-      # note below) — set both to that Vercel deployment's real URL.
+      # Fill in with the connecti-web and connecti-socket URLs Render
+      # assigns after the first deploy (e.g. https://connecti-web.onrender.com).
       - key: CORS_ORIGIN
         sync: false
       - key: CLIENT_URL
@@ -62,10 +62,29 @@ services:
       - key: INTERNAL_SOCKET_SECRET
         sync: false # must match connecti-api's value exactly
       - key: CORS_ORIGIN
-        sync: false # the Vercel frontend's URL
+        sync: false # connecti-web's URL
 
-# The frontend is deployed on Vercel, not here — Render's own static-site
-# hosting (a `connecti-web` service, previously defined in this file) isn't
-# used. Vercel needs its own VITE_BASE_URL/VITE_SOCKET_URL/
-# VITE_GOOGLE_CLIENT_ID env vars set in its project settings, pointing at
-# connecti-api's and connecti-socket's Render URLs above.
+  # Frontend — static files only. No Node process runs in production; this
+  # is just a build step (vite build) plus a CDN/static host serving the
+  # output. The rewrite rule below is what makes React Router's client-side
+  # routes (e.g. /profile/edit) work on a hard refresh.
+  - type: web
+    name: connecti-web
+    runtime: static
+    rootDir: .
+    # Static-site builds on Render also default NODE_ENV to production,
+    # which would otherwise skip the devDependencies (vite, typescript,
+    # etc.) this build actually needs.
+    buildCommand: npm install --include=dev && npm run build -w @connecti/shared && npm run build -w @connecti/web
+    staticPublishPath: apps/web/dist
+    envVars:
+      - key: VITE_BASE_URL
+        sync: false # connecti-api's URL
+      - key: VITE_SOCKET_URL
+        sync: false # connecti-socket's URL
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
