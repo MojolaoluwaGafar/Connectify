@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import { getMatches } from '../likes/likes.service.js'; // ⚠️ confirm actual path
+import { getMatches } from '../likes/likes.service.js';
 import { AppError } from '../../core/errors/app-error.js';
 import { Like } from '../../model/likes.js';
 import { Message } from '../../model/messages.js';
@@ -111,14 +111,22 @@ export async function listConversations(userId: string | undefined) {
     matchedProfiles.map(async (profile: any) => {
       const conversationId = getConversationId(currentUserId, profile.userId);
 
-      const lastMessage = await Message.findOne({ matchId: conversationId })
-        .sort({ createdAt: -1 })
-        .lean();
+      const [lastMessage, unreadCount] = await Promise.all([
+        Message.findOne({ matchId: conversationId })
+          .sort({ createdAt: -1 })
+          .lean(),
+        Message.countDocuments({
+          matchId: conversationId,
+          senderId: { $ne: toObjectId(currentUserId) },
+          readBy: { $ne: toObjectId(currentUserId) },
+        }),
+      ]);
 
       return {
         matchId: conversationId,
         otherUser: profile,
         lastMessage: lastMessage ? formatMessage(lastMessage) : null,
+        unreadCount,
       };
     }),
   );

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { useAuth } from "../context/authContext/useAuth";
+import NotificationBell from "../components/NotificationBell";
 
 interface NavbarProps {
   isLoggedIn: boolean;
@@ -185,7 +186,10 @@ export default function Navbar({
             or Login/Sign Up buttons (logged out) — desktop only */}
         <div className="hidden items-center gap-3 md:flex">
           {isLoggedIn ? (
-            <div className="relative" ref={profileRef}>
+            <>
+              <NotificationBell />
+
+              <div className="relative" ref={profileRef}>
               {/* Avatar circle + chevron toggles the dropdown below */}
               <button
                 onClick={() => setProfileOpen((o) => !o)}
@@ -246,7 +250,8 @@ export default function Navbar({
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            </>
           ) : (
             <>
               {/* Outline-style Login button */}
@@ -270,6 +275,8 @@ export default function Navbar({
 
         {/* Mobile-only row: avatar (if logged in) + hamburger/close icon */}
         <div className="flex items-center gap-3 md:hidden">
+          {isLoggedIn && <NotificationBell />}
+
           {isLoggedIn &&
             (profilePicture ? (
               <img
@@ -374,6 +381,15 @@ export default function Navbar({
               >
                 <User size={18} />
                 View profile
+              </Link>
+
+              <Link
+                to="/settings"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 text-base text-gray-800"
+              >
+                <Settings size={18} />
+                Settings
               </Link>
 
               <button

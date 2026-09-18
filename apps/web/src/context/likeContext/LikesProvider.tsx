@@ -11,6 +11,7 @@ import { LikesContext } from './likeContext';
 import { invalidateQuery } from '../../hooks/useApiQuery';
 import { themedToast } from '../../utils/ToastFeedback';
 import { socket } from '../../lib/socket';
+import { isMatchNotificationsEnabled } from '../../utils/notificationPreferences';
 
 function LikesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -75,8 +76,13 @@ function LikesProvider({ children }: { children: ReactNode }) {
     const handleNewMatch = (data: { profile: DiscoverProfile }) => {
       const profile = data.profile;
 
+      // The match itself always counts (isMatch/likedMeIds stay accurate
+      // regardless of the setting) — only the popup is opt-out-able.
       setLikedMeIds((prev) => new Set(prev).add(profile.userId));
-      setJustMatched(profile);
+
+      if (isMatchNotificationsEnabled()) {
+        setJustMatched(profile);
+      }
     };
 
     socket.on('new_match', handleNewMatch);
@@ -122,7 +128,10 @@ function LikesProvider({ children }: { children: ReactNode }) {
       // MatchModal, so only the non-match case needs a toast here.
       if (data.matched) {
         setLikedMeIds((prev) => new Set(prev).add(profile.id));
-        setJustMatched(profile);
+
+        if (isMatchNotificationsEnabled()) {
+          setJustMatched(profile);
+        }
       } else {
         setJustLiked(profile);
         themedToast.success(`You liked ${profile.fullName}.`);

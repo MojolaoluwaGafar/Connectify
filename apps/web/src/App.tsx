@@ -38,12 +38,14 @@ const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 import { MatchesModal } from './components/MatchModal';
 import LikesProvider from './context/likeContext/LikesProvider';
+import NotificationsProvider from './context/notificationsContext/NotificationsProvider';
 import { connectSocket, disconnectSocket, getActiveConversationId, socket } from './lib/socket';
 
 import { ToastContainer, Bounce } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import "./toast.css"
 import { themedToast } from './utils/ToastFeedback';
+import { isMessageNotificationsEnabled } from './utils/notificationPreferences';
 
 function RouteLoadingFallback() {
   return (
@@ -99,6 +101,7 @@ function Providers({ children }: { children: ReactNode }) {
       text: string;
     }) => {
       if (payload.conversationId === getActiveConversationId()) return;
+      if (!isMessageNotificationsEnabled()) return;
 
       themedToast.info(`New message from ${payload.senderName}`);
     };
@@ -113,8 +116,10 @@ function Providers({ children }: { children: ReactNode }) {
   return (
     <AuthGateProvider isAuthenticated={Boolean(user)}>
       <LikesProvider>
-        <MatchesModal></MatchesModal>
-        {children}
+        <NotificationsProvider>
+          <MatchesModal></MatchesModal>
+          {children}
+        </NotificationsProvider>
       </LikesProvider>
     </AuthGateProvider>
   );
