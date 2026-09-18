@@ -2,7 +2,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 
 interface AuthGateContextValue {
   isOpen: boolean;
-  requireAuth: (action?: () => void) => boolean; // returns true if already authed
+  requireAuth: (action?: () => void) => boolean;
   openGate: () => void;
   closeGate: () => void;
 }
