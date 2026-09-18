@@ -135,7 +135,14 @@ io.on('connection', (socket: Socket) => {
   })
 })
 
-export const startSocketServer = (port = env.SOCKET_PORT) => {
+// Render (and most PaaS hosts) assign this service its own port at deploy
+// time via the platform-injected PORT env var, which the process must bind
+// to directly — it won't necessarily match SOCKET_PORT. Locally, `npm run
+// dev:socket` sets PORT=3002 itself (see package.json) so this and the
+// main API server never fight over the same port despite sharing one .env.
+export const startSocketServer = (
+  port = process.env.PORT ? Number(process.env.PORT) : env.SOCKET_PORT,
+) => {
   return server.listen(port, () => {
    console.log(`Socket server running on port ${port}`)
   })
