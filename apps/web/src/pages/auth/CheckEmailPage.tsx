@@ -75,12 +75,12 @@ const CheckEmailPage = () => {
 
           {/* Dev note */}
 
-          <div className="mb-7 rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">
+          {/* <div className="mb-7 rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">
             <p className="text-sm leading-relaxed text-violet-700">
               Dev note: the reset token was logged to the console — this mock
               has no real inbox to send it to.
             </p>
-          </div>
+          </div> */}
 
           {/* Reset code button */}
 

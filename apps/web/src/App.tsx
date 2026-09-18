@@ -75,12 +75,12 @@ function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user?.id) {
       disconnectSocket();
-      console.log('no user found');
+      // console.log('no user found');
       return;
     }
 
     connectSocket();
-    console.log('user found');
+    // console.log('user found');
 
     return () => {
       disconnectSocket();
