@@ -3,9 +3,7 @@ import { io } from 'socket.io-client'
 import { getAuthToken } from '../utils/authToken'
 
 const socketUrl =
-  import.meta.env.VITE_SOCKET_URL ??
-  import.meta.env.VITE_WS_URL ??
-  'http://localhost:3002'
+  import.meta.env.VITE_SOCKET_URL
 
 export const socket = io(socketUrl, {
   autoConnect: false,

@@ -212,12 +212,12 @@ const VerifyEmailPage = () => {
           </p>
 
           {/* Dev note */}
-
+{/* 
           <div className="mb-7 rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">
             <p className="text-sm leading-relaxed text-violet-600">
               Dev note: check your browser console for the verification code.
             </p>
-          </div>
+          </div> */}
 
           {/* OTP form */}
 
