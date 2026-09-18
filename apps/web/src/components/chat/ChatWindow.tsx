@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaperPlane, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 import { useAuth } from "../../context/authContext/useAuth";
-import { socket } from "../../lib/socket";
+import { socket, setActiveConversationId } from "../../lib/socket";
 import {
   getMessages,
   markConversationRead,
@@ -25,7 +25,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Extract recipient details and match ID from current conversation prop
@@ -36,11 +36,13 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     if (!matchId) {
       setMessages([]);
       setInputText("");
+      setActiveConversationId(null);
       return;
     }
     setIsOtherUserTyping(false);
     setIsTyping(false);
     setIsOtherUserOnline(false);
+    setActiveConversationId(matchId);
 
     let cancelled = false;
 
@@ -67,7 +69,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     });
 
     const handleIncomingMessage = (payload: any) => {
-      console.log("RECEIVED MESSAGE FROM SOCKET:", payload);
+      // console.log("RECEIVED MESSAGE FROM SOCKET:", payload);
       const conversationId = payload?.conversationId ?? payload?.matchId;
 
       if (conversationId !== matchId) {
@@ -93,7 +95,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
           ? current
           : [...current, nextMessage];
 
-        console.log("MESSAGES STATE:", updatedMessages);
+        // console.log("MESSAGES STATE:", updatedMessages);
 
         return updatedMessages;
       });
@@ -163,9 +165,16 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     socket.on("send_message_error", handleSendMessageError);
 
     socket.emit("join_conversation", matchId);
+    // The "who's online" snapshot is only pushed automatically at the
+    // moment a socket connects, which usually happens long before this
+    // ChatWindow mounts — ask for a fresh one now so status is correct
+    // even if the other user was already online.
+    socket.emit("get_online_users");
+
     return () => {
       cancelled = true;
 
+      setActiveConversationId(null);
       socket.emit("leave_conversation", matchId);
 
       socket.off("online_users", handleOnlineUsers);
@@ -187,9 +196,15 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   }, [matchId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
+    // Scroll only this container's own scrollbar to its latest message.
+    // scrollIntoView() on an end-marker element bubbles up through every
+    // scrollable ancestor, including the page itself, which was dragging
+    // the whole ChatWindow out of view on the surrounding layout whenever
+    // a message came in or went out.
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    container.scrollTop = container.scrollHeight;
   }, [messages]);
 
   const handleInputChange = (value: string) => {
@@ -241,11 +256,11 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     const outboundText = inputText.trim();
 
     setInputText("");
-    console.log("SENDING MESSAGE:", {
-      connected: socket.connected,
-      matchId,
-      outboundText,
-    });
+    // console.log("SENDING MESSAGE:", {
+    //   connected: socket.connected,
+    //   matchId,
+    //   outboundText,
+    // });
 
     socket.emit("send_message", {
       conversationId: matchId,
@@ -312,7 +327,10 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
         </div>
 
         {/* Chat Messages Feed Container */}
-        <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-3 md:bg-white lg:bg-white sm:bg-gray-50 bg-gray-50 justify-start [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none] px-2">
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 p-5 overflow-y-auto flex flex-col gap-3 md:bg-white lg:bg-white sm:bg-gray-50 bg-gray-50 justify-start [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none] px-2"
+        >
           {/* Empty State Banner when no messages exist */}
           {messages.length === 0 ? (
             <div className="flex justify-center h-11 text-purple-600 bg-purple-100 lg:rounded-3xl md:rounded-3xl rounded-lg p-3 text-sm max-w-[90%] mx-auto w-full text-center border md:border-none lg:border-none border-solid border-gray-200">
@@ -350,7 +368,6 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
               })}
             </div>
           )}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Bar & Preset Quick-Reply Chips */}

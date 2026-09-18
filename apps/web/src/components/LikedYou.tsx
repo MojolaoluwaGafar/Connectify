@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import type { DiscoverProfile } from '../types';
 import { getWhoLikedMe } from '../API/Services/Likes/likes';
 import { useAuth } from '../context/authContext/useAuth';
+import { useLikes } from '../context/likeContext/useLikes';
 import { useNavigate } from 'react-router-dom';
 
 export const WhoLikedYou = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  // Re-included in the fetch below's dependencies — it changes in
+  // realtime whenever someone matches with the user (see LikesProvider's
+  // "new_match" socket listener), so this widget doesn't go stale while
+  // sitting on the Discover page.
+  const { likedMeIds } = useLikes();
   const [likedYou, setLikedYou] = useState<DiscoverProfile[]>([]);
   useEffect(() => {
     if (!user) return;
@@ -16,15 +22,15 @@ export const WhoLikedYou = () => {
                 const result = await getWhoLikedMe(user.id);
                 setLikedYou(result.slice(0,3));
 
-                console.log("WHO LIKED ME RESULT", result);
-                
+                // console.log("WHO LIKED ME RESULT", result);
+
             } catch (error) {
                 console.error("FAILED TO GET WHO LIKED ME", error);
-                
+
             }
         };
         fetchWhoLikedMe()
-    }, [user])
+    }, [user, likedMeIds])
 
     if (likedYou.length === 0) {
         return null;

@@ -149,8 +149,6 @@ export default function ProfileEditPage() {
     }
 
     setApiError('');
-    themedToast.error("You must be logged in to save your profile.");
-
 
     if (!validate()) {
       themedToast.error('Please fix the highlighted fields.');

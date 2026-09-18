@@ -7,9 +7,13 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   resendVerificationSchema,
+  changePasswordSchema,
 } from '@connecti/shared'
 import { AppError } from '../../core/errors/app-error.js'
 import { User } from '../../model/User.js'
+import { Profile } from '../../model/profile.js'
+import { Like } from '../../model/likes.js'
+import { Message } from '../../model/messages.js'
 import jwt from 'jsonwebtoken'
 import { env } from '../../config/env.js'
 import type { JWTPayload } from '../../types/payload.js'
@@ -66,12 +70,12 @@ export async function registerUser(payload: unknown) {
   const verificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
 
   // Development only: show verification code in backend terminal
-  console.log("====================================");
-  console.log("📧 VERIFICATION CODE");
-  console.log(`Email: ${data.email}`);
-  console.log(`Code: ${verificationCode}`);
-  console.log("Expires: 10 minutes");
-  console.log("====================================");
+  // console.log("====================================");
+  // console.log("📧 VERIFICATION CODE");
+  // console.log(`Email: ${data.email}`);
+  // console.log(`Code: ${verificationCode}`);
+  // console.log("Expires: 10 minutes");
+  // console.log("====================================");
 
   const newUser = await User.create({
     fullName: data.fullName,
@@ -214,15 +218,15 @@ export async function loginUser(payload: unknown) {
 }
 
 export async function forgotPassword(payload: unknown) {
-  console.log("FORGOT PASSWORD FUNCTION CALLED");
+  // console.log("FORGOT PASSWORD FUNCTION CALLED");
 
   const data = forgotPasswordSchema.parse(payload);
 
-  console.log(`Forgot password email: ${data.email}`);
+  // console.log(`Forgot password email: ${data.email}`);
 
   const user = await User.findOne({ email: data.email });
 
-  console.log(`User found: ${!!user}`);
+  // console.log(`User found: ${!!user}`);
 
   if (!user) {
     return {
@@ -241,12 +245,12 @@ export async function forgotPassword(payload: unknown) {
   await user.save();
 
   // Development only: show reset code in backend terminal
-  console.log("====================================");
-  console.log("🔐 PASSWORD RESET CODE");
-  console.log(`Email: ${user.email}`);
-  console.log(`Code: ${resetToken}`);
-  console.log("Expires: 10 minutes");
-  console.log("====================================");
+  // console.log("====================================");
+  // console.log("🔐 PASSWORD RESET CODE");
+  // console.log(`Email: ${user.email}`);
+  // console.log(`Code: ${resetToken}`);
+  // console.log("Expires: 10 minutes");
+  // console.log("====================================");
 
     await sendForgetPasswordVerificationEmail(
     user.email,
@@ -321,6 +325,82 @@ export async function resetPassword(payload: unknown) {
   };
 }
 
+export async function changePassword(
+  currentUser: JWTPayload | undefined,
+  payload: unknown,
+) {
+  if (!currentUser) {
+    throw new AppError(401, "UNAUTHORIZED", "Authentication required");
+  }
+
+  const data = changePasswordSchema.parse(payload);
+
+  const user = await User.findById(currentUser.id);
+
+  if (!user) {
+    throw new AppError(404, "USER_NOT_FOUND", "User not found");
+  }
+
+  if (!user.password) {
+    throw new AppError(
+      400,
+      "NO_PASSWORD_SET",
+      "This account signs in with Google and has no password to change",
+    );
+  }
+
+  const passwordMatches = await bcrypt.compare(
+    data.currentPassword,
+    user.password,
+  );
+
+  if (!passwordMatches) {
+    // 400, not 401 — a 401 here would trip the axios interceptor's
+    // global "session expired" redirect-to-login on a simple typo.
+    throw new AppError(
+      400,
+      "INVALID_CURRENT_PASSWORD",
+      "Current password is incorrect",
+    );
+  }
+
+  user.password = await bcrypt.hash(data.newPassword, 12);
+
+  await user.save();
+
+  return {
+    message: "Password changed successfully",
+  };
+}
+
+export async function deleteAccount(currentUser: JWTPayload | undefined) {
+  if (!currentUser) {
+    throw new AppError(401, "UNAUTHORIZED", "Authentication required");
+  }
+
+  const user = await User.findById(currentUser.id);
+
+  if (!user) {
+    throw new AppError(404, "USER_NOT_FOUND", "User not found");
+  }
+
+  const userId = user._id;
+
+  await Promise.all([
+    Profile.deleteOne({ userId }),
+    Like.deleteMany({ $or: [{ likerId: userId }, { likedUserId: userId }] }),
+    Message.deleteMany({
+      matchId: { $regex: `(^|_)${String(userId)}(_|$)` },
+    }),
+  ]);
+
+  await user.deleteOne();
+
+  return {
+    message: "Account deleted successfully",
+  };
+}
+
 export async function resendVerificationCode(payload: unknown) {
   const data = resendVerificationSchema.parse(payload);
 
@@ -353,12 +433,12 @@ export async function resendVerificationCode(payload: unknown) {
   await sendVerificationEmail(user.email, user.fullName, verificationCode);
 
   // Development only: show new verification code in backend terminal
-  console.log("====================================");
-  console.log("📧 RESENT VERIFICATION CODE");
-  console.log(`Email: ${user.email}`);
-  console.log(`Code: ${verificationCode}`);
-  console.log("Expires: 10 minutes");
-  console.log("====================================");
+  // console.log("====================================");
+  // console.log("📧 RESENT VERIFICATION CODE");
+  // console.log(`Email: ${user.email}`);
+  // console.log(`Code: ${verificationCode}`);
+  // console.log("Expires: 10 minutes");
+  // console.log("====================================");
 
   return {
     message:

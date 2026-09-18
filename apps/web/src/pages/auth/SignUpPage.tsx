@@ -149,10 +149,10 @@ const SignupPage = () => {
             )}
 
             <Button
+            className="w-full"
             type="submit"
             disabled={isSubmitting}
             isLoading={isSubmitting}
-  
             >
            {isSubmitting ? 'Creating account...' : 'Create Account'}
            </Button>

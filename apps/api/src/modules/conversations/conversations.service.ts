@@ -16,7 +16,7 @@ export function getConversationId(userIdA: string, userIdB: string) {
   return [userIdA, userIdB].sort().join('_');
 }
 
-function parseConversationId(conversationId: string) {
+export function parseConversationId(conversationId: string) {
   const parts = conversationId.split('_');
   if (parts.length !== 2) return null;
 

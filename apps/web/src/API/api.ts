@@ -1,7 +1,6 @@
 ﻿import axios, { type AxiosError } from "axios";
 
 import { clearAuth, getAuthToken } from "../utils/authToken";
-// import type { ICreateProfile } from "../types";
 
 const redirectToLogin = () => {
   if (typeof window === "undefined") return;
@@ -11,9 +10,7 @@ const redirectToLogin = () => {
 };
 
 const apiBaseUrl =
-  import.meta.env.VITE_BASE_URL ??
-  import.meta.env.VITE_API_URL ??
-  "http://localhost:3001";
+  import.meta.env.VITE_BASE_URL;
 
 const api = axios.create({
   baseURL: apiBaseUrl,
@@ -60,25 +57,3 @@ export function isAxiosError(error: unknown): error is AxiosError {
 export const getUser = async () => {
   return await api.get("/api/v1/auth/me");
 };
-
-// export const createProfile = async (data: ICreateProfile) => {
-//   const formData = new FormData();
-//   formData.append('fullName', data.fullName);
-//   formData.append('age', String(data.age));
-//   formData.append('gender', data.gender);
-//   formData.append('location', data.location);
-//   formData.append('occupation', data.occupation);
-//   formData.append('about', data.about);
-//   formData.append('interests', JSON.stringify(data.interests));
-
-//   if (data.profilePicture instanceof File) {
-//     formData.append('profilePicture', data.profilePicture);
-//   } else if (data.profilePicture) {
-//     formData.append('profilePicture', data.profilePicture);
-//   }
-
-//   return await api.post("/api/v1/profiles/createProfile", formData, {
-//     headers: { 'Content-Type': 'multipart/form-data' },
-//   });
-// };
-

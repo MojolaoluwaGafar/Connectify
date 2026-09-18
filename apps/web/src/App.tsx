@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import {
   BrowserRouter,
   Route,
@@ -6,38 +6,52 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
-import DiscoveryPage from './pages/DiscoveryPage';
 import ProtectedRoutes from './layout/ProtectedRoutes';
 import MainLayout from './layout/MainLayout';
 import { AuthProvider } from './context/authContext/AuthProvider';
 
-import PageNotFound from './pages/PageNotFound';
-import Settings from './pages/SettingsPage';
-import Matches from './pages/MatchesPage';
-import MyProfilePage from './pages/MyProfilepage';
-
-import ProfilePage from './pages/ProfilePage';
-import ProfileEditPage from './pages/ProfileEditPage';
 import { AuthGateProvider } from './context/authContext/useAuthGate';
-import LikesPage from './pages/LikesPage';
 import { useAuth } from './context/authContext/useAuth';
-import MessagesPage from './pages/MessagesPage';
-import SignupPage from './pages/auth/SignUpPage';
-import VerifyEmailPage from './pages/auth/VerifyEmailPage';
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
-import CheckEmailPage from './pages/auth/CheckEmailPage';
-import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import LoginPage from './pages/auth/LoginPage';
-import LandingPage from './pages/LandingPage';
 import GuestOnlyRoute from './layout/GuestOnlyRoutes';
+
+// Lazy-loaded so each route ships only the JS it needs, instead of one big
+// bundle everyone downloads up front — a real win on slower mobile data.
+const DiscoveryPage = lazy(() => import('./pages/DiscoveryPage'));
+const PageNotFound = lazy(() => import('./pages/PageNotFound'));
+const Settings = lazy(() => import('./pages/SettingsPage'));
+const Matches = lazy(() => import('./pages/MatchesPage'));
+const MyProfilePage = lazy(() => import('./pages/MyProfilepage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const ProfileEditPage = lazy(() => import('./pages/ProfileEditPage'));
+const LikesPage = lazy(() => import('./pages/LikesPage'));
+const MessagesPage = lazy(() => import('./pages/MessagesPage'));
+const SignupPage = lazy(() => import('./pages/auth/SignUpPage'));
+const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
+const ForgotPasswordPage = lazy(
+  () => import('./pages/auth/ForgotPasswordPage'),
+);
+const CheckEmailPage = lazy(() => import('./pages/auth/CheckEmailPage'));
+const ResetPasswordPage = lazy(
+  () => import('./pages/auth/ResetPasswordPage'),
+);
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 import { MatchesModal } from './components/MatchModal';
 import LikesProvider from './context/likeContext/LikesProvider';
-import { connectSocket, disconnectSocket } from './lib/socket';
+import { connectSocket, disconnectSocket, getActiveConversationId, socket } from './lib/socket';
 
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import "./toast.css"
 import { themedToast } from './utils/ToastFeedback';
+
+function RouteLoadingFallback() {
+  return (
+    <div className="flex h-screen w-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+    </div>
+  );
+}
 
 // Everything that needs to know "is someone logged in" (the auth gate modal,
 // the likes/matches state) lives inside AuthProvider so it can read that.
@@ -54,21 +68,45 @@ function Providers({ children }: { children: ReactNode }) {
     navigate(location.pathname, { replace: true, state: null });
   }, [location, navigate]);
 
-  // const { data } = getUser();
-  // console.log(data);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!user?.id) {
       disconnectSocket();
-      console.log('no user found');
+      // console.log('no user found');
       return;
     }
 
     connectSocket();
-    console.log('user found');
+    // console.log('user found');
 
     return () => {
       disconnectSocket();
+    };
+  }, [user?.id]);
+
+  // Global "new message" notification — fires no matter which page the
+  // user is on. Suppressed only when they already have that exact
+  // conversation open, since ChatWindow renders the message live there.
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleNewMessageNotification = (payload: {
+      conversationId: string;
+      senderName: string;
+      text: string;
+    }) => {
+      if (payload.conversationId === getActiveConversationId()) return;
+
+      themedToast.info(`New message from ${payload.senderName}`);
+    };
+
+    socket.on('new_message_notification', handleNewMessageNotification);
+
+    return () => {
+      socket.off('new_message_notification', handleNewMessageNotification);
     };
   }, [user?.id]);
 
@@ -88,6 +126,7 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <Providers>
+            <Suspense fallback={<RouteLoadingFallback />}>
             <Routes>
               <Route
                 path="/"
@@ -161,8 +200,8 @@ export default function App() {
                 <Route path="*" element={<PageNotFound></PageNotFound>} />
               </Route>
             </Routes>
-            
-            
+            </Suspense>
+
             <ToastContainer  position='top-center' autoClose={3000} hideProgressBar={false}
             newestOnTop={false} closeOnClick pauseOnHover draggable />
           </Providers>
