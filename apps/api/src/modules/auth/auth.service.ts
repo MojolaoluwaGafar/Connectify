@@ -7,9 +7,13 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   resendVerificationSchema,
+  changePasswordSchema,
 } from '@connecti/shared'
 import { AppError } from '../../core/errors/app-error.js'
 import { User } from '../../model/User.js'
+import { Profile } from '../../model/profile.js'
+import { Like } from '../../model/likes.js'
+import { Message } from '../../model/messages.js'
 import jwt from 'jsonwebtoken'
 import { env } from '../../config/env.js'
 import type { JWTPayload } from '../../types/payload.js'
@@ -318,6 +322,82 @@ export async function resetPassword(payload: unknown) {
 
   return {
     message: "Password reset successfully",
+  };
+}
+
+export async function changePassword(
+  currentUser: JWTPayload | undefined,
+  payload: unknown,
+) {
+  if (!currentUser) {
+    throw new AppError(401, "UNAUTHORIZED", "Authentication required");
+  }
+
+  const data = changePasswordSchema.parse(payload);
+
+  const user = await User.findById(currentUser.id);
+
+  if (!user) {
+    throw new AppError(404, "USER_NOT_FOUND", "User not found");
+  }
+
+  if (!user.password) {
+    throw new AppError(
+      400,
+      "NO_PASSWORD_SET",
+      "This account signs in with Google and has no password to change",
+    );
+  }
+
+  const passwordMatches = await bcrypt.compare(
+    data.currentPassword,
+    user.password,
+  );
+
+  if (!passwordMatches) {
+    // 400, not 401 — a 401 here would trip the axios interceptor's
+    // global "session expired" redirect-to-login on a simple typo.
+    throw new AppError(
+      400,
+      "INVALID_CURRENT_PASSWORD",
+      "Current password is incorrect",
+    );
+  }
+
+  user.password = await bcrypt.hash(data.newPassword, 12);
+
+  await user.save();
+
+  return {
+    message: "Password changed successfully",
+  };
+}
+
+export async function deleteAccount(currentUser: JWTPayload | undefined) {
+  if (!currentUser) {
+    throw new AppError(401, "UNAUTHORIZED", "Authentication required");
+  }
+
+  const user = await User.findById(currentUser.id);
+
+  if (!user) {
+    throw new AppError(404, "USER_NOT_FOUND", "User not found");
+  }
+
+  const userId = user._id;
+
+  await Promise.all([
+    Profile.deleteOne({ userId }),
+    Like.deleteMany({ $or: [{ likerId: userId }, { likedUserId: userId }] }),
+    Message.deleteMany({
+      matchId: { $regex: `(^|_)${String(userId)}(_|$)` },
+    }),
+  ]);
+
+  await user.deleteOne();
+
+  return {
+    message: "Account deleted successfully",
   };
 }
 

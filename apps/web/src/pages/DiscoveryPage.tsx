@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import * as api from '../services/authApi';
+import { getDiscoverProfiles } from '../API/Services/Profile/Profile';
 import { ProfileCard } from '../components/ProfileCard';
 import FilterProfiles from '../components/FilterProfiles';
 import EmptyProfile from '../components/EmptyProfile';
@@ -16,8 +16,8 @@ import { ProfileCardSkeletonGrid } from '../components/ui/ProfileCardSkeleton';
 const PAGESIZE = 8;
 
 const DiscoveryPage = () => {
-  const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<'all' | 'new' | 'near-me'>('all');
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
@@ -28,7 +28,7 @@ const DiscoveryPage = () => {
   // cacheKey (below) and this closure stay in sync.
   const request = useCallback(
     () =>
-      api.getDiscoverProfiles({
+      getDiscoverProfiles({
         search: searchValue,
         tab,
         page,
@@ -85,7 +85,7 @@ const DiscoveryPage = () => {
           <p className="mt-2 text-sm text-red-600">{discoveryError}</p>
         )}
         <main className="flex lg:flex-row flex-col gap-10 lg:mt-5 w-full justify-between">
-          <div className=" space-y-4 lg:w-3/4">
+          <div className="py-3 lg:py-0 space-y-4 lg:w-3/4">
             <FilterProfiles
               className="lg:hidden"
               setTab={setTab}

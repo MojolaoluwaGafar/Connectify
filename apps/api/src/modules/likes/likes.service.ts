@@ -1,6 +1,40 @@
 import { Like } from '../../model/likes.js';
 import { Profile } from '../../model/profile.js';
 import mongoose from 'mongoose';
+import { env } from '../../config/env.js';
+
+function formatProfile(profile: any) {
+  return {
+    ...profile,
+    id: profile.userId.toString(),
+    userId: profile.userId.toString(),
+  };
+}
+
+// Best-effort push to the (separate) socket process so the person who
+// liked first learns about the match immediately instead of waiting for
+// their next fetch. The REST flow above already succeeded either way —
+// this must never fail the like request itself.
+async function notifyMatch(recipientId: string, likerId: string) {
+  try {
+    const likerProfile = await Profile.findOne({ userId: likerId }).lean();
+    if (!likerProfile) return;
+
+    await fetch(`${env.socketInternalUrl}/internal/notify-match`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': env.INTERNAL_SOCKET_SECRET,
+      },
+      body: JSON.stringify({
+        recipientId,
+        profile: formatProfile(likerProfile),
+      }),
+    });
+  } catch (error) {
+    console.error('Failed to push realtime match notification:', error);
+  }
+}
 
 export async function likeProfile(likerId: string, likedUserId: string) {
   // I (by I, i mean Chidera ) removed the payload validation for now if any error occurs later add in the payload thank you
@@ -24,6 +58,13 @@ export async function likeProfile(likerId: string, likedUserId: string) {
     if (error?.code !== 11000) {
       throw error;
     }
+  }
+
+  if (matched) {
+    // likedUserId liked us first and is waiting — they get the realtime
+    // push. likerId (us) already learns about the match from this
+    // request's own response, so no need to notify ourselves too.
+    void notifyMatch(likedUserId, likerId);
   }
 
   return {

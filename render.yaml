@@ -1,0 +1,84 @@
+services:
+  # REST API — the Express app. A real, always-running Node process.
+  - type: web
+    name: connecti-api
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm run build -w @connecti/shared && npm run build -w @connecti/api
+    startCommand: npm run start -w @connecti/api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: INTERNAL_SOCKET_SECRET
+        generateValue: true
+      # Fill in with the connecti-web and connecti-socket URLs Render
+      # assigns after the first deploy (e.g. https://connecti-web.onrender.com).
+      - key: CORS_ORIGIN
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: SOCKET_INTERNAL_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+  # Socket.IO server — a second, separate Node process. Long-running and
+  # stateful (in-memory presence map), which is exactly why it can't be a
+  # serverless function and needs its own always-on service.
+  - type: web
+    name: connecti-socket
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm run build -w @connecti/shared && npm run build -w @connecti/api
+    startCommand: npm run start:socket -w @connecti/api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false # must match connecti-api's value exactly
+      - key: INTERNAL_SOCKET_SECRET
+        sync: false # must match connecti-api's value exactly
+      - key: CORS_ORIGIN
+        sync: false # connecti-web's URL
+
+  # Frontend — static files only. No Node process runs in production; this
+  # is just a build step (vite build) plus a CDN/static host serving the
+  # output. The rewrite rule below is what makes React Router's client-side
+  # routes (e.g. /profile/edit) work on a hard refresh.
+  - type: web
+    name: connecti-web
+    runtime: static
+    rootDir: .
+    buildCommand: npm install && npm run build -w @connecti/shared && npm run build -w @connecti/web
+    staticPublishPath: apps/web/dist
+    envVars:
+      - key: VITE_BASE_URL
+        sync: false # connecti-api's URL
+      - key: VITE_SOCKET_URL
+        sync: false # connecti-socket's URL
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

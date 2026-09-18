@@ -13,6 +13,13 @@ const environmentSchema = z.object({
     .default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   SOCKET_PORT: z.coerce.number().int().min(1).max(65535).default(3002),
+  // Shared secret so the REST API process can push realtime events (e.g. a
+  // new match) through the separate socket process's internal HTTP endpoint.
+  INTERNAL_SOCKET_SECRET: z.string().default('dev-internal-socket-secret'),
+  // Only needed when the REST API and socket process are deployed as
+  // separate services (so "localhost" no longer reaches the socket
+  // process) — set this to the socket service's internal/private URL.
+  SOCKET_INTERNAL_URL: z.string().trim().optional().default(''),
 
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   CLIENT_URL: z.string().default('http://localhost:5173'),
@@ -22,7 +29,7 @@ const environmentSchema = z.object({
     .trim()
     .min(1, 'Set MONGODB_URI to your MongoDB Atlas connection string.'),
 
-  JWT_SECRET_KEY: z.string().default('dev-secret-change-me'),
+  JWT_SECRET_KEY: z.string(),
   JWT_EXPIRES_IN: z.string().default('7d'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   
@@ -49,4 +56,7 @@ export const env = {
   corsOrigins: parsedEnvironment.CORS_ORIGIN.split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
+  socketInternalUrl:
+    parsedEnvironment.SOCKET_INTERNAL_URL ||
+    `http://localhost:${parsedEnvironment.SOCKET_PORT}`,
 }

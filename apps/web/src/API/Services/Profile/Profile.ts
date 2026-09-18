@@ -52,7 +52,18 @@ export const ProfileServices = {
 
   async getMyProfile(): Promise<Profile | null> {
     const { data } = await api.get('/api/v1/profiles/me/profile');
-    const profile = data?.profile ?? data?.data?.profile ?? data;
+
+    // The backend always responds `{ profile: Profile | null }`. A brand-new
+    // user legitimately gets `profile: null` back — that must NOT fall
+    // through to the other fallbacks below (`??` treats `null` as nullish,
+    // so a naive `data?.profile ?? data?.data?.profile ?? data` chain would
+    // skip right past a real `null` and return the whole response object
+    // instead, which is truthy and breaks every `!profile` check downstream).
+    if (data && typeof data === 'object' && 'profile' in data) {
+      return (data.profile as Profile | null) ?? null;
+    }
+
+    const profile = data?.data?.profile ?? data;
     return (profile as Profile | null) ?? null;
   },
 
@@ -72,7 +83,17 @@ export const ProfileServices = {
   async getProfileById(profileId: string): Promise<DiscoverProfile | null> {
     if (!profileId) return null;
     const { data } = await api.get(`/api/v1/profiles/${profileId}`);
-    return (data?.data as DiscoverProfile | null) ?? null;
+    const profile = data?.data as Partial<DiscoverProfile> | null | undefined;
+
+    if (!profile) return null;
+
+    return {
+      ...profile,
+      id: profile.id ?? profile.userId ?? profileId,
+      userId: profile.userId ?? profile.id ?? profileId,
+      interests: profile.interests ?? profile.interest ?? [],
+      joinedDaysAgo: profile.joinedDaysAgo ?? 0,
+    } as DiscoverProfile;
   },
 };
 

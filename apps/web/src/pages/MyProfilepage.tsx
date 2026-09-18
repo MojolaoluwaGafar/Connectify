@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import {
   MapPin,
   Briefcase,
@@ -21,10 +21,7 @@ import Chip from '../components/ui/Chip';
 import { useLikes } from '../context/likeContext/useLikes';
 
 export default function MyProfilePage() {
-  const { user, profile } = useAuth();
-
-  console.log('MyProfilePage user:', user);
-  console.log('MyProfilePage profile:', profile);
+  const { user, profile, isLoading } = useAuth();
   const { likedIds } = useLikes();
   const navigate = useNavigate();
 
@@ -34,12 +31,6 @@ export default function MyProfilePage() {
   });
 
   const [imageOpen, setImageOpen] = useState(false);
-
-  // useEffect(() => {
-  //   if (!profile) {
-  //     navigate('/profile/edit', { replace: true });
-  //   }
-  // }, [profile, navigate]);
 
   useEffect(() => {
     if (!user) return;
@@ -54,10 +45,17 @@ export default function MyProfilePage() {
     );
   }, [user, likedIds]);
 
-  if (!profile) {
-    navigate('/profile/edit', { replace: true });
-    return null;
+  if (isLoading || !user) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-theme" />
+      </div>
+    );
   }
+
+  // ProtectedRoutes already redirects here only once a profile exists; this
+  // is just a defensive fallback in case that state changes mid-render.
+  if (!profile) return <Navigate to="/profile/edit" replace />;
 
   const statCards = [
     {

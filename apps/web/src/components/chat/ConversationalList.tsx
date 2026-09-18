@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useAuth } from "../../context/authContext/useAuth";
 import { getConversations } from "../../API/Services/Messages/messages";
+import { socket } from "../../lib/socket";
 
 // TypeScript interface for component props
 interface ConversationListProps {
@@ -44,6 +45,61 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
     }
 
     loadConversations();
+  }, [user]);
+
+  // Keeps each row's preview in sync with new messages as they arrive —
+  // without this, a conversation's preview only updates on a full reload.
+  useEffect(() => {
+    if (!user) return;
+
+    function upsertLastMessage(
+      conversationId: string,
+      lastMessage: { text: string; sentAt: string },
+    ) {
+      setConversations((prev) => {
+        const next = prev.map((conversation) =>
+          conversation.matchId === conversationId
+            ? { ...conversation, lastMessage }
+            : conversation,
+        );
+
+        return [...next].sort((a, b) => {
+          const aTime = a.lastMessage?.sentAt ?? "";
+          const bTime = b.lastMessage?.sentAt ?? "";
+          return bTime.localeCompare(aTime);
+        });
+      });
+    }
+
+    // Fires for whichever side has this conversation's ChatWindow open
+    // (sender included, since sending echoes back through the room).
+    const handleReceiveMessage = (payload: any) => {
+      if (!payload?.conversationId) return;
+
+      upsertLastMessage(payload.conversationId, {
+        text: payload.text ?? "",
+        sentAt: payload.sentAt ?? new Date().toISOString(),
+      });
+    };
+
+    // Fires for the recipient regardless of which page they're on, so a
+    // conversation not currently open still gets its preview updated.
+    const handleNewMessageNotification = (payload: any) => {
+      if (!payload?.conversationId) return;
+
+      upsertLastMessage(payload.conversationId, {
+        text: payload.text ?? "",
+        sentAt: new Date().toISOString(),
+      });
+    };
+
+    socket.on("receive_message", handleReceiveMessage);
+    socket.on("new_message_notification", handleNewMessageNotification);
+
+    return () => {
+      socket.off("receive_message", handleReceiveMessage);
+      socket.off("new_message_notification", handleNewMessageNotification);
+    };
   }, [user]);
 
   // Client-side search filter checking otherUser's fullName against searchQuery

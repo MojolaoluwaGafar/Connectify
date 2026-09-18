@@ -21,6 +21,7 @@ import Button from '../components/ui/Button';
 
 // Change this path if your modal is located somewhere else.
 import ProfilePreviewModal from '../components/profilePreviewModal';
+import { themedToast } from '../utils/ToastFeedback';
 
 interface FieldErrors {
   fullName?: string;
@@ -150,6 +151,7 @@ export default function ProfileEditPage() {
     setApiError('');
 
     if (!validate()) {
+      themedToast.error('Please fix the highlighted fields.');
       return;
     }
 
@@ -171,15 +173,24 @@ export default function ProfileEditPage() {
         profilePicture,
       });
 
+
       await refreshProfile();
+
+      themedToast.success('Profile saved successfully!');
 
       navigate('/profile');
     } catch (error) {
       console.error('Failed to save profile:', error);
 
+      const message =
+      error instanceof Error
+        ? error.message
+        : 'Could not save your profile. Please try again.';
+
       setApiError(
         'Could not save your profile. Please try again.',
       );
+      themedToast.error(message);
     } finally {
       setIsSaving(false);
     }

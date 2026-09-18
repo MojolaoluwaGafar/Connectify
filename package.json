@@ -10,13 +10,13 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev -w @connecti/api\" \"npm run dev:socket -w @connecti/api\" \"npm run dev -w @connecti/web\"",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @connecti/shared && npm run build -w @connecti/api && npm run build -w @connecti/web",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build -w @connecti/shared && npm run typecheck --workspaces --if-present",
     "dev:api": "npm run dev -w @connecti/api",
-    "dev:web": "npm run dev -w @connecti/web",
-    "dev:socket": "npm run dev -w @connecti/socket"
+    "dev:socket": "npm run dev:socket -w @connecti/api",
+    "dev:web": "npm run dev -w @connecti/web"
   },
   "devDependencies": {
     "@types/google.accounts": "^0.0.18",

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ProfileCard from '../components/discover/ProfileCard';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,7 @@ import { getLikedByMe, getWhoLikedMe } from '../API/Services/Likes/likes';
 import { useAuth } from '../context/authContext/useAuth';
 import { useApiQuery } from '../hooks/useApiQuery';
 import { ProfileCardSkeletonGrid } from '../components/ui/ProfileCardSkeleton';
+import { socket } from '../lib/socket';
 
 type Tab = 'liked-you' | 'you-liked';
 
@@ -26,11 +27,30 @@ const LikesPage = () => {
   const {
     data: likedYouData,
     loading: isLikedYouLoading,
+    refetch: refetchWhoLikedMe,
   } = useApiQuery(fetchWhoLikedMe, 'Could not load your likes.', {
     enabled: Boolean(user),
     cacheKey: user ? `liked-you:${user.id}` : null,
     staleTime: 30_000,
   });
+
+  // The cache above only refreshes on remount/staleness — without this,
+  // someone matching with the user while this page is open wouldn't show
+  // up in the "Liked You" tab until a reload.
+  useEffect(() => {
+    if (!user) return;
+
+    const handleNewMatch = () => {
+      void refetchWhoLikedMe();
+    };
+
+    socket.on('new_match', handleNewMatch);
+
+    return () => {
+      socket.off('new_match', handleNewMatch);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const {
     data: youLikedData,

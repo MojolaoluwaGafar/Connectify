@@ -9,7 +9,6 @@ const socketUrl =
 
 export const socket = io(socketUrl, {
   autoConnect: false,
-  withCredentials: true,
   transports: ['websocket'],
   reconnectionAttempts: 5,
 })
@@ -45,3 +44,14 @@ export const disconnectSocket = () => {
     socket.disconnect()
   }
 }
+
+// Tracks whichever conversation is currently open in a mounted ChatWindow,
+// so a global "new message" notification listener can tell whether the
+// user is already looking at that conversation and skip the toast.
+let activeConversationId: string | null = null
+
+export const setActiveConversationId = (conversationId: string | null) => {
+  activeConversationId = conversationId
+}
+
+export const getActiveConversationId = () => activeConversationId

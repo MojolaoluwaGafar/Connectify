@@ -26,11 +26,3 @@ body::-webkit-scrollbar,
   height: 0;
   display: none;
 }
-
-.LoginSuccessToastStyle {
-  background-color: #4caf50;
-  color: #fff;
-  border-radius: 8px;
-  font-weight: bold;
-  padding: 12px 20px;
-}

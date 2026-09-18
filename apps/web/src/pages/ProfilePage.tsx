@@ -17,7 +17,10 @@ import { useLikes } from '../context/likeContext/useLikes';
 import { useApiQuery } from '../hooks/useApiQuery';
 
 function sharedCount(a: DiscoverProfile, b: DiscoverProfile) {
-  return a.interests.filter((interest) => b.interests.includes(interest))
+  const aInterests = a.interests ?? a.interest ?? [];
+  const bInterests = b.interests ?? b.interest ?? [];
+
+  return aInterests.filter((interest) => bInterests.includes(interest))
     .length;
 }
 
@@ -196,14 +199,14 @@ export default function ViewProfilePage() {
               {isLiked ? 'Liked' : 'Like profile'}
             </Button>
 
-            {(isMatchedWithTarget || canMessage) ? (
+            {isMatchedWithTarget ? (
               <Button
                 variant="outline"
                 icon={<MessageCircle size={16} />}
                 className="border-stroke-primary! text-theme! hover:bg-theme-shade/20!"
                 onClick={() =>
                   navigate('/messages', {
-                    state: { openProfileId: target.id },
+                    state: { selectedUser: target },
                   })
                 }
               >
@@ -211,7 +214,9 @@ export default function ViewProfilePage() {
               </Button>
             ) : (
               <p className="text-sm text-ink-500">
-                Like their profile to start a conversation.
+                {isLiked
+                  ? "You'll be able to message once they like you back."
+                  : 'Like their profile to start a conversation.'}
               </p>
             )}
           </div>

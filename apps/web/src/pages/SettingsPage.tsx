@@ -1,12 +1,20 @@
-import { useState } from 'react';
-import { useAuth } from '../context/authContext/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import axios from "axios";
+import { useAuth } from "../context/authContext/useAuth";
+import { useNavigate } from "react-router-dom";
+import { themedToast } from "../utils/ToastFeedback";
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.error?.message ?? fallback;
+  }
+  return error instanceof Error ? error.message : fallback;
+}
 
 const Settings = () => {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
 
-  const { logout } = useAuth();
+  const { user, logout, changePassword, deleteAccount } = useAuth();
   const [newMatches, setNewMatches] = useState(() => {
     const savedMatches = localStorage.getItem("newMatches");
     return savedMatches !== null ? JSON.parse(savedMatches) : true;
@@ -22,30 +30,97 @@ const Settings = () => {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
-  const handleDeleteAccount = () => {
-    localStorage.removeItem("newMatches");
-    localStorage.removeItem("newMessages");
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-    setDeleteModalOpen(false);
-    setAccountDeleted(true);
-        setTimeout(() => {
+  const resetPasswordForm = () => {
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      themedToast.error("Fill in all password fields.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      themedToast.error("New password and confirmation do not match.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      themedToast.success("Password changed successfully.");
+      resetPasswordForm();
+      setPasswordModalOpen(false);
+    } catch (error) {
+      themedToast.error(getErrorMessage(error, "Failed to change password."));
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (isDeletingAccount) return;
+
+    setIsDeletingAccount(true);
+    try {
+      await deleteAccount();
+
+      localStorage.removeItem("newMatches");
+      localStorage.removeItem("newMessages");
+
+      setDeleteModalOpen(false);
+      setAccountDeleted(true);
+      themedToast.success("Your account has been deleted.");
+      setTimeout(() => {
         navigate("/signup");
       }, 2000);
-    };
+    } catch (error) {
+      themedToast.error(getErrorMessage(error, "Failed to delete account."));
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
 
   const handleLogout = async () => {
+  if (isLoggingOut) return;
+
+  setIsLoggingOut(true);
+
+  try {
     setLogoutModalOpen(false);
 
     await logout();
 
     setLoggedOut(true);
 
-       setTimeout(() => {
+    themedToast.success('You have been logged out successfully.');
+
+    setTimeout(() => {
       navigate("/signup");
     }, 2000);
-  };
+  } catch (error) {
+    console.error('Logout failed:', error);
 
+    themedToast.error(
+      error instanceof Error
+        ? error.message
+        : 'Logout failed. Please try again.',
+    );
+  } finally {
+    setIsLoggingOut(false);
+  }
+};
   return (
     <>
       <main
@@ -88,12 +163,13 @@ const Settings = () => {
           <div className="mt-5 flex items-center justify-between">
             <span className="text-[14px] text-[#6B6575]">Email</span>
             <span className="text-[14px] font-semibold text-[#1C1524]">
-              mickietyronne@gmail.com
+              {user?.email ?? "—"}
             </span>
           </div>
 
           <button
             type="button"
+            onClick={() => setPasswordModalOpen(true)}
             className="mt-5 text-left text-[14px] font-medium text-purple-600 hover:underline"
           >
             change password
@@ -227,7 +303,6 @@ const Settings = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
               color="#ef4444"
-
             >
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
@@ -264,9 +339,68 @@ const Settings = () => {
               </button>
               <button
                 onClick={handleDeleteAccount}
-                className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                disabled={isDeletingAccount}
+                className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
               >
-                Delete account
+                {isDeletingAccount ? "Deleting..." : "Delete account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {passwordModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
+          <div className="flex w-full max-w-lg flex-col rounded-xl bg-white p-10 shadow-xl">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Change password
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Enter your current password and choose a new one.
+            </p>
+            <div className="mt-6 flex w-full flex-col gap-3">
+              <input
+                type="password"
+                autoComplete="current-password"
+                placeholder="Current password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:outline-none"
+              />
+              <input
+                type="password"
+                autoComplete="new-password"
+                placeholder="New password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:outline-none"
+              />
+              <input
+                type="password"
+                autoComplete="new-password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:outline-none"
+              />
+            </div>
+            <div className="mt-6 flex w-full flex-col gap-3">
+              <button
+                onClick={() => {
+                  setPasswordModalOpen(false);
+                  resetPasswordForm();
+                }}
+                className="w-full rounded-md border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleChangePassword}
+                disabled={isChangingPassword}
+                className="w-full rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-60"
+              >
+                {isChangingPassword ? "Updating..." : "Update password"}
               </button>
             </div>
           </div>
@@ -276,7 +410,7 @@ const Settings = () => {
       {/* Logout Modal */}
       {logoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
-          <div className="flex h-70 w-full max-w-lg flex-col items-center justify-center rounded-xl bg-white p-10 shadow-xl">
+          <div className="flex h-70 w-full max-w-lg flex-col            items-center justify-center rounded-xl bg-white p-10 shadow-xl">
             <h2 className="text-lg font-semibold text-gray-900">Log out?</h2>
             <p className="mt-2 text-center text-sm text-gray-500">
               Are you sure you want to log out of your account?
@@ -290,9 +424,10 @@ const Settings = () => {
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                disabled={isLoggingOut}
+                className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
               >
-                Log out
+                {isLoggingOut ? "Logging out..." : "Log out"}
               </button>
             </div>
           </div>
