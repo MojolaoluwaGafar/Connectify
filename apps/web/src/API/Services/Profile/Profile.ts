@@ -1,6 +1,6 @@
-import { ProfileListResponseSchema } from '@connecti/shared';
 import api from '../../api';
 import type { DiscoverProfile, ICreateProfile, Profile } from '../../../types';
+import { ProfileListResponseSchema } from '../../../../../../packages/shared/src/api';
 
 export interface ProfileListFilters {
   search?: string;
