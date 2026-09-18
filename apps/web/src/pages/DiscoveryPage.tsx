@@ -62,7 +62,7 @@ const DiscoveryPage = () => {
 
   const profiles: DiscoverProfile[] = data?.items ?? [];
 
-  console.log('DiscoveryPage profiles:', profiles);
+  // console.log('DiscoveryPage profiles:', profiles);
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGESIZE);
 

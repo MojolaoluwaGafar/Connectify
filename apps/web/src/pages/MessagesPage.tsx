@@ -13,12 +13,12 @@ const MessagesPage = () => {
     async function loadConversations() {
       if (!user) return;
 
-      console.log(user);
+      // console.log(user);
 
       try {
         const data = await getConversations();
 
-        console.log('CONVERSATIONS DATA', data);
+        // console.log('CONVERSATIONS DATA', data);
 
         const selectedUser = location.state?.selectedUser;
 

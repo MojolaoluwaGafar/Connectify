@@ -69,7 +69,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     });
 
     const handleIncomingMessage = (payload: any) => {
-      console.log("RECEIVED MESSAGE FROM SOCKET:", payload);
+      // console.log("RECEIVED MESSAGE FROM SOCKET:", payload);
       const conversationId = payload?.conversationId ?? payload?.matchId;
 
       if (conversationId !== matchId) {
@@ -95,7 +95,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
           ? current
           : [...current, nextMessage];
 
-        console.log("MESSAGES STATE:", updatedMessages);
+        // console.log("MESSAGES STATE:", updatedMessages);
 
         return updatedMessages;
       });
@@ -256,11 +256,11 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     const outboundText = inputText.trim();
 
     setInputText("");
-    console.log("SENDING MESSAGE:", {
-      connected: socket.connected,
-      matchId,
-      outboundText,
-    });
+    // console.log("SENDING MESSAGE:", {
+    //   connected: socket.connected,
+    //   matchId,
+    //   outboundText,
+    // });
 
     socket.emit("send_message", {
       conversationId: matchId,

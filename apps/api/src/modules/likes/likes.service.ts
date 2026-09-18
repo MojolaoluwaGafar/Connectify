@@ -45,7 +45,7 @@ export async function likeProfile(likerId: string, likedUserId: string) {
     likedUserId: likerId,
   });
   const matched = !!existingLike;
-  console.log('EXISTING LIKES', existingLike);
+  // console.log('EXISTING LIKES', existingLike);
 
   try {
     const like = new Like({ likerId, likedUserId });
@@ -91,12 +91,12 @@ export async function likedByMe(likerId: string) {
     likerId: new mongoose.Types.ObjectId(likerId),
   });
 
-  console.log('LIKES FOUND:', likes);
-  console.log('LIKER ID:', likerId);
+  // console.log('LIKES FOUND:', likes);
+  // console.log('LIKER ID:', likerId);
 
   const likedUserIds = likes.map((like) => like.likedUserId);
 
-  console.log('LIKED USER IDS:', likedUserIds);
+  // console.log('LIKED USER IDS:', likedUserIds);
 
   const profiles = await Profile.find({
     userId: { $in: likedUserIds },
@@ -113,13 +113,13 @@ export const whoLikedMe = async (userId: string) => {
   const likes = await Like.find({
     likedUserId: new mongoose.Types.ObjectId(userId),
   });
-  console.log('WHO LIKED ME LIKES', likes);
+  // console.log('WHO LIKED ME LIKES', likes);
 
   const likerIds = likes.map((like) => like.likerId);
-  console.log('WHO LIKED ME LIKER IDS:', likerIds);
+  // console.log('WHO LIKED ME LIKER IDS:', likerIds);
 
   const profiles = await Profile.find({ userId: { $in: likerIds } });
-  console.log('WHO LIKED ME PROFILES:', profiles);
+  // console.log('WHO LIKED ME PROFILES:', profiles);
 
   return profiles.map((profile) => ({
     ...profile.toObject(),
