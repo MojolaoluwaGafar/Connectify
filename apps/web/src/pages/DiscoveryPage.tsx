@@ -22,6 +22,11 @@ const DiscoveryPage = () => {
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
   const [discoveryError, setDiscoveryError] = useState('');
+  // Generated once per visit and reused for every page request so the "all"
+  // tab's random order stays stable while paging through — the backend
+  // shuffles deterministically from this seed rather than re-randomizing
+  // per request, which would otherwise repeat/skip users across pages.
+  const [seed] = useState(() => Math.floor(Math.random() * 1_000_000_000));
 
   // Recreated whenever the actual query params change, so useApiQuery's
   // internal fetchData always calls the API with fresh args, and so
@@ -34,14 +39,17 @@ const DiscoveryPage = () => {
         page,
         pageSize: PAGESIZE,
         excludeUserId: user?.id,
+        seed,
       }),
-    [searchValue, tab, page, user?.id],
+    [searchValue, tab, page, user?.id, seed],
   );
 
   // One cache entry per distinct combination of filters — switching back
   // to a tab/page/search you've already loaded shows cached results
   // instantly instead of refetching and flashing a spinner.
-  const cacheKey = `discover:${tab}:${page}:${searchValue}:${user?.id ?? 'anon'}`;
+  // Near-me results depend on the viewer's own saved location, so it's part
+  // of the key — otherwise changing it would keep serving the old tab's cache.
+  const cacheKey = `discover:${tab}:${page}:${searchValue}:${seed}:${user?.id ?? 'anon'}:${profile?.location ?? ''}`;
 
   const {
     data,

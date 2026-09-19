@@ -1,96 +1,14 @@
-# Frontend-derived backend contract
+# API contract
 
-**Status:** Approved implementation reference
+**Status:** As-built reference for the REST API in `apps/api` (kept at this
+path for existing links). Real-time events are documented in
+[backend.md](./backend.md#62-events).
 
-This document converts the current Connectify client in `apps/web/connectify`
-into the backend contract for Connecti. It is based on the client routes,
-screens, contexts, and the mock API in `apps/web/connectify/src/lib/mockApi.ts`
-plus the app shell in `apps/web/connectify/src/App.tsx`; it deliberately
-excludes localStorage implementation details and mock-only behavior that must
-not be copied into the real API.
+## Conventions
 
-## Source app and module mapping
-
-The real product surface is the Connectify app currently checked in under the
-workspace:
-
-```text
-apps/
-  web/
-    connectify/
-      src/
-        App.tsx
-        pages/
-        context/
-        components/
-        layout/
-        lib/mockApi.ts
-```
-
-The backend contracts below are derived from these screens and behaviors:
-
-- `apps/web/connectify/src/App.tsx` for protected and guest route structure
-- `apps/web/connectify/src/context/authContext/AuthProvider.tsx` for auth state
-- `apps/web/connectify/src/context/likeContext/LikesProvider.tsx` for like/match flow
-- `apps/web/connectify/src/pages/*` for product features and permissions
-- `apps/web/connectify/src/lib/mockApi.ts` for the canonical behavior contract
-
-
-## 1. Product surface confirmed by the client
-
-| Client area | Backend capability | Source reference |
-| --- | --- | --- |
-| Sign up, verification, login, password reset | Local-password identity and email verification | `pages/auth/*`, `lib/mockApi.ts` |
-| Profile edit and public profile view | Profile creation, update, public read, photo upload | `ProfileEditPage.tsx`, `ViewProfilePage.tsx` |
-| Discover | Public, paginated profile discovery with search and tabs | `DiscoverPage.tsx` |
-| Likes and matches | Directed likes; a match occurs only after reciprocal likes | `LikesContext.tsx`, `MatchesPage.tsx` |
-| Messages | One direct conversation per pair; a single active like grants messaging | `MessagesPage.tsx`, `ChatWindow.tsx` |
-| Settings | Notification preferences, logout, account deletion | `SettingsPage.tsx` |
-
-Public visitors may browse Discover and public profiles. Writing likes,
-messages, profile changes, settings, or account actions requires a signed-in
-user.
-
-## 2. Canonical lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> Registered: register
-    Registered --> VerificationPending: email code issued
-    VerificationPending --> Verified: valid code submitted
-    VerificationPending --> VerificationPending: resend code
-    Verified --> Authenticated: login
-    Authenticated --> ProfileIncomplete: no complete profile
-    ProfileIncomplete --> ProfileComplete: profile meets requirements
-    ProfileComplete --> Discovering: browse public profiles
-    Discovering --> OneWayLike: like a profile
-    OneWayLike --> ConversationEnabled: either direction has an active like
-    ConversationEnabled --> Matched: both directions have active likes
-    Matched --> ConversationEnabled: one side removes its like
-    ConversationEnabled --> Discovering: last active like is removed
-    Authenticated --> [*]: account deletion
-```
-
-### Product rules
-
-1. An account cannot create a session until its email is verified.
-2. A profile is complete only when it has: full name, age 18–100, gender,
-   location, a about of at least 10 characters, and one or more interests.
-3. A like is directed: `actor -> target`. A duplicate active like is
-   idempotent.
-4. A match is the mutual-like state, not a separate client-created resource.
-   The backend records `matchedAt` when the state is first reached so it can
-   create an in-app notification and support history.
-5. The current client intentionally allows messaging when *either* user has
-   an active like. The relationship layer—not the route parameter—authorizes
-   every message read and write.
-6. If the final active like is removed, the client no longer lists the
-   conversation. Preserve data for moderation/audit, but deny new reads and
-   messages until a new like reopens the relationship.
-
-## 3. API contract
-
-All endpoints live below `/v1`. Every error uses the existing stable shape:
+- **Base path:** `/api/v1` (also available as `/v1`). The frontend calls `/api/v1/...`.
+- **Auth:** every route except the auth entry points and health checks requires `Authorization: Bearer <jwt>`. A missing token returns `401 { "message": "No token provided" }`; an invalid or expired token returns `403 { "message": "Invalid or expired token" }`. Sessions are JWTs — there are no cookies or refresh tokens.
+- **Errors:** application errors use one envelope. (The auth middleware's `401`/`403` and a few controller guards return a plain `{ "message": ... }` instead.)
 
 ```json
 {
@@ -103,152 +21,135 @@ All endpoints live below `/v1`. Every error uses the existing stable shape:
 }
 ```
 
-### Authentication
+- Every response carries an `x-request-id` header; callers may supply their own.
+- Rate limit: 120 requests/minute per IP (`429 RATE_LIMITED`).
+
+## 1. Product rules
+
+1. An account cannot log in until its email is verified (Google sign-in accounts are verified automatically).
+2. A profile is **complete** only when it has: full name (≥ 2 chars), age 18–100, gender, location, occupation, an "about" of at least 10 characters, one or more interests, **and a profile photo**. Incomplete profiles still appear in discovery.
+3. A like is directed (`liker → liked`). Liking someone you already like is a harmless no-op.
+4. A **match** is the mutual-like state. It is not stored — it is derived from two `Like` records.
+5. **Messaging requires a match.** Both people must currently like each other; if either un-likes, message reads and writes are denied (`403 NOT_MATCHED`), and the socket join is refused. Message history is kept.
+6. A conversation id is derived: the two user ids sorted and joined with `_` (`<idLow>_<idHigh>`).
+
+## 2. Authentication — `/auth`
+
+| Method | Path | Auth | Body | Purpose |
+| --- | --- | --- | --- | --- |
+| POST | `/auth/register` | – | `{ fullName, email, password }` | Create an unverified account; emails a 6-digit code (10-minute expiry) |
+| POST | `/auth/verify-email` | – | `{ email, code }` | Verify the account |
+| POST | `/auth/resend-verification` | – | `{ email }` | Send a replacement code |
+| POST | `/auth/login` | – | `{ email, password }` | Returns `{ token, user }` for a verified account |
+| POST | `/auth/google` | – | `{ idToken }` | Verifies a Google ID token; finds, links, or creates the account; returns `{ token, user }` |
+| GET | `/auth/me` | yes | – | Current user |
+| POST | `/auth/forgot-password` | – | `{ email }` | Emails a reset code; the response never reveals whether the email exists |
+| POST | `/auth/reset-password` | – | `{ email, token, newPassword, confirmPassword }` | Replace the password using the emailed code |
+| POST | `/auth/change-password` | yes | `{ currentPassword, newPassword }` | Wrong current password → `400 INVALID_CURRENT_PASSWORD` (not 401, so the client doesn't treat it as an expired session); Google-only accounts → `400 NO_PASSWORD_SET` |
+| DELETE | `/auth/account` | yes | – | Deletes the user, their profile, likes, and messages |
+
+Successful auth responses use `{ "message": "...", "data": ..., "requestId": "..." }`. Login returns
+`data: { token, user: { id, fullName, email, role, isEmailVerified } }`. Password hashes,
+verification codes, and reset tokens are never returned. Input shapes are validated by the shared
+zod schemas in `packages/shared/src/schemas/auth.ts`.
+
+## 3. Profiles and discovery — `/profiles`
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/auth/register` | Create an unverified account and issue a verification code |
-| POST | `/auth/verify-email` | Verify `{ email, code }` |
-| POST | `/auth/resend-verification` | Send a replacement verification code |
-| POST | `/auth/login` | Create a session for a verified account |
-| POST | `/auth/logout` | Revoke the current session |
-| GET | `/auth/me` | Rehydrate the client session and profile |
-| POST | `/auth/password-reset/request` | Request a reset without leaking account existence |
-| POST | `/auth/password-reset/confirm` | Validate token/code and replace the password |
+| GET | `/profiles` | Paginated discovery (see below) |
+| GET | `/profiles/me/profile` | The current user's profile → `{ "profile": Profile \| null }` (`null` for a brand-new user) |
+| GET | `/profiles/:profileId` | A profile by **user id** → `{ "data": Profile \| null }` |
+| POST | `/profiles/createProfile` | Create or update (upsert) the current user's profile. `multipart/form-data` with `fullName, age, gender, location, occupation, about, interests` (JSON array string) and an optional `profilePicture` file (JPEG/PNG, ≤ 5 MB, uploaded to Cloudinary). Returns `201 { success, message, profile }` |
 
-Use an HTTP-only, Secure, SameSite cookie for browser sessions. Do not return
-password hashes, reset tokens, or verification codes. The client’s mock
-`User.password` field is not part of the real API DTO.
+**Discovery query parameters**
 
-### Profile and discovery
+| Param | Meaning |
+| --- | --- |
+| `tab` | `all` (default), `new`, or `near-me` |
+| `search` | Case-insensitive match against full name or interests |
+| `page`, `pageSize` | 1-based page (default 1) and size (default 8, max 50) |
+| `excludeUserId` | Hide this user (the caller's own profile) |
+| `seed` | Integer shuffle key for `tab=all` — see below |
+| `radius` | Kilometres, for `tab=near-me` only (default 50, clamped to 1–500) |
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/profiles` | Public discovery; accepts `search`, `tab`, `page`, `pageSize` |
-| GET | `/profiles/:profileId` | Public profile view |
-| GET | `/me/profile` | Read the current user’s editable profile |
-| PUT | `/me/profile` | Create or replace the current user’s profile |
-| PATCH | `/me/profile` | Partial profile update |
-| POST | `/media/profile-photo/upload-url` | Request a signed image upload URL |
-| POST | `/media/:mediaId/complete` | Confirm upload and attach returned photo URL |
+**Ordering by tab**
 
-`tab` supports `all`, `near-me`, and `new`. Use the client’s existing
-page-based response until the frontend migrates to cursor pagination:
+- `all` — a deterministic shuffle derived from `seed`. The client generates one seed per visit and sends it with every page request, so the order is random per visit but stable while paging (no repeats or skipped users). A different seed gives a different order.
+- `new` — newest accounts first (`createdAt` descending).
+- `near-me` — profiles within `radius` km of the caller's own `locationCoords` (a GeoJSON `[lng, lat]` point stored on the profile, from a `2dsphere` index), nearest first. Requires the caller to have coordinates (`400` otherwise). Each item carries a `distanceLabel` such as `"12 km away"` or `"In your area"`. `locationCoords` is hidden from every response except the caller's own profile.
+
+**Location endpoints**
+
+- `GET /api/v1/geocode/autocomplete?q=<text>` — authenticated, rate-limited (40/min/IP). Returns `{ "data": [{ "label": "Ikeja, Lagos", "lat": 6.59, "lng": 3.34 }], "provider": "locationiq" }` for Nigerian area-level places (cities, districts, LGAs, states). `provider` is `locationiq` or `photon` — the UI shows that provider's attribution. LocationIQ is primary when `LOCATIONIQ_API_KEY` is set and Photon is the fallback (or the only provider when no key is set); `502 GEOCODER_UNAVAILABLE` only if every provider fails. Results are cached in memory for an hour.
+- `POST /api/v1/profiles/createProfile` now requires `locationCoords` (JSON string in the multipart body: `{"type":"Point","coordinates":[lng,lat]}`) alongside `location`.
+
+**Response**
 
 ```json
 {
-  "items": [],
-  "total": 0,
-  "page": 1,
-  "pageSize": 8
+  "success": true,
+  "message": "Profiles listed",
+  "data": {
+    "message": "Profile discovery successful.",
+    "status": "success",
+    "items": [ { "id": "<userId>", "userId": "<userId>", "fullName": "...", "age": 25,
+                 "gender": "female", "location": "Lagos", "occupation": "", "about": "...",
+                 "interests": ["Music"], "interest": ["Music"], "profilePicture": null,
+                 "isComplete": false, "joinedDaysAgo": 3 } ],
+    "total": 19,
+    "page": 1,
+    "pageSize": 8
+  }
 }
 ```
 
-Profile photos accept JPEG or PNG only and have a 5 MB maximum, matching the
-uploader UI. The backend returns a public-safe `profilePicture`, never storage keys
-or signed URLs.
+`total` is the number of **profiles** matching the filters (excluding the caller). Users who
+registered but never saved a profile have no profile document and therefore never appear in
+discovery — so the user count can be higher than the discoverable count.
 
-### Likes, matches, and conversations
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| PUT | `/profiles/:profileId/like` | Add an idempotent active like; returns match state |
-| DELETE | `/profiles/:profileId/like` | Remove the caller’s active like |
-| GET | `/likes/sent` | Profiles liked by the caller |
-| GET | `/likes/received` | Profiles that like the caller |
-| GET | `/matches` | Profiles with reciprocal active likes |
-| GET | `/conversations` | Messageable direct conversations for the caller |
-| GET | `/conversations/:conversationId/messages` | Paginated messages for a permitted conversation |
-| POST | `/conversations/:conversationId/messages` | Send a message to a permitted conversation |
-
-`PUT /profiles/:profileId/like` returns:
-
-```json
-{
-  "liked": true,
-  "matched": false,
-  "conversationId": "uuid"
-}
-```
-
-The database, rather than the client, assigns an opaque conversation ID. A
-unique unordered user-pair constraint prevents duplicate direct conversations.
-
-### Preferences and account lifecycle
+## 4. Likes and matches — `/likes`
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/me/preferences` | Read message and match notification choices |
-| PATCH | `/me/preferences` | Update `matchNotifications` and `messageNotifications` |
-| DELETE | `/me` | Start a controlled account-deletion workflow |
+| PUT | `/likes/profiles/:profileId/like` | Like a user. Returns `{ message, status, likerId, likedUserId, matched }` — `matched` is `true` when this like completed a match |
+| DELETE | `/likes/profiles/:profileId/like` | Remove your like |
+| GET | `/likes/liked-by-me` | `{ items: Profile[] }` — profiles you liked |
+| GET | `/likes/who-liked-me` | `{ items: Profile[] }` — profiles that liked you |
+| GET | `/likes/matches` | `{ items: Profile[] }` — mutual likes |
 
-## 4. Persistence model
+Side effects: a like that completes a match pushes a `new_match` socket event to the person who
+liked first; a like that does not complete a match pushes `new_like` to the liked person. Both
+pushes are best-effort and never fail the request.
 
-```mermaid
-erDiagram
-    USERS ||--|| PROFILES : owns
-    USERS ||--o{ LIKES : sends
-    USERS ||--o{ LIKES : receives
-    USERS ||--o{ CONVERSATION_MEMBERS : joins
-    CONVERSATIONS ||--o{ CONVERSATION_MEMBERS : contains
-    CONVERSATIONS ||--o{ MESSAGES : contains
-    USERS ||--o{ MESSAGES : authors
-    USERS ||--|| NOTIFICATION_PREFERENCES : configures
+## 5. Conversations — `/conversations`
 
-    USERS { uuid id PK string email string password_hash boolean email_verified_at datetime created_at }
-    PROFILES { uuid user_id PK string full_name int age string gender string location string occupation string about string photo_url boolean is_complete }
-    LIKES { uuid id PK uuid actor_id uuid target_id string status datetime created_at datetime revoked_at }
-    CONVERSATIONS { uuid id PK string kind uuid user_low_id uuid user_high_id datetime matched_at datetime closed_at }
-    CONVERSATION_MEMBERS { uuid conversation_id PK uuid user_id PK datetime last_read_at }
-    MESSAGES { uuid id PK uuid conversation_id uuid sender_id string body datetime created_at datetime deleted_at }
-    NOTIFICATION_PREFERENCES { uuid user_id PK boolean match_notifications boolean message_notifications }
-```
+All routes require auth and a valid match (see rule 5).
 
-Required constraints:
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/conversations` | `{ data: [{ matchId, otherUser, lastMessage, unreadCount }] }`, newest activity first |
+| GET | `/conversations/:conversationId/messages` | `{ data: [{ id, matchId, senderId, text, sentAt }] }` in chronological order |
+| POST | `/conversations/:conversationId/messages` | Body `{ content }` (or `text`); returns `201 { data: message }`. Empty text → `400 EMPTY_MESSAGE` |
+| POST | `/conversations/:conversationId/read` | Marks the other person's messages as read by you |
 
-- unique, lowercase-normalized `users.email`;
-- a check preventing a like of one’s own profile;
-- unique active directed like on `(actor_id, target_id)`;
-- unique direct conversation on the canonical `(user_low_id, user_high_id)`;
-- message sender must be a conversation member;
-- profile age range `18..100` and about length `10..200`.
+The app normally sends messages over the socket (`send_message`) rather than the REST route.
+`unreadCount` counts messages not sent by you whose `readBy` does not include you.
 
-## 5. Backend module plan
+## 6. Preferences and health
 
-```text
-apps/api/src/modules/
-  auth/             registration, verification, sessions, password reset
-  profiles/         profile validation, discovery, profile reads
-  likes/            directed likes and match transition rules
-  conversations/    pair lookup, membership, message authorization
-  preferences/      notification choices and account settings
-  media/            signed profile-photo upload lifecycle
-```
+| Method | Path | Status |
+| --- | --- | --- |
+| GET, PATCH | `/preferences/me/preferences` | **Not implemented** — returns `501 NOT_IMPLEMENTED`. The Settings page keeps "New matches" / "New messages" in the browser's `localStorage` instead |
+| GET | `/health/live` | `{ "status": "alive" }` |
+| GET | `/health/ready` | `{ "status": "ready", "checks": { ... } }` — dependency checks are placeholders (`not-configured`) |
 
-Implement each module as `route -> input schema -> service -> repository ->
-response mapper`. Routes do not access database tables directly.
+`GET /health` (outside `/v1`) is a compatibility alias for a basic liveness check.
 
-## 6. Delivery lifecycle
+## 7. Client-side notification behavior
 
-1. Add PostgreSQL migrations and repositories for users, profiles, sessions,
-   verification codes, and reset tokens.
-2. Replace the frontend’s `mockApi` auth calls with the authentication API;
-   remove localStorage session and plaintext password behavior.
-3. Implement profile and discovery endpoints; replace static mock profiles
-   with seeded development records.
-4. Implement likes transactionally. When an active reciprocal like appears,
-   set `matchedAt`, emit `match.created`, and create the direct conversation.
-5. Implement conversation and message authorization based on active likes;
-   add polling first and WebSocket delivery only after HTTP flows are stable.
-6. Persist settings, signed photo upload, notifications, and account deletion.
+Not part of the API, but worth knowing when reading the frontend:
 
-## 7. Explicit product decisions still required
-
-- Should removing the final like permanently close a conversation, or should
-  previous participants retain read-only history?
-- Is city text matching sufficient for “Near Me,” or do we need geographic
-  coordinates and a distance radius?
-- Are public profiles indexed by search engines, or public only to visitors
-  inside the Connecti client?
-- Which email provider will deliver verification and password-reset messages?
-- Does Google sign-in remain planned? The button exists but is not yet wired.
+- **Toast / match popup** are gated by the "New messages" / "New matches" toggles in Settings.
+- **The header bell** always records new matches, likes, and messages regardless of those toggles, and is held in memory only.
+- **Unread badges and the "Typing…" indicator** in the conversation list are driven by `new_message_notification` and `user_typing` events and are not affected by the toggles.

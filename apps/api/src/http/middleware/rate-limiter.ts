@@ -5,6 +5,10 @@ interface RateLimitOptions {
   windowMs?: number
   maxRequests?: number
   message?: string
+  // Buckets are shared across every limiter instance, keyed by IP. Give a
+  // route-specific limiter its own scope so its (stricter) count doesn't mix
+  // with the app-wide limiter's count for the same IP.
+  scope?: string
 }
 
 interface Bucket {
@@ -39,11 +43,12 @@ export function rateLimiter(options: RateLimitOptions = {}): RequestHandler {
         ? forwardedFor.split(',')[0]?.trim() ?? request.ip ?? 'unknown'
         : request.ip ?? 'unknown'
 
+    const bucketKey = options.scope ? `${options.scope}:${ipValue}` : ipValue
     const now = Date.now()
-    const existing = buckets.get(ipValue)
+    const existing = buckets.get(bucketKey)
 
     if (!existing || existing.resetAt <= now) {
-      buckets.set(ipValue, { count: 1, resetAt: now + windowMs })
+      buckets.set(bucketKey, { count: 1, resetAt: now + windowMs })
       next()
       return
     }

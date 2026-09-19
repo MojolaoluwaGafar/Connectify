@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useMemo,
   useState,
   type MouseEvent,
   type ReactNode,
@@ -9,17 +8,16 @@ import { useNavigate } from 'react-router-dom';
 import { createProfile } from '../API/Services/Profile/Profile';
 
 import { useAuth } from '../context/authContext/useAuth';
-import type { Gender } from '../types';
+import type { Gender, LocationCoords } from '../types';
 import PhotoUploader from '../components/ui/PhotoUploader';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
+import LocationAutocomplete from '../components/ui/LocationAutocomplete';
 import { INTEREST_OPTIONS } from '../data/mockProfile';
-import { NIGERIA_STATES } from '../data/nigeriaStates';
 import TextArea from '../components/ui/TextArea';
 import Chip from '../components/ui/Chip';
 import Button from '../components/ui/Button';
 
-// Change this path if your modal is located somewhere else.
 import ProfilePreviewModal from '../components/profilePreviewModal';
 import { themedToast } from '../utils/ToastFeedback';
 
@@ -47,6 +45,11 @@ export default function ProfileEditPage() {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState<Gender | null>(null);
   const [location, setLocation] = useState('');
+  // Set only when the user picks a place from the suggestions, and cleared as
+  // soon as they type — so the saved coordinates always match the saved text.
+  const [locationCoords, setLocationCoords] = useState<LocationCoords | null>(
+    null,
+  );
   const [occupation, setOccupation] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
   const [about, setBio] = useState('');
@@ -63,6 +66,7 @@ export default function ProfileEditPage() {
       setAge(profile.age ? String(profile.age) : '');
       setGender(profile.gender ?? null);
       setLocation(profile.location ?? '');
+      setLocationCoords(profile.locationCoords ?? null);
       setOccupation(profile.occupation ?? '');
 
       setInterests(
@@ -77,19 +81,6 @@ export default function ProfileEditPage() {
       setFullName(user.fullName ?? '');
     }
   }, [profile, user]);
-
-  const locationOptions = useMemo(() => {
-    if (
-      location &&
-      !NIGERIA_STATES.includes(
-        location as (typeof NIGERIA_STATES)[number],
-      )
-    ) {
-      return [location, ...NIGERIA_STATES];
-    }
-
-    return NIGERIA_STATES;
-  }, [location]);
 
   function toggleInterest(label: string) {
     setInterests((prev) =>
@@ -124,6 +115,8 @@ export default function ProfileEditPage() {
 
     if (!location.trim()) {
       next.location = 'Location is required.';
+    } else if (!locationCoords) {
+      next.location = 'Pick your location from the suggestions.';
     }
 
     if (about.trim().length < 10) {
@@ -155,7 +148,7 @@ export default function ProfileEditPage() {
       return;
     }
 
-    if (!gender) {
+    if (!gender || !locationCoords) {
       return;
     }
 
@@ -167,6 +160,7 @@ export default function ProfileEditPage() {
         age: Number(age),
         gender,
         location: location.trim(),
+        locationCoords,
         occupation: occupation.trim(),
         interests,
         about: about.trim(),
@@ -254,20 +248,24 @@ export default function ProfileEditPage() {
                 </option>
               </Select>
 
-              <Select
+              <LocationAutocomplete
                 label="Location"
+                placeholder="Search your city or area"
+                hint="Used to show you people near you."
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onInputChange={(text) => {
+                  setLocation(text);
+                  setLocationCoords(null);
+                }}
+                onSelect={(place) => {
+                  setLocation(place.label);
+                  setLocationCoords({
+                    type: 'Point',
+                    coordinates: [place.lng, place.lat],
+                  });
+                }}
                 error={fieldErrors.location}
-              >
-                <option value="">Select your state</option>
-
-                {locationOptions.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-                ))}
-              </Select>
+              />
             </div>
           </Section>
 
