@@ -20,12 +20,13 @@ import type { JWTPayload } from '../../types/payload.js'
 import { ActivationTemplate } from '../../MailTemplates/Activate.js'
 import { SendEmail } from '../../utils/SendMail.js'
 import { ForgetPassWordTemplate } from '../../MailTemplates/forgetPassword.js'
+import {
+  generateOneTimeCode,
+  hashOneTimeCode,
+  verifyOneTimeCode,
+} from '../../core/auth/one-time-code.js'
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID)
-
-function generateVerificationCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
 
 async function sendVerificationEmail(
   email: string,
@@ -65,7 +66,7 @@ export async function registerUser(payload: unknown) {
 
   const hashedPassword = await bcrypt.hash(data.password, 12);
 
-  const verificationCode = generateVerificationCode();
+  const verificationCode = generateOneTimeCode();
 
   const verificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -83,7 +84,12 @@ export async function registerUser(payload: unknown) {
     password: hashedPassword,
     role: "user",
     isEmailVerified: false,
-    verificationCode,
+    // Only the HMAC is stored; the plain code goes to the user's inbox.
+    verificationCode: hashOneTimeCode(
+      'email-verification',
+      data.email,
+      verificationCode,
+    ),
     verificationCodeExpires,
   });
 
@@ -118,7 +124,14 @@ export async function verifyUserEmail(payload: unknown) {
     );
   }
 
-  if (user.verificationCode !== data.code) {
+  if (
+    !verifyOneTimeCode(
+      'email-verification',
+      user.email,
+      data.code,
+      user.verificationCode,
+    )
+  ) {
     throw new AppError(
       400,
       "INVALID_VERIFICATION_CODE",
@@ -235,11 +248,15 @@ export async function forgotPassword(payload: unknown) {
     };
   }
 
-  const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+  const resetToken = generateOneTimeCode();
 
   const passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-  user.passwordResetToken = resetToken;
+  user.passwordResetToken = hashOneTimeCode(
+    'password-reset',
+    user.email,
+    resetToken,
+  );
   user.passwordResetExpires = passwordResetExpires;
 
   await user.save();
@@ -296,7 +313,14 @@ export async function resetPassword(payload: unknown) {
     );
   }
 
-  if (!user.passwordResetToken || user.passwordResetToken !== data.token) {
+  if (
+    !verifyOneTimeCode(
+      'password-reset',
+      user.email,
+      data.token,
+      user.passwordResetToken,
+    )
+  ) {
     throw new AppError(
       400,
       "INVALID_RESET_TOKEN",
@@ -421,11 +445,15 @@ export async function resendVerificationCode(payload: unknown) {
     );
   }
 
-  const verificationCode = generateVerificationCode();
+  const verificationCode = generateOneTimeCode();
 
   const verificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-  user.verificationCode = verificationCode;
+  user.verificationCode = hashOneTimeCode(
+    'email-verification',
+    user.email,
+    verificationCode,
+  );
   user.verificationCodeExpires = verificationCodeExpires;
 
   await user.save();
