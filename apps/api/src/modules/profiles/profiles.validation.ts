@@ -9,11 +9,21 @@ const profilePictureSchema = z
     'Profile picture must be a valid hosted URL.',
   );
 
+// GeoJSON point — coordinates are [longitude, latitude], in that order.
+const locationCoordsSchema = z.object({
+  type: z.literal('Point'),
+  coordinates: z.tuple([
+    z.number().min(-180).max(180),
+    z.number().min(-90).max(90),
+  ]),
+});
+
 export const profileInputSchema = z.object({
   fullName: z.string().trim().min(2),
   age: z.number().int().min(18).max(100),
   gender: z.enum(['male', 'female', 'non-binary', 'prefer-not-to-say']),
   location: z.string().trim().min(1),
+  locationCoords: locationCoordsSchema,
   occupation: z.string().trim(),
   about: z.string().trim().min(10),
   interests: z.array(z.string()).min(1),

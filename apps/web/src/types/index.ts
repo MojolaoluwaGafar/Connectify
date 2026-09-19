@@ -20,6 +20,12 @@ export interface User {
   createdAt: string;
 }
 
+// GeoJSON point — coordinates are [longitude, latitude], in that order.
+export interface LocationCoords {
+  type: 'Point';
+  coordinates: [number, number];
+}
+
 export interface Profile {
   userId: string;
   isComplete?: boolean;
@@ -27,37 +33,30 @@ export interface Profile {
   age: number;
   gender: Gender;
   location: string;
+  // Only present on your own profile — the API never returns other people's.
+  locationCoords?: LocationCoords;
   occupation: string;
   about: string;
   interest?: string[];
   interests?: string[];
   profilePicture: string | null;
-  //   locationCoords?: {
-  //     type: 'Point';
-  //     coordinates: [number, number];
-  //   };
-  //   isComplete: boolean;
-  // }
 }
 export interface ICreateProfile {
   fullName: string;
   age: number;
   gender: Gender;
   location: string;
+  locationCoords: LocationCoords;
   occupation: string;
   about: string;
   interests: string[];
   profilePicture: string | File | null;
-  locationCoords?: {
-    type: 'Point';
-    coordinates: [number, number];
-  };
 }
 
 export interface DiscoverProfile extends Profile {
   id: string; // same as userId, convenience for lists/keys
   interests: string[];
-  distanceLabel?: string; // e.g. "Near Me" — used for filtering
+  distanceLabel?: string; // e.g. "12 km away" — set on the near-me tab only
   joinedDaysAgo: number; // used for the "New" filter
 }
 

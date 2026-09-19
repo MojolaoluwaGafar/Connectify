@@ -4,6 +4,14 @@ import * as profilesService from './profiles.service.js';
 import { profileInputSchema } from './profiles.validation.js';
 import { uploadProfilePicture } from './profiles.service.js';
 
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
 export const profilesController = {
   create: async (request: Request, response: Response, next: NextFunction) => {
     if (!request.user) {
@@ -23,6 +31,12 @@ export const profilesController = {
         profilePicture: request.body.profilePicture
           ? request.body.profilePicture
           : null,
+        // Multipart bodies only carry strings; a malformed value becomes
+        // undefined so validation answers with a 400 rather than a crash.
+        locationCoords:
+          typeof request.body.locationCoords === 'string'
+            ? parseJson(request.body.locationCoords)
+            : request.body.locationCoords,
       });
       const profilePicture = request.file
         ? await uploadProfilePicture(request.file)
@@ -73,7 +87,10 @@ export const profilesController = {
       ? (request.params.profileId[0] ?? '')
       : (request.params.profileId ?? '');
 
-    const data = await profilesService.getProfileById(profileId);
+    const data = await profilesService.getProfileById(
+      profileId,
+      request.user?.id,
+    );
     response.status(200).json({ data });
   },
 

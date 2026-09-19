@@ -21,11 +21,16 @@ export const ProfileSchema = z.object({
   age: z.number().int().min(18).max(100),
   gender: GenderSchema,
   location: z.string(),
-  occupation: z.string(),
+  // Both optional/loosely typed to match the actual Mongoose model
+  // (`occupation` isn't required, `profilePicture` isn't guaranteed to be
+  // a strictly well-formed URL) — a single non-conforming profile used to
+  // fail this schema and silently drop the *entire* page of results it was
+  // on, which is why pagination looked like it was missing users.
+  occupation: z.string().optional().default(''),
   about: z.string(),
   interest: z.array(z.string()),
   interests: z.array(z.string()).default([]),
-  profilePicture: z.string().url().nullable(),
+  profilePicture: z.string().nullable(),
   isComplete: z.boolean(),
 });
 
