@@ -39,7 +39,7 @@ export const WhoLikedYou = () => {
   return (
     <div>
       {/* starts here  */}
-      <div className="border rounded-2xl p-4 text-sm space-y-3 border-stroke-primary w-full">
+      <div className="border rounded-2xl p-4 text-sm space-y-3 border-stroke-primary w-full my-3 lg:my-0">
         <div className="flex justify-between items-center">
           <h2 className="font-fraunces font-semibold font-600 text-[16px] text-black">
             Who liked you

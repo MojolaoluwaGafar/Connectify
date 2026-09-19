@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '../authContext/useAuth';
-import { socket } from '../../lib/socket';
+import { getActiveConversationId, socket } from '../../lib/socket';
 import {
   NotificationsContext,
   type AppNotification,
@@ -33,6 +33,11 @@ function NotificationsProvider({ children }: { children: ReactNode }) {
       senderName: string;
       text: string;
     }) => {
+      // The user is already reading this conversation, so a notification
+      // for it is just noise (the toast in App.tsx skips it for the same
+      // reason) — it would otherwise fill the bell with the live chat.
+      if (payload.conversationId === getActiveConversationId()) return;
+
       // The toast/popup toggles in Settings only govern the toast and the
       // match popup — the bell itself always records every notification,
       // regardless of that preference.

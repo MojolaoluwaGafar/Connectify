@@ -9,13 +9,29 @@ import { getLikedByMe, getWhoLikedMe } from '../API/Services/Likes/likes';
 import { useAuth } from '../context/authContext/useAuth';
 import { useApiQuery } from '../hooks/useApiQuery';
 import { ProfileCardSkeletonGrid } from '../components/ui/ProfileCardSkeleton';
+import Pagination from '../components/Pagination';
 import { socket } from '../lib/socket';
 
 type Tab = 'liked-you' | 'you-liked';
 
+// Multiple of the 3-column desktop grid so the last row is never ragged
+// on a full page.
+const PAGE_SIZE = 9;
+
 const LikesPage = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('liked-you');
+  const [page, setPage] = useState(1);
+
+  const changeTab = (next: Tab) => {
+    setTab(next);
+    setPage(1);
+  };
+
+  const changePage = (next: number) => {
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const { likedIds } = useLikes();
   const { user } = useAuth();
@@ -79,6 +95,15 @@ const LikesPage = () => {
 
   const list = tab === 'liked-you' ? likedYou : youLiked;
 
+  // The list can shrink while the page is open (unliking, socket refetch),
+  // so clamp instead of trusting `page` to still be in range.
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedList = list.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+
   return (
     <div className="min-h-screen ">
       {/* MAIN */}
@@ -106,7 +131,7 @@ const LikesPage = () => {
           {/* TABS */}
           <div className="flex w-full gap-2 rounded-full bg-[#EEF2F6] p-1 lg:w-fit">
             <button
-              onClick={() => setTab('liked-you')}
+              onClick={() => changeTab('liked-you')}
               className={`rounded-full px-4 w-1/2 py-2 font-[inter] text-sm font-semibold transition lg:w-fit ${
                 tab === 'liked-you'
                   ? 'bg-white text-theme shadow-sm'
@@ -117,7 +142,7 @@ const LikesPage = () => {
             </button>
 
             <button
-              onClick={() => setTab('you-liked')}
+              onClick={() => changeTab('you-liked')}
               className={`rounded-full px-4 w-1/2 py-2 font-[inter] text-sm font-semibold transition lg:w-fit ${
                 tab === 'you-liked'
                   ? 'bg-white text-theme shadow-sm'
@@ -159,11 +184,19 @@ const LikesPage = () => {
             </div>
           ) : (
             /* PROFILE CARDS */
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {list.map((profile) => (
-                <ProfileCard key={profile.userId} profile={profile} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {pagedList.map((profile) => (
+                  <ProfileCard key={profile.userId} profile={profile} />
+                ))}
+              </div>
+
+              <Pagination
+                page={currentPage}
+                totalPages={totalPages}
+                onChange={changePage}
+              />
+            </>
           )}
         </div>
       </main>

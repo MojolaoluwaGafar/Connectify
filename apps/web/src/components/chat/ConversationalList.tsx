@@ -8,6 +8,7 @@ import {
   markConversationRead,
 } from "../../API/Services/Messages/messages";
 import { getActiveConversationId, socket } from "../../lib/socket";
+import { formatConversationTime } from "../../utils/chatTime";
 
 // TypeScript interface for component props
 interface ConversationListProps {
@@ -263,14 +264,17 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                     </div>
                   </div>
 
-                  {/* Right Side: Timestamp (mobile only, as before) + unread count chip */}
-                  <div className="flex flex-col gap-1.5 items-end">
+                  {/* Right Side: last-message time + unread count chip */}
+                  <div className="flex flex-col gap-1.5 items-end shrink-0">
                     {lastMessage && (
-                      <p className="md:hidden lg:hidden font-bold text-sm h-4">
-                        {new Date(lastMessage.sentAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                      <p
+                        className={`text-xs h-4 whitespace-nowrap font-[Geist] ${
+                          unreadCount > 0
+                            ? "font-semibold text-violet-600"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {formatConversationTime(lastMessage.sentAt)}
                       </p>
                     )}
 

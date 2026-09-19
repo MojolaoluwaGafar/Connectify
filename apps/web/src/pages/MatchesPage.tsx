@@ -6,6 +6,11 @@ import type { DiscoverProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useLikes } from '../context/likeContext/useLikes';
 import { ProfileCardSkeletonGrid } from '../components/ui/ProfileCardSkeleton';
+import Pagination from '../components/Pagination';
+
+// Multiple of the 3-column desktop grid so the last row is never ragged
+// on a full page.
+const PAGE_SIZE = 9;
 
 const Matches = () => {
   const navigate = useNavigate();
@@ -24,6 +29,22 @@ const Matches = () => {
 
   // Loading state
   const [loading, setLoading] = useState(true);
+
+  const [page, setPage] = useState(1);
+
+  // Matches can change while the page is open (realtime new_match/unlike),
+  // so clamp instead of trusting `page` to still be in range.
+  const totalPages = Math.max(1, Math.ceil(matches.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedMatches = matches.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+
+  const changePage = (next: number) => {
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Get the user's matches when the user or liked profiles change
   useEffect(() => {
@@ -102,7 +123,7 @@ const Matches = () => {
             </div>
           ) : (
             /* Matches */
-            matches.map((profile: DiscoverProfile) => (
+            pagedMatches.map((profile: DiscoverProfile) => (
               <div
                 key={profile.id}
                 className="group relative overflow-hidden rounded-2xl border border-stroke-primary text-sm shadow-sm transition-all duration-300 hover:shadow-lg relative"
@@ -174,6 +195,14 @@ const Matches = () => {
             ))
           )}
         </div>
+
+        {!loading && (
+          <Pagination
+            page={currentPage}
+            totalPages={totalPages}
+            onChange={changePage}
+          />
+        )}
       </div>
     </div>
   );
