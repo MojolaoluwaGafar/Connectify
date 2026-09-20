@@ -144,7 +144,7 @@ const DiscoveryPage = () => {
             <WhoLikedYou />
 
             {showCompleteProfileCard && (
-              <div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl">
+              <div className="p-4 bg-theme text-white text-sm flex flex-col gap-2 rounded-2xl my-3 lg:my-0 ">
                 <div className="p-3 bg-theme-shade rounded-full size-fit flex items-center justify-center">
                   <img src="/sparkles (1).svg" />
                 </div>

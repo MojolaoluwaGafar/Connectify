@@ -453,7 +453,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
               onClick={() =>
                 selectedUser && setInputText("What's your Favorite music")
               }
-              className="border border-solid rounded-3xl py-1 px-2 border-[#1c1524]/[0.0784] text-sm max-w-34 h-8.25 hover:bg-gray-50"
+              className="border border-solid rounded-3xl py-1 px-2 border-[#1c1524]/[0.0784] text-sm max-w-34 max-h-8.25 hover:bg-gray-50"
             >
               Ask about music
             </button>

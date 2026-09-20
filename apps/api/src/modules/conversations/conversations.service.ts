@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 import { getMatches } from '../likes/likes.service.js';
 import { AppError } from '../../core/errors/app-error.js';
+import { pushSocketEvent } from '../../core/realtime/pushSocketEvent.js';
 import { Like } from '../../model/likes.js';
 import { Message } from '../../model/messages.js';
 
@@ -33,13 +34,30 @@ export function parseConversationId(conversationId: string) {
   return [a, b] as const;
 }
 
+// A conversation only ever has two participants, so the recipient of any
+// given message is simply "whichever half of matchId isn't the sender".
 function formatMessage(item: Record<string, any>) {
+  const senderId = String(item.senderId);
+  const parsed = parseConversationId(item.matchId);
+  const recipientId = parsed?.find((id) => id !== senderId);
+
+  const readBy: string[] = (item.readBy ?? []).map((id: any) => String(id));
+  const isRead = Boolean(recipientId && readBy.includes(recipientId));
+  const isDelivered = isRead || Boolean(item.deliveredAt);
+
+  const status: 'sent' | 'delivered' | 'read' = isRead
+    ? 'read'
+    : isDelivered
+      ? 'delivered'
+      : 'sent';
+
   return {
     id: String(item._id),
     matchId: item.matchId,
-    senderId: String(item.senderId),
+    senderId,
     text: item.text,
     sentAt: item.createdAt.toISOString(),
+    status,
   };
 }
 
@@ -174,9 +192,9 @@ export async function sendMessageService(
 }
 
 export async function markRead(conversationId: string, userId: string) {
-  await assertParticipant(conversationId, userId);
+  const otherUserId = await assertParticipant(conversationId, userId);
 
-  await Message.updateMany(
+  const { modifiedCount } = await Message.updateMany(
     {
       matchId: conversationId,
       senderId: { $ne: toObjectId(userId) },
@@ -184,4 +202,59 @@ export async function markRead(conversationId: string, userId: string) {
     },
     { $addToSet: { readBy: toObjectId(userId) } },
   );
+
+  // markRead runs on the REST API process, which has no direct handle on
+  // the socket server, so the sender's tick update has to cross over via
+  // the internal notify bridge instead of a plain io.emit.
+  if (modifiedCount > 0) {
+    await pushSocketEvent(otherUserId, 'messages_read', {
+      conversationId,
+      readerId: userId,
+    });
+  }
+}
+
+// Marks a single just-sent message delivered — called right after creation,
+// when the socket layer already knows the recipient is online.
+export async function markMessageDelivered(messageId: string) {
+  const updated = await Message.findOneAndUpdate(
+    { _id: messageId, deliveredAt: null },
+    { $set: { deliveredAt: new Date() } },
+    { new: true },
+  ).lean();
+
+  return updated ? formatMessage(updated) : null;
+}
+
+// Catches up any messages that were sent while `userId` was offline, run
+// when they reconnect. Returns one entry per conversation that had pending
+// messages so the caller can notify each sender exactly once.
+export async function markDeliveredForUser(userId: string) {
+  const pending = await Message.find({
+    senderId: { $ne: toObjectId(userId) },
+    deliveredAt: null,
+  }).lean();
+
+  const toMark = pending.filter((message) =>
+    parseConversationId(message.matchId)?.includes(userId),
+  );
+
+  if (toMark.length === 0) return [];
+
+  await Message.updateMany(
+    { _id: { $in: toMark.map((message) => message._id) } },
+    { $set: { deliveredAt: new Date() } },
+  );
+
+  const byConversation = new Map<string, string>();
+  for (const message of toMark) {
+    if (!byConversation.has(message.matchId)) {
+      byConversation.set(message.matchId, String(message.senderId));
+    }
+  }
+
+  return Array.from(byConversation, ([conversationId, senderId]) => ({
+    conversationId,
+    senderId,
+  }));
 }

@@ -5,6 +5,7 @@ export interface message extends Document {
   senderId: mongoose.Types.ObjectId;
   text: string;
   readBy: mongoose.Types.ObjectId[];
+  deliveredAt: Date | null;
   createdAt: Date;
 }
 
@@ -28,6 +29,10 @@ const MessageSchema: Schema = new Schema(
     readBy: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],
+    },
+    deliveredAt: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: { createdAt: true, updatedAt: false } },

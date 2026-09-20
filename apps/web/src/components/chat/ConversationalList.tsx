@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
+import { Check, CheckCheck } from "lucide-react";
 
 import { useAuth } from "../../context/authContext/useAuth";
 import {
@@ -62,7 +63,12 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
 
     function upsertLastMessage(
       conversationId: string,
-      lastMessage: { text: string; sentAt: string },
+      lastMessage: {
+        senderId?: string;
+        text: string;
+        sentAt: string;
+        status?: string;
+      },
     ) {
       setConversations((prev) => {
         const next = prev.map((conversation) =>
@@ -85,8 +91,10 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
       if (!payload?.conversationId) return;
 
       upsertLastMessage(payload.conversationId, {
+        senderId: payload.senderId,
         text: payload.text ?? "",
         sentAt: payload.sentAt ?? new Date().toISOString(),
+        status: payload.status,
       });
     };
 
@@ -96,6 +104,7 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
       if (!payload?.conversationId) return;
 
       upsertLastMessage(payload.conversationId, {
+        senderId: payload.senderId,
         text: payload.text ?? "",
         sentAt: new Date().toISOString(),
       });
@@ -113,6 +122,44 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
             ? {
                 ...conversation,
                 unreadCount: (conversation.unreadCount ?? 0) + 1,
+              }
+            : conversation,
+        ),
+      );
+    };
+
+    // Live tick updates for the sender's own last message — pushed when the
+    // recipient comes online (delivered) or opens the chat (read).
+    const handleMessagesDelivered = (payload: any) => {
+      if (!payload?.conversationId) return;
+
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.matchId === payload.conversationId &&
+          conversation.lastMessage &&
+          conversation.lastMessage.status !== "read"
+            ? {
+                ...conversation,
+                lastMessage: {
+                  ...conversation.lastMessage,
+                  status: "delivered",
+                },
+              }
+            : conversation,
+        ),
+      );
+    };
+
+    const handleMessagesRead = (payload: any) => {
+      if (!payload?.conversationId) return;
+
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.matchId === payload.conversationId &&
+          conversation.lastMessage
+            ? {
+                ...conversation,
+                lastMessage: { ...conversation.lastMessage, status: "read" },
               }
             : conversation,
         ),
@@ -143,12 +190,16 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
 
     socket.on("receive_message", handleReceiveMessage);
     socket.on("new_message_notification", handleNewMessageNotification);
+    socket.on("messages_delivered", handleMessagesDelivered);
+    socket.on("messages_read", handleMessagesRead);
     socket.on("user_typing", handleUserTyping);
     socket.on("user_stop_typing", handleUserStopTyping);
 
     return () => {
       socket.off("receive_message", handleReceiveMessage);
       socket.off("new_message_notification", handleNewMessageNotification);
+      socket.off("messages_delivered", handleMessagesDelivered);
+      socket.off("messages_read", handleMessagesRead);
       socket.off("user_typing", handleUserTyping);
       socket.off("user_stop_typing", handleUserStopTyping);
     };
@@ -169,7 +220,7 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
       </h1>
 
       {/* Outer Sidebar Container for List View */}
-      <div className="flex flex-col sm:w-full md:w-full lg:w-95 md:border lg:border lg:border-solid md:border-solid border-[#1c1524]/[0.0784] rounded-l-2xl h-150 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none]">
+      <div className="flex flex-col sm:w-full md:w-full lg:w-95 md:border lg:border lg:border-solid md:border-solid border-[#1c1524]/[0.0784] rounded-l-2xl max-h-[70vh] lg:h-150 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none]">
         {/* Search Bar Block */}
         <div className="w-full px-2.5 py-4 lg:rounded-l-md md:rounded-lg lg:rounded-r-none">
           <div className="border-solid border-[#1c1524]/[0.0784] border rounded-3xl gap-2 flex items-center px-3 py-2.5 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-transparent mx-4 lg:mx-0 md:mx-0">
@@ -209,6 +260,9 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                 conversation.matchId,
               );
               const unreadCount = conversation.unreadCount ?? 0;
+              const isOwnLastMessage =
+                !!lastMessage &&
+                String(lastMessage.senderId) === String(user?.id);
 
               return (
                 <div
@@ -229,36 +283,56 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                   className="flex p-4 gap-3 border-b border-solid border-[#1c1524]/[0.0784] w-full justify-between hover:bg-purple-50 cursor-pointer mx-4 lg:mx-0 md:mx-0"
                 >
                   {/* Left Side: Avatar and Preview Details */}
-                  <div className="flex gap-3">
+                  <div className="flex min-w-0 flex-1 gap-3">
                     {/* User Profile Avatar */}
                     {person.profilePicture ? (
                       <img
                         src={person.profilePicture}
                         alt={person.fullName}
-                        className="rounded-full w-12 h-12 object-cover"
+                        className="rounded-full w-12 h-12 object-cover shrink-0"
                       />
                     ) : (
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-sm font-medium text-white">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600 text-sm font-medium text-white">
                         {person.fullName.charAt(0).toUpperCase()}
                       </span>
                     )}
 
                     {/* Text Metadata Container */}
-                    <div className="flex flex-col gap-1">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
                       {/* Name */}
-                      <p className="font-semibold text-[14px] font-[Geist]">
+                      <p className="truncate font-semibold text-[14px] font-[Geist]">
                         {person.fullName}
                       </p>
 
                       {/* Last Message Preview Text — swapped for a live
                           "Typing…" status when the other person is typing */}
                       {isTyping ? (
-                        <p className="text-[13px] text-violet-600 font-[Geist] font-medium italic truncate w-40">
+                        <p className="text-[13px] text-violet-600 font-[Geist] font-medium italic truncate">
                           Typing…
                         </p>
                       ) : (
-                        <p className="text-[13px] text-gray-500 font-[Geist] truncate w-40">
-                          {lastMessage?.text || "Start a conversation"}
+                        <p className="flex min-w-0 items-center gap-1 text-[13px] text-gray-500 font-[Geist]">
+                          {isOwnLastMessage &&
+                            lastMessage &&
+                            (lastMessage.status === "sent" ? (
+                              <Check
+                                className="shrink-0 text-gray-400"
+                                size={13}
+                              />
+                            ) : (
+                              <CheckCheck
+                                className={`shrink-0 ${
+                                  lastMessage.status === "read"
+                                    ? "text-sky-500"
+                                    : "text-gray-400"
+                                }`}
+                                size={13}
+                              />
+                            ))}
+                          <span className="truncate">
+                            {isOwnLastMessage && "You: "}
+                            {lastMessage?.text || "Start a conversation"}
+                          </span>
                         </p>
                       )}
                     </div>

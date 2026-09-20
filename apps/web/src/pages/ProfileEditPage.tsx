@@ -333,7 +333,7 @@ export default function ProfileEditPage() {
             </p>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button
               size="lg"
               onClick={handleSave}

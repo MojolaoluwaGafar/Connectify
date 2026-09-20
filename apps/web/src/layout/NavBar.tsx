@@ -408,7 +408,7 @@ export default function Navbar({
           rest of the page behind it */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
-          <div className="flex h-70 w-full max-w-lg flex-col items-center justify-center rounded-xl bg-white p-10 shadow-xl">
+          <div className="flex min-h-70 max-h-[90vh] w-full max-w-lg flex-col items-center justify-center overflow-y-auto rounded-xl bg-white p-10 shadow-xl">
             <h2 className="text-lg font-semibold text-gray-900">Log out?</h2>
 
             <p className="mt-2 text-center text-sm text-gray-500">

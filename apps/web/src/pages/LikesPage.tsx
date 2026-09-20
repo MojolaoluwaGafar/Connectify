@@ -105,7 +105,7 @@ const LikesPage = () => {
   );
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen container mx-auto ">
       {/* MAIN */}
       <main className="p-4 sm:p-6 md:px-12 md:py-8 lg:px-20 lg:py-10 xl:px-24 2xl:px-32 flex flex-col gap-8 text-[#655E75]">
         {/* TITLE + TABS */}

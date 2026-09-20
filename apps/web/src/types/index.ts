@@ -74,12 +74,15 @@ export interface Match {
   matchedAt: string;
 }
 
+export type MessageStatus = 'sent' | 'delivered' | 'read';
+
 export interface Message {
   id: string;
   matchId: string;
   senderId: string;
   text: string;
   sentAt: string;
+  status?: MessageStatus;
 }
 
 export interface Conversation {

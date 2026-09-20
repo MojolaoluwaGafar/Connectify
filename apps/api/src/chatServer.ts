@@ -5,6 +5,7 @@ import { Server, type Socket } from 'socket.io'
 import { env } from './config/env.js'
 import { verifyAuthToken } from './core/auth/token.js'
 import { registerChatHandlers } from './sockets/chatSocket.js'
+import { markDeliveredForUser } from './modules/conversations/conversations.service.js'
 
 const server = http.createServer()
 
@@ -42,7 +43,11 @@ function readJsonBody(request: http.IncomingMessage): Promise<any> {
 // Whitelisted rather than a free-form event name, so this endpoint can't be
 // used to make a socket emit anything arbitrary even if the shared secret
 // were ever compromised.
-const ALLOWED_INTERNAL_EVENTS = new Set(['new_match', 'new_like'])
+const ALLOWED_INTERNAL_EVENTS = new Set([
+  'new_match',
+  'new_like',
+  'messages_read',
+])
 
 server.on('request', (request, response) => {
   if (request.method !== 'POST' || request.url !== '/internal/notify') {
@@ -117,6 +122,22 @@ io.on('connection', (socket: Socket) => {
   if (!onlineUsers.has(userId)) {
    onlineUsers.set(userId, new Set())
    io.emit('user_online', userId)
+
+   // First socket for this user this session — catch up any messages that
+   // were sent to them while they were offline, and let each sender know
+   // live rather than leaving their tick stuck on "sent" until next fetch.
+   markDeliveredForUser(userId)
+    .then((deliveries) => {
+      for (const { conversationId, senderId } of deliveries) {
+        io.to(senderId).emit('messages_delivered', {
+          conversationId,
+          recipientId: userId,
+        })
+      }
+    })
+    .catch((error) => {
+      console.error('Failed to mark messages delivered on connect:', error)
+    })
   }
 
   onlineUsers.get(userId)?.add(socket.id)

@@ -1,7 +1,7 @@
 import { Like } from '../../model/likes.js';
 import { Profile } from '../../model/profile.js';
 import mongoose from 'mongoose';
-import { env } from '../../config/env.js';
+import { pushSocketEvent } from '../../core/realtime/pushSocketEvent.js';
 
 function formatProfile(profile: any) {
   return {
@@ -9,29 +9,6 @@ function formatProfile(profile: any) {
     id: profile.userId.toString(),
     userId: profile.userId.toString(),
   };
-}
-
-// Best-effort push to the (separate) socket process so the recipient learns
-// about likes/matches immediately instead of waiting for their next fetch.
-// The REST flow above already succeeded either way — this must never fail
-// the like request itself.
-async function pushSocketEvent(
-  recipientId: string,
-  event: 'new_match' | 'new_like',
-  payload: unknown,
-) {
-  try {
-    await fetch(`${env.socketInternalUrl}/internal/notify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-secret': env.INTERNAL_SOCKET_SECRET,
-      },
-      body: JSON.stringify({ recipientId, event, payload }),
-    });
-  } catch (error) {
-    console.error(`Failed to push realtime ${event} notification:`, error);
-  }
 }
 
 async function notifyMatch(recipientId: string, likerId: string) {

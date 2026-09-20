@@ -173,18 +173,18 @@ const Matches = () => {
                   </div>
 
                   {/* Profile action buttons */}
-                  <div className="flex items-center justify-between px-4 sm:gap-3 absolute bottom-2 left-0 w-full">
+                  <div className="flex items-center gap-3 px-4 absolute bottom-2 left-0 w-full">
                     {/* Start chat button */}
                     <button
                       onClick={() => navigate('/messages')}
-                      className="bg-theme text-white font-medium font-geist py-2.5 px-2 sm:px-4 rounded-lg text-sm hover:bg-[#6941C6] transition-colors w-[50%]"
+                      className="bg-theme text-white font-medium font-geist py-2.5 px-2 sm:px-4 rounded-lg text-sm hover:bg-[#6941C6] transition-colors flex-1"
                     >
                       Start Chat
                     </button>
 
                     {/* View profile button */}
                     <button
-                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-2 sm:px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors w-[50%]"
+                      className="border border-[#D0D5DD] text-[#344054] font-medium font-geist py-3 px-2 sm:px-4 rounded-xl text-sm bg-white hover:bg-gray-50 transition-colors flex-1"
                       onClick={() => navigate(`/profile/${profile.id}`)}
                     >
                       View Profile

@@ -151,3 +151,4 @@ After the first deploy, fill in the cross-service values in each service's Envir
 - [Backend architecture](docs/architecture/backend.md) — as-built design, data model, sockets, security.
 - [API contract](docs/architecture/frontend-derived-backend-contract.md) — routes, request/response shapes, product rules.
 - [Student collaboration workflow](docs/collaboration/student-workflow.md) — branching, PRs, review.
+- [Fixes and lessons](docs/collaboration/fixes-and-lessons.md) — real bugs from this project: symptom, cause, fix, and what to take away.

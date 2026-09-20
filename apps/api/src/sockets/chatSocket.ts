@@ -1,6 +1,7 @@
 import { type Server, type Socket } from 'socket.io';
 import {
   assertParticipant,
+  markMessageDelivered,
   markRead,
   parseConversationId,
   sendMessageService,
@@ -127,18 +128,28 @@ socket.on(
       //   io.sockets.adapter.rooms.get(conversationId),
       // );
 
+      const parsed = parseConversationId(conversationId);
+      const recipientId = parsed?.find((id) => id !== userId);
+
+      // Every socket joins a room named after its own userId on connect
+      // (see chatServer.ts), so a non-empty room means they're online right
+      // now — good enough to call the message "delivered" rather than just
+      // "sent".
+      let outgoing = message;
+      if (recipientId && (io.sockets.adapter.rooms.get(recipientId)?.size ?? 0) > 0) {
+        const delivered = await markMessageDelivered(message.id);
+        if (delivered) outgoing = delivered;
+      }
+
       io.to(conversationId).emit('receive_message', {
         conversationId,
-        ...message,
+        ...outgoing,
       });
 
       // Anyone with this ChatWindow open already got the message above via
       // the conversation room. This second, lighter event goes to the
       // recipient's personal room so the rest of the app (wherever they
       // are) can surface a notification even when that room isn't joined.
-      const parsed = parseConversationId(conversationId);
-      const recipientId = parsed?.find((id) => id !== userId);
-
       if (recipientId) {
         const senderProfile = await Profile.findOne({ userId }).lean();
 

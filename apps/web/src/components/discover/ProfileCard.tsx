@@ -17,11 +17,11 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
     <div className="relative group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-lg">
       
       {/* Profile image */}
-      <div className="h-70 w-99 overflow-hidden lg:h-99 lg:w-full bg-gray-100">
+      <div className="h-70 w-full overflow-hidden lg:h-99 bg-gray-100">
         <img
           src={profile.profilePicture ?? '/profile-picture.png'}
           alt={profile.fullName}
-          className="h-70 w-99 object-cover transition-transform duration-300 group-hover:scale-105 lg:h-full lg:w-99 lg:group-hover:scale-108"
+          className="h-70 w-full object-cover transition-transform duration-300 group-hover:scale-105 lg:h-full lg:group-hover:scale-108"
         />
       </div>
 
