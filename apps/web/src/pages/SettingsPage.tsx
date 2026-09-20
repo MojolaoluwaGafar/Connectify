@@ -3,6 +3,10 @@ import axios from "axios";
 import { useAuth } from "../context/authContext/useAuth";
 import { useNavigate } from "react-router-dom";
 import { themedToast } from "../utils/ToastFeedback";
+import {
+  NEW_MATCHES_STORAGE_KEY,
+  NEW_MESSAGES_STORAGE_KEY,
+} from "../utils/notificationPreferences";
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
@@ -16,12 +20,12 @@ const Settings = () => {
 
   const { user, logout, changePassword, deleteAccount } = useAuth();
   const [newMatches, setNewMatches] = useState(() => {
-    const savedMatches = localStorage.getItem("newMatches");
+    const savedMatches = localStorage.getItem(NEW_MATCHES_STORAGE_KEY);
     return savedMatches !== null ? JSON.parse(savedMatches) : true;
   });
 
   const [newMessages, setNewMessages] = useState(() => {
-    const savedMessages = localStorage.getItem("newMessages");
+    const savedMessages = localStorage.getItem(NEW_MESSAGES_STORAGE_KEY);
     return savedMessages !== null ? JSON.parse(savedMessages) : true;
   });
 
@@ -76,8 +80,8 @@ const Settings = () => {
     try {
       await deleteAccount();
 
-      localStorage.removeItem("newMatches");
-      localStorage.removeItem("newMessages");
+      localStorage.removeItem(NEW_MATCHES_STORAGE_KEY);
+      localStorage.removeItem(NEW_MESSAGES_STORAGE_KEY);
 
       setDeleteModalOpen(false);
       setAccountDeleted(true);
@@ -125,7 +129,7 @@ const Settings = () => {
     <>
       <main
         className="w-full mx-auto flex min-h-[831px] max-w-[1440px] flex-col gap-8
-          bg-white px-[240px] pb-[80px] pt-[48px] md:px-8 lg:px-[240px]"
+          bg-white px-4 pb-[80px] pt-[48px] md:px-8 lg:px-[240px]"
       >
         <section className="flex w-full flex-col gap-1">
           <h1 className="font-serif text-[32px] font-bold leading-[38px] text-gray-900">
@@ -204,7 +208,7 @@ const Settings = () => {
               onClick={() => {
                 const newValue = !newMatches;
                 setNewMatches(newValue);
-                localStorage.setItem("newMatches", JSON.stringify(newValue));
+                localStorage.setItem(NEW_MATCHES_STORAGE_KEY, JSON.stringify(newValue));
               }}
               className={`relative h-6 w-11 rounded-full transition ${
                 newMatches ? "bg-purple-600" : "bg-gray-300"
@@ -228,7 +232,7 @@ const Settings = () => {
               onClick={() => {
                 const newValue = !newMessages;
                 setNewMessages(newValue);
-                localStorage.setItem("newMessages", JSON.stringify(newValue));
+                localStorage.setItem(NEW_MESSAGES_STORAGE_KEY, JSON.stringify(newValue));
               }}
               className={`relative h-6 w-11 rounded-full transition ${
                 newMessages ? "bg-purple-600" : "bg-gray-300"

@@ -17,6 +17,24 @@ export interface profile extends Document {
   isComplete:boolean
 }
 
+const LocationCoordsSchema = new Schema(
+  {
+    type: { type: String, enum: ['Point'], required: true },
+    coordinates: {
+      type: [Number],
+      required: true,
+      validate: {
+        validator: (value: number[]) =>
+          value.length === 2 &&
+          Math.abs(value[0] as number) <= 180 &&
+          Math.abs(value[1] as number) <= 90,
+        message: 'Location coordinates must be [longitude, latitude]',
+      },
+    },
+  },
+  { _id: false },
+);
+
 const ProfileSchema: Schema = new Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -42,19 +60,14 @@ const ProfileSchema: Schema = new Schema({
     trim: true,
   },
 
-  // locationCoords: {
-  //   type: {
-  //     type: String,
-  //     enum: ["Point"],
-  //   },
-  //   coordinates: {
-  //     type: [Number],
-  //     validate: {
-  //       validator: (value: number[]) => value.length === 2,
-  //       message: "Location coordinates must contain longitude and latitude",
-  //     },
-  //   },
-  // },
+  // GeoJSON point ([longitude, latitude]) for the near-me tab. Hidden from
+  // queries by default so other users' coordinates can't leak through the many
+  // places that spread whole profile documents into API responses — opt in
+  // with .select('+locationCoords') where it's genuinely needed.
+  locationCoords: {
+    type: LocationCoordsSchema,
+    select: false,
+  },
 
   occupation: {
     type: String,
@@ -90,6 +103,6 @@ const ProfileSchema: Schema = new Schema({
   }
 });
 
-// ProfileSchema.index({ locationCoords: '2dsphere' });
+ProfileSchema.index({ locationCoords: '2dsphere' });
 
 export const Profile = mongoose.model<profile>('Profile', ProfileSchema);

@@ -39,8 +39,13 @@ function readJsonBody(request: http.IncomingMessage): Promise<any> {
   })
 }
 
+// Whitelisted rather than a free-form event name, so this endpoint can't be
+// used to make a socket emit anything arbitrary even if the shared secret
+// were ever compromised.
+const ALLOWED_INTERNAL_EVENTS = new Set(['new_match', 'new_like'])
+
 server.on('request', (request, response) => {
-  if (request.method !== 'POST' || request.url !== '/internal/notify-match') {
+  if (request.method !== 'POST' || request.url !== '/internal/notify') {
     return
   }
 
@@ -50,13 +55,17 @@ server.on('request', (request, response) => {
   }
 
   readJsonBody(request)
-    .then(({ recipientId, profile }) => {
-      if (!recipientId || !profile) {
+    .then(({ recipientId, event, payload }) => {
+      if (
+        !recipientId ||
+        typeof event !== 'string' ||
+        !ALLOWED_INTERNAL_EVENTS.has(event)
+      ) {
         response.writeHead(400).end()
         return
       }
 
-      io.to(recipientId).emit('new_match', { profile })
+      io.to(recipientId).emit(event, payload)
       response.writeHead(200, { 'Content-Type': 'application/json' })
       response.end(JSON.stringify({ ok: true }))
     })

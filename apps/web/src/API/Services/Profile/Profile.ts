@@ -14,6 +14,9 @@ export interface ProfileListFilters {
   lat?: number;
   lng?: number;
   radius?: number;
+  // Stable per-session shuffle key for tab: 'all' — same seed across page
+  // requests keeps pagination consistent; a new one gives a fresh random order.
+  seed?: number;
 }
 
 export const ProfileServices = {
@@ -23,6 +26,7 @@ export const ProfileServices = {
     formData.append('age', String(data.age));
     formData.append('gender', data.gender);
     formData.append('location', data.location);
+    formData.append('locationCoords', JSON.stringify(data.locationCoords));
     formData.append('occupation', data.occupation);
     formData.append('about', data.about);
     formData.append('interests', JSON.stringify(data.interests));

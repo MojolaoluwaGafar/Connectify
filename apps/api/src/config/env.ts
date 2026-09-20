@@ -41,6 +41,12 @@ const environmentSchema = z.object({
   APP_EMAIL: z.string().trim().optional().default(''),
   APP_PASSWORD: z.string().optional().default(''),
   GOOGLE_CLIENT_ID: z.string().trim().optional().default(''),
+  // Location autocomplete. With a LocationIQ key it's the primary provider;
+  // without one (or if it fails) the keyless Photon geocoder at GEOCODER_URL
+  // is used. The public Photon instance is fair-use only — self-host it if it
+  // will carry real traffic.
+  LOCATIONIQ_API_KEY: z.string().trim().optional().default(''),
+  GEOCODER_URL: z.url().default('https://photon.komoot.io/api'),
   SMTP_HOST: z.string().trim().default('smtp.gmail.com'),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_SECURE: z

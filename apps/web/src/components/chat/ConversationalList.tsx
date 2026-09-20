@@ -3,8 +3,11 @@ import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "../../context/authContext/useAuth";
-import { getConversations } from "../../API/Services/Messages/messages";
-import { socket } from "../../lib/socket";
+import {
+  getConversations,
+  markConversationRead,
+} from "../../API/Services/Messages/messages";
+import { getActiveConversationId, socket } from "../../lib/socket";
 
 // TypeScript interface for component props
 interface ConversationListProps {
@@ -21,6 +24,10 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
   const [conversations, setConversations] = useState<any[]>([]);
   // Loading indicator state while fetching API data
   const [loading, setLoading] = useState(true);
+  // Conversation ids whose other participant is currently typing
+  const [typingConversationIds, setTypingConversationIds] = useState<
+    Set<string>
+  >(new Set());
 
   // Effect hook: Triggers on mount or whenever the active user updates
   useEffect(() => {
@@ -91,14 +98,58 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
         text: payload.text ?? "",
         sentAt: new Date().toISOString(),
       });
+
+      if (payload.conversationId === getActiveConversationId()) {
+        // Already looking at this chat — it'll be marked read there
+        // momentarily, so don't let a stale unread count reappear here.
+        markConversationRead(payload.conversationId).catch(() => {});
+        return;
+      }
+
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.matchId === payload.conversationId
+            ? {
+                ...conversation,
+                unreadCount: (conversation.unreadCount ?? 0) + 1,
+              }
+            : conversation,
+        ),
+      );
+    };
+
+    const handleUserTyping = (payload: any) => {
+      if (!payload?.conversationId) return;
+
+      setTypingConversationIds((prev) => {
+        const next = new Set(prev);
+        next.add(payload.conversationId);
+        return next;
+      });
+    };
+
+    const handleUserStopTyping = (payload: any) => {
+      if (!payload?.conversationId) return;
+
+      setTypingConversationIds((prev) => {
+        if (!prev.has(payload.conversationId)) return prev;
+
+        const next = new Set(prev);
+        next.delete(payload.conversationId);
+        return next;
+      });
     };
 
     socket.on("receive_message", handleReceiveMessage);
     socket.on("new_message_notification", handleNewMessageNotification);
+    socket.on("user_typing", handleUserTyping);
+    socket.on("user_stop_typing", handleUserStopTyping);
 
     return () => {
       socket.off("receive_message", handleReceiveMessage);
       socket.off("new_message_notification", handleNewMessageNotification);
+      socket.off("user_typing", handleUserTyping);
+      socket.off("user_stop_typing", handleUserStopTyping);
     };
   }, [user]);
 
@@ -153,12 +204,27 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
             filteredConversations.map((conversation) => {
               const person = conversation.otherUser;
               const lastMessage = conversation.lastMessage;
+              const isTyping = typingConversationIds.has(
+                conversation.matchId,
+              );
+              const unreadCount = conversation.unreadCount ?? 0;
 
               return (
                 <div
                   key={conversation.matchId}
                   /* Trigger parent callback when selecting a conversation thread */
-                  onClick={() => onSelectConversation(conversation)}
+                  onClick={() => {
+                    // Optimistic — ChatWindow's own mount effect persists
+                    // this server-side moments later.
+                    setConversations((prev) =>
+                      prev.map((item) =>
+                        item.matchId === conversation.matchId
+                          ? { ...item, unreadCount: 0 }
+                          : item,
+                      ),
+                    );
+                    onSelectConversation(conversation);
+                  }}
                   className="flex p-4 gap-3 border-b border-solid border-[#1c1524]/[0.0784] w-full justify-between hover:bg-purple-50 cursor-pointer mx-4 lg:mx-0 md:mx-0"
                 >
                   {/* Left Side: Avatar and Preview Details */}
@@ -183,23 +249,35 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                         {person.fullName}
                       </p>
 
-                      {/* Last Message Preview Text (or Default Icebreaker) */}
-                      <p className="text-[13px] text-gray-500 font-[Geist] truncate w-40">
-                        {lastMessage?.text || "Start a conversation"}
-                      </p>
+                      {/* Last Message Preview Text — swapped for a live
+                          "Typing…" status when the other person is typing */}
+                      {isTyping ? (
+                        <p className="text-[13px] text-violet-600 font-[Geist] font-medium italic truncate w-40">
+                          Typing…
+                        </p>
+                      ) : (
+                        <p className="text-[13px] text-gray-500 font-[Geist] truncate w-40">
+                          {lastMessage?.text || "Start a conversation"}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {/* Right Side: Timestamp Display (Mobile Only View) */}
-                  <div className="flex flex-col md:hidden lg:hidden gap-3 items-end">
+                  {/* Right Side: Timestamp (mobile only, as before) + unread count chip */}
+                  <div className="flex flex-col gap-1.5 items-end">
                     {lastMessage && (
-                      <p className="font-bold text-sm h-4">
-                        {/* Format ISO timestamp to short local time (e.g. 10:45 AM) */}
+                      <p className="md:hidden lg:hidden font-bold text-sm h-4">
                         {new Date(lastMessage.sentAt).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
                       </p>
+                    )}
+
+                    {unreadCount > 0 && (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-violet-600 px-1.5 text-[11px] font-semibold text-white">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
                     )}
                   </div>
                 </div>

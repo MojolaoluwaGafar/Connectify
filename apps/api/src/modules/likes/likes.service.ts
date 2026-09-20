@@ -11,29 +11,45 @@ function formatProfile(profile: any) {
   };
 }
 
-// Best-effort push to the (separate) socket process so the person who
-// liked first learns about the match immediately instead of waiting for
-// their next fetch. The REST flow above already succeeded either way —
-// this must never fail the like request itself.
-async function notifyMatch(recipientId: string, likerId: string) {
+// Best-effort push to the (separate) socket process so the recipient learns
+// about likes/matches immediately instead of waiting for their next fetch.
+// The REST flow above already succeeded either way — this must never fail
+// the like request itself.
+async function pushSocketEvent(
+  recipientId: string,
+  event: 'new_match' | 'new_like',
+  payload: unknown,
+) {
   try {
-    const likerProfile = await Profile.findOne({ userId: likerId }).lean();
-    if (!likerProfile) return;
-
-    await fetch(`${env.socketInternalUrl}/internal/notify-match`, {
+    await fetch(`${env.socketInternalUrl}/internal/notify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-internal-secret': env.INTERNAL_SOCKET_SECRET,
       },
-      body: JSON.stringify({
-        recipientId,
-        profile: formatProfile(likerProfile),
-      }),
+      body: JSON.stringify({ recipientId, event, payload }),
     });
   } catch (error) {
-    console.error('Failed to push realtime match notification:', error);
+    console.error(`Failed to push realtime ${event} notification:`, error);
   }
+}
+
+async function notifyMatch(recipientId: string, likerId: string) {
+  const likerProfile = await Profile.findOne({ userId: likerId }).lean();
+  if (!likerProfile) return;
+
+  await pushSocketEvent(recipientId, 'new_match', {
+    profile: formatProfile(likerProfile),
+  });
+}
+
+async function notifyLike(recipientId: string, likerId: string) {
+  const likerProfile = await Profile.findOne({ userId: likerId }).lean();
+  if (!likerProfile) return;
+
+  await pushSocketEvent(recipientId, 'new_like', {
+    profile: formatProfile(likerProfile),
+  });
 }
 
 export async function likeProfile(likerId: string, likedUserId: string) {
@@ -65,6 +81,10 @@ export async function likeProfile(likerId: string, likedUserId: string) {
     // push. likerId (us) already learns about the match from this
     // request's own response, so no need to notify ourselves too.
     void notifyMatch(likedUserId, likerId);
+  } else {
+    // Not mutual (yet) — still let the recipient know someone liked them,
+    // for the notification bell. Doesn't imply a match.
+    void notifyLike(likedUserId, likerId);
   }
 
   return {
