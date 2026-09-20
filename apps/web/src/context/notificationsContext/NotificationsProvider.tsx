@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../authContext/useAuth';
 import { getActiveConversationId, socket } from '../../lib/socket';
 import {
   NotificationsContext,
   type AppNotification,
+  type NotificationType,
 } from './notificationsContext';
 
 const MAX_NOTIFICATIONS = 20;
@@ -12,8 +14,16 @@ function truncate(text: string, max = 60) {
   return text.length > max ? `${text.slice(0, max).trim()}…` : text;
 }
 
+// Routes whose mere visit means the user has seen that kind of update —
+// clears the matching notifications without requiring a bell click.
+const ROUTE_SEEN_TYPES: Record<string, NotificationType> = {
+  '/matches': 'match',
+  '/likes': 'like',
+};
+
 function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const location = useLocation();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   // Fresh account/session — don't carry a previous user's notifications over.
@@ -48,6 +58,7 @@ function NotificationsProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
         read: false,
         navigateTo: '/messages',
+        conversationId: payload.conversationId,
       });
     };
 
@@ -95,15 +106,41 @@ function NotificationsProvider({ children }: { children: ReactNode }) {
     };
   }, [user]);
 
+  // Visiting the page a notification type points to counts as having seen
+  // it, even if the bell itself was never opened.
+  useEffect(() => {
+    const seenType = ROUTE_SEEN_TYPES[location.pathname];
+    if (!seenType) return;
+
+    setNotifications((prev) =>
+      prev.map((n) => (n.type === seenType ? { ...n, read: true } : n)),
+    );
+  }, [location.pathname]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
+  const markConversationNotificationsRead = (conversationId: string) => {
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.type === 'message' && n.conversationId === conversationId
+          ? { ...n, read: true }
+          : n,
+      ),
+    );
+  };
+
   return (
     <NotificationsContext.Provider
-      value={{ notifications, unreadCount, markAllRead }}
+      value={{
+        notifications,
+        unreadCount,
+        markAllRead,
+        markConversationNotificationsRead,
+      }}
     >
       {children}
     </NotificationsContext.Provider>

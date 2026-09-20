@@ -26,3 +26,17 @@ body::-webkit-scrollbar,
   height: 0;
   display: none;
 }
+
+/* iOS Safari auto-zooms the whole page when a focused input's font-size is
+   under 16px, and doesn't reliably zoom back out on blur — the page is left
+   looking "stuck zoomed in" even after tapping away. Most inputs in this app
+   use Tailwind's text-sm (14px), so force 16px on mobile to prevent it. The
+   !important is needed to outrank utility classes like text-sm, which are
+   more specific than a bare element selector. */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}

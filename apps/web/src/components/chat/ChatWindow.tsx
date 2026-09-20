@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaperPlane, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 import { useAuth } from "../../context/authContext/useAuth";
+import { useNotifications } from "../../context/notificationsContext/useNotifications";
 import { socket, setActiveConversationId } from "../../lib/socket";
 import {
   getMessages,
@@ -23,6 +24,7 @@ interface ChatWindowProps {
 const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   // Extract authenticated user details from Auth Context
   const { user } = useAuth();
+  const { markConversationNotificationsRead } = useNotifications();
 
   // State to hold active chat messages array
   const [messages, setMessages] = useState<any[]>([]);
@@ -90,6 +92,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     markConversationRead(matchId).catch((error) => {
       console.error("Failed to mark conversation as read:", error);
     });
+    markConversationNotificationsRead(matchId);
 
     const handleIncomingMessage = (payload: any) => {
       // console.log("RECEIVED MESSAGE FROM SOCKET:", payload);
