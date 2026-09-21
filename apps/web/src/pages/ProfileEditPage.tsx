@@ -1,17 +1,25 @@
-import { useEffect, useState, type MouseEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createProfile } from '../services/api';
-
+import { createProfile } from '../API/Services/Profile/Profile';
 
 import { useAuth } from '../context/authContext/useAuth';
-import type { Gender } from '../types';
+import type { Gender, LocationCoords } from '../types';
 import PhotoUploader from '../components/ui/PhotoUploader';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
+import LocationAutocomplete from '../components/ui/LocationAutocomplete';
 import { INTEREST_OPTIONS } from '../data/mockProfile';
 import TextArea from '../components/ui/TextArea';
 import Chip from '../components/ui/Chip';
 import Button from '../components/ui/Button';
+
+import ProfilePreviewModal from '../components/profilePreviewModal';
+import { themedToast } from '../utils/ToastFeedback';
 
 interface FieldErrors {
   fullName?: string;
@@ -23,7 +31,11 @@ interface FieldErrors {
 }
 
 export default function ProfileEditPage() {
-  const { user, profile, refreshProfile } = useAuth();
+  const {
+    user,
+    profile,
+    refreshProfile,
+  } = useAuth();
 
   const navigate = useNavigate();
 
@@ -33,38 +45,48 @@ export default function ProfileEditPage() {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState<Gender | null>(null);
   const [location, setLocation] = useState('');
+  // Set only when the user picks a place from the suggestions, and cleared as
+  // soon as they type — so the saved coordinates always match the saved text.
+  const [locationCoords, setLocationCoords] = useState<LocationCoords | null>(
+    null,
+  );
   const [occupation, setOccupation] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
   const [about, setBio] = useState('');
-  const [profilePicture, setPhotoUrl] = useState<string | null>(null);
-  const [locationCoords, setLocationCoords] = useState<{
-    type: 'Point';
-    coordinates: [number, number];
-  }>();
+  const [profilePicture, setPhotoUrl] = useState<string | File | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [apiError, setApiError] = useState('');
 
   useEffect(() => {
     if (profile) {
-      setFullName(profile.fullName);
+      setFullName(profile.fullName ?? '');
       setAge(profile.age ? String(profile.age) : '');
-      setGender(profile.gender ?? '');
-      setLocation(profile.location);
-      setOccupation(profile.occupation);
-      setInterests(profile.interest ?? profile.interests ?? []);
-      setBio(profile.about);
-      setPhotoUrl(profile.profilePicture);
-      setLocationCoords(profile.locationCoords);
+      setGender(profile.gender ?? null);
+      setLocation(profile.location ?? '');
+      setLocationCoords(profile.locationCoords ?? null);
+      setOccupation(profile.occupation ?? '');
+
+      setInterests(
+        profile.interest ??
+          profile.interests ??
+          [],
+      );
+
+      setBio(profile.about ?? '');
+      setPhotoUrl(profile.profilePicture ?? null);
     } else if (user) {
-      setFullName(user.fullName);
+      setFullName(user.fullName ?? '');
     }
   }, [profile, user]);
 
   function toggleInterest(label: string) {
     setInterests((prev) =>
-      prev.includes(label) ? prev.filter((i) => i !== label) : [...prev, label],
+      prev.includes(label)
+        ? prev.filter((interest) => interest !== label)
+        : [...prev, label],
     );
   }
 
@@ -79,7 +101,11 @@ export default function ProfileEditPage() {
 
     if (!age) {
       next.age = 'Age is required.';
-    } else if (!Number.isInteger(ageNum) || ageNum < 18 || ageNum > 100) {
+    } else if (
+      !Number.isInteger(ageNum) ||
+      ageNum < 18 ||
+      ageNum > 100
+    ) {
       next.age = 'Enter an age between 18 and 100.';
     }
 
@@ -89,10 +115,13 @@ export default function ProfileEditPage() {
 
     if (!location.trim()) {
       next.location = 'Location is required.';
+    } else if (!locationCoords) {
+      next.location = 'Pick your location from the suggestions.';
     }
 
     if (about.trim().length < 10) {
-      next.about = 'Write at least 10 characters so people know who you are.';
+      next.about =
+        'Write at least 10 characters so people know who you are.';
     }
 
     if (interests.length === 0) {
@@ -106,49 +135,56 @@ export default function ProfileEditPage() {
 
   async function handleSave(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
-    if (!user) return;
+
+    if (!user) {
+      setApiError('You must be logged in to save your profile.');
+      return;
+    }
 
     setApiError('');
 
-    if (!validate()) return;
+    if (!validate()) {
+      themedToast.error('Please fix the highlighted fields.');
+      return;
+    }
 
-    if (!gender) return;
+    if (!gender || !locationCoords) {
+      return;
+    }
 
     setIsSaving(true);
 
     try {
-      let nextLocationCoords = locationCoords;
-
-      if (navigator.geolocation) {
-        const position = await new Promise<GeolocationPosition | null>((resolve) => {
-          navigator.geolocation.getCurrentPosition(resolve, () => resolve(null));
-        });
-
-        if (position) {
-          nextLocationCoords = {
-            type: 'Point',
-            coordinates: [position.coords.longitude, position.coords.latitude],
-          };
-          setLocationCoords(nextLocationCoords);
-        }
-      }
-
       await createProfile({
-        fullName: fullName.trim() || "",
+        fullName: fullName.trim(),
         age: Number(age),
-        gender: gender,
+        gender,
         location: location.trim(),
+        locationCoords,
         occupation: occupation.trim(),
         interests,
         about: about.trim(),
-        profilePicture: profilePicture,
-        locationCoords: nextLocationCoords,
+        profilePicture,
       });
 
+
       await refreshProfile();
+
+      themedToast.success('Profile saved successfully!');
+
       navigate('/profile');
-    } catch {
-      setApiError('Could not save your profile. Please try again.');
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+
+      const message =
+      error instanceof Error
+        ? error.message
+        : 'Could not save your profile. Please try again.';
+
+      setApiError(
+        'Could not save your profile. Please try again.',
+      );
+      themedToast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -159,6 +195,7 @@ export default function ProfileEditPage() {
       <h1 className="font-display text-3xl font-semibold text-ink-900">
         {isCreating ? 'Complete your profile' : 'Edit your profile'}
       </h1>
+
       <p className="mt-1 text-ink-500">
         {isCreating
           ? 'Tell people a little about yourself so they can find you'
@@ -166,7 +203,11 @@ export default function ProfileEditPage() {
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-        <PhotoUploader profilePicture={profilePicture} name={fullName} onChange={setPhotoUrl} />
+        <PhotoUploader
+          profilePicture={profilePicture}
+          name={fullName}
+          onChange={setPhotoUrl}
+        />
 
         <div className="space-y-6">
           <Section title="Basic information">
@@ -192,22 +233,37 @@ export default function ProfileEditPage() {
 
               <Select
                 label="Gender"
-                value={gender ?? ""}
-                onChange={(e) => setGender(e.target.value as Gender)}
+                value={gender ?? ''}
+                onChange={(e) =>
+                  setGender(e.target.value as Gender)
+                }
                 error={fieldErrors.gender}
               >
-                <option value="">select gender</option>
+                <option value="">Select gender</option>
                 <option value="female">Female</option>
                 <option value="male">Male</option>
                 <option value="non-binary">Non-binary</option>
-                <option value="prefer-not-to-say">Prefer not to say</option>
+                <option value="prefer-not-to-say">
+                  Prefer not to say
+                </option>
               </Select>
 
-              <Input
+              <LocationAutocomplete
                 label="Location"
-                placeholder="your country or city"
+                placeholder="Search your city or area"
+                hint="Used to show you people near you."
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onInputChange={(text) => {
+                  setLocation(text);
+                  setLocationCoords(null);
+                }}
+                onSelect={(place) => {
+                  setLocation(place.label);
+                  setLocationCoords({
+                    type: 'Point',
+                    coordinates: [place.lng, place.lat],
+                  });
+                }}
                 error={fieldErrors.location}
               />
             </div>
@@ -216,13 +272,16 @@ export default function ProfileEditPage() {
           <Section title="Personal information">
             <Input
               label="Occupation"
-              placeholder="what do you do? (optional)"
+              placeholder="What do you do? (optional)"
               value={occupation}
               onChange={(e) => setOccupation(e.target.value)}
             />
           </Section>
 
-          <Section title="Interests" subtitle="Select all that apply">
+          <Section
+            title="Interests"
+            subtitle="Select all that apply"
+          >
             <div className="flex flex-wrap gap-2">
               {INTEREST_OPTIONS.map((label) => (
                 <Chip
@@ -243,9 +302,11 @@ export default function ProfileEditPage() {
 
           <Section title="About you">
             <TextArea
-              placeholder="Write a short about about yourself (at least 10 characters)"
+              placeholder="Write a short about yourself (at least 10 characters)"
               value={about}
-              onChange={(e) => setBio(e.target.value.slice(0, 200))}
+              onChange={(e) =>
+                setBio(e.target.value.slice(0, 200))
+              }
               maxLength={200}
               rows={4}
               error={fieldErrors.about}
@@ -273,8 +334,21 @@ export default function ProfileEditPage() {
           )}
 
           <div className="flex gap-3">
-            <Button size="lg" onClick={handleSave} isLoading={isSaving}>
-              {isCreating ? 'Save Profile and continue' : 'Save Changes'}
+            <Button
+              size="lg"
+              onClick={handleSave}
+              isLoading={isSaving}
+            >
+              {isCreating
+                ? 'Save Profile and continue'
+                : 'Save Changes'}
+            </Button>
+
+            <Button
+              type="button"
+              onClick={() => setIsPreviewOpen(true)}
+            >
+              Preview Profile
             </Button>
 
             {!isCreating && (
@@ -289,6 +363,21 @@ export default function ProfileEditPage() {
           </div>
         </div>
       </div>
+
+      <ProfilePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        fullName={fullName}
+        age={age}
+        gender={gender ?? ''}
+        location={location}
+        occupation={occupation}
+        interests={interests}
+        about={about}
+        profilePicture={
+          typeof profilePicture === 'string' ? profilePicture : null
+        }
+      />
     </div>
   );
 }
@@ -308,7 +397,11 @@ function Section({
         {title}
       </p>
 
-      {subtitle && <p className="mt-0.5 text-xs text-[#6b6178]">{subtitle}</p>}
+      {subtitle && (
+        <p className="mt-0.5 text-xs text-[#6b6178]">
+          {subtitle}
+        </p>
+      )}
 
       <div className="mt-4">{children}</div>
     </div>

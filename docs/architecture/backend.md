@@ -1,321 +1,214 @@
-# Connecti Backend Architecture
+# Connectify Backend Architecture
 
-**Status:** Foundation implemented; domain modules pending product decisions
-**Scope:** MVP backend
-**Source of truth:** The current Connectify application under `apps/web/connectify`
-is the behavioral reference for this backend. See
-[Frontend-derived backend contract](./frontend-derived-backend-contract.md)
-for the API lifecycle and product rules that override earlier assumptions in
-this document.
+**Status:** As-built (reflects the code in `apps/api` and `packages/shared`)
+**Scope:** MVP backend — REST API plus a separate real-time socket server
 
-## 1. Goals and Assumptions
+> An earlier version of this document described a planned PostgreSQL/Redis/outbox
+> design. The implemented system is simpler: MongoDB, JWT bearer auth, and
+> Socket.IO. The planned pieces that were **not** built are listed under
+> [Not yet implemented](#9-not-yet-implemented).
 
-Connecti is treated as a connection product where a signed-in person can:
+For route-level detail see the [API contract](./frontend-derived-backend-contract.md).
 
-- create and manage a profile;
-- discover other people;
-- send and remove directed likes;
-- match after reciprocal likes;
-- start conversations with a valid like relationship;
-- exchange messages;
-- receive notification updates;
-- upload profile media.
+## 1. What the backend does
 
-The MVP should be a modular monolith. One API process and one relational database keep transactions and deployment simple while preserving clear domain boundaries for later extraction.
+A signed-in person can:
 
-Non-goals for the first release are recommendation ML, multi-region writes, end-to-end encryption, and microservices.
+- register, verify their email, log in (password or Google), reset/change their password, and delete their account;
+- create a profile with a photo;
+- discover other profiles (search, "all", "new", "near me");
+- like and un-like profiles; a **match** is two people who have liked each other;
+- chat in real time with matches, with presence, typing indicators, and unread counts;
+- receive live match / like / message notifications.
 
-## 2. Current workspace structure
+It is a modular monolith: one API process (`server.ts`) plus one socket process
+(`chatServer.ts`), sharing the same codebase, models, and database.
 
-```text
-apps/
-  api/
-    package.json
-    tsconfig.json
-    src/
-      app.ts
-      server.ts
-      config/
-      core/
-      http/
-      modules/
-        health/
-        auth/
-        profiles/
-        likes/
-        conversations/
-        preferences/
-        media/
-      routes/
-      types/
-  web/
-    connectify/
-      src/
-        App.tsx
-        pages/
-          LandingPage.tsx
-          DiscoveryPage.tsx
-          MyProfilepage.tsx
-          ProfileEditPage.tsx
-          ProfilePage.tsx
-          LikesPage.tsx
-          MatchesPage.tsx
-          MessagesPage.tsx
-          SettingsPage.tsx
-          auth/
-        context/
-          authContext/
-          likeContext/
-        components/
-        layout/
-        lib/
-          mockApi.ts
-          storage.ts
-        data/
-          mockProfile.ts
-        types/
-```
-
-This structure separates the product client from the API, while keeping the
-backend module naming aligned to the real feature surface exposed by the
-Connectify web app.
-
-## 3. System Context
-
-```mermaid
-flowchart LR
-    Client[Web or mobile client] -->|HTTPS JSON| API[Connecti API]
-    API --> Auth[Identity provider or auth module]
-    API --> DB[(PostgreSQL)]
-    API --> Cache[(Redis)]
-    API --> Files[(Object storage)]
-    API --> Queue[Job queue]
-    Queue --> Worker[Background worker]
-    Worker --> DB
-    Worker --> Notify[Email or push provider]
-    API --> Obs[Logs metrics traces]
-```
-
-### Runtime components
-
-| Component      | Responsibility                                                       | MVP choice                                          |
-| -------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
-| API            | HTTP transport, validation, authorization, domain orchestration      | Express + TypeScript in `apps/api`                  |
-| Database       | Durable transactional state and search indexes                       | PostgreSQL                                          |
-| Cache          | Rate limits, short-lived sessions, unread counters, idempotency keys | Redis; optional until needed                        |
-| Object storage | Avatars and message attachments                                      | S3-compatible storage with signed URLs              |
-| Worker         | Notifications, media processing, cleanup, fan-out work               | Separate TypeScript process using the same packages |
-| Observability  | Structured logs, request IDs, metrics, error reporting               | Provider-neutral interfaces from day one            |
-
-## 4. API Boundaries
-
-The API is versioned under `/v1`. Responses use JSON and errors use one stable shape:
-
-```json
-{
-  "error": {
-    "code": "CONNECTION_ALREADY_EXISTS",
-    "message": "A connection already exists between these users.",
-    "requestId": "req_01...",
-    "details": {}
-  }
-}
-```
-
-Every authenticated request receives `request.userId` from the verified access token. Clients never choose the acting user in the URL or request body.
-
-### Identity and profile
-
-- `POST /v1/auth/register`
-- `POST /v1/auth/login`
-- `POST /v1/auth/refresh`
-- `POST /v1/auth/logout`
-- `GET /v1/me`
-- `PATCH /v1/me`
-- `GET /v1/users/:userId`
-- `GET /v1/users?query=&cursor=`
-
-If an external identity provider is selected, register/login/refresh/logout become provider integration endpoints and the API stores only the local user record and provider subject.
-
-### Connections
-
-- `GET /v1/connections?status=accepted|pending&cursor=`
-- `POST /v1/connections/:userId`
-- `POST /v1/connections/:connectionId/accept`
-- `POST /v1/connections/:connectionId/reject`
-- `DELETE /v1/connections/:connectionId`
-
-Connection creation must be idempotent for the same pair of users. A database constraint must prevent duplicate undirected relationships.
-
-### Conversations and messages
-
-- `GET /v1/conversations?cursor=`
-- `POST /v1/conversations`
-- `GET /v1/conversations/:conversationId/messages?cursor=`
-- `POST /v1/conversations/:conversationId/messages`
-- `POST /v1/conversations/:conversationId/read`
-- `DELETE /v1/messages/:messageId` (soft delete)
-
-Only conversation members can read or mutate conversation data. The initial MVP supports direct conversations; group conversations can be added without changing the message model by making membership explicit.
-
-### Notifications and media
-
-- `GET /v1/notifications?cursor=`
-- `POST /v1/notifications/:notificationId/read`
-- `POST /v1/media/upload-url`
-- `POST /v1/media/:mediaId/complete`
-
-Uploads use a short-lived signed URL. The API records metadata only after the client confirms the object was uploaded; the worker validates type, size, and malware scanning status before the media is public.
-
-## 5. Domain Modules
-
-Keep these modules inside the API application initially. Each module owns its commands, queries, validation, and persistence adapters; modules do not import another module's database tables directly.
+## 2. Workspace structure
 
 ```text
 apps/api/src/
-  server.ts                 # process bootstrap only
-  app.ts                    # middleware and route composition
-  config/env.ts             # validated runtime configuration
-  core/errors/              # transport-independent application errors
-  http/                     # request context and HTTP error handlers
-  routes/v1.ts              # versioned route composition
+  server.ts               REST API bootstrap (Express)
+  chatServer.ts           Socket.IO server bootstrap + internal notify endpoint
+  app.ts                  Middleware and route composition
+  config/                 env.ts (zod-validated), database.ts, Cloudinary.ts
+  core/                   errors, logger, auth token helpers, auth middleware
+  http/                   request id, rate limiter, request logger, error handler
+  model/                  Mongoose models: User, Profile, Like, Message
   modules/
-    health/                 # implemented liveness and readiness endpoints
-    auth/                   # registration, verification, login, session hydration
-    profiles/               # public discovery, profile reads, profile updates
-    likes/                  # directed likes, match transitions, relationship state
-    conversations/          # pair lookup, membership, message authorization
-    preferences/            # notification choices and settings updates
-    media/                  # signed profile-photo upload workflow
-  infrastructure/
-    db/ cache/ queue/ storage/ observability/ # added alongside integrations
+    auth/                 register, verify, login, Google, reset/change password, delete
+    profiles/             create/read/list (discovery), photo upload
+    likes/                like/unlike, liked-by-me, who-liked-me, matches
+    conversations/        list, messages, send, mark-read
+    preferences/          placeholder (returns 501)
+    health/               /health/live, /health/ready
+  routes/v1.ts            Versioned route composition
+  sockets/chatSocket.ts   Chat event handlers
+  MailTemplates/, utils/  Email templates and mail sending (Brevo / SMTP)
+apps/web/src/             Vite + React frontend
+packages/shared/src/      Zod schemas/types shared with the frontend (built to dist/)
 ```
 
-A request should flow as:
+A request flows as:
 
 ```text
-route -> request schema -> application command/query -> domain rules -> repository -> response mapper
+route -> controller -> service -> Mongoose model -> response
 ```
 
-Routes must not contain SQL, provider calls, or business rules.
+Controllers unwrap the request and shape the response; services hold the rules
+and talk to the models. Input is validated with zod (`@connecti/shared` for auth
+inputs, `profiles.validation.ts` for profiles).
 
-## 6. Data Model
+## 3. System context
 
-Use UUID or UUIDv7 identifiers, UTC timestamps, and soft deletion where user-visible history matters.
+```mermaid
+flowchart LR
+    Web[Web app<br/>Vite + React] -->|HTTPS JSON, Bearer JWT| API[REST API :3001]
+    Web -->|WebSocket, JWT in handshake| Sock[Socket server :3002]
+    API --> DB[(MongoDB)]
+    Sock --> DB
+    API --> Cloud[Cloudinary<br/>profile photos]
+    API --> Mail[Brevo / SMTP<br/>verification + reset emails]
+    API -->|POST /internal/notify<br/>x-internal-secret| Sock
+    Google[Google Identity] -->|ID token| Web
+    Web -->|ID token| API
+```
+
+| Component | Responsibility | Choice |
+| --- | --- | --- |
+| REST API | Auth, profiles, likes, conversations, validation, authorization | Express 5 + TypeScript |
+| Socket server | Live chat, presence, typing, pushed notifications | Socket.IO on a plain `http` server |
+| Database | Users, profiles, likes, messages | MongoDB via Mongoose |
+| Photo storage | Profile pictures (JPEG/PNG, ≤ 5 MB) | Cloudinary (multer memory upload) |
+| Email | Verification and password-reset codes | Brevo API, SMTP fallback in development |
+
+The two Node processes are **separate deployables** (`npm run start` and
+`npm run start:socket`). That allows restarting one without dropping the other's
+connections, but it means code in the REST process cannot call the socket
+server's `io` directly — see [the internal bridge](#63-the-internal-bridge).
+
+## 4. Data model
+
+MongoDB collections (Mongoose models in `apps/api/src/model`):
 
 ```mermaid
 erDiagram
-    USERS ||--|| PROFILES : owns
-    USERS ||--o{ CONNECTIONS : sends
-    USERS ||--o{ CONNECTIONS : receives
-    CONVERSATIONS ||--o{ CONVERSATION_MEMBERS : contains
-    USERS ||--o{ CONVERSATION_MEMBERS : joins
-    CONVERSATIONS ||--o{ MESSAGES : contains
-    USERS ||--o{ MESSAGES : authors
-    USERS ||--o{ NOTIFICATIONS : receives
-    MESSAGES ||--o{ MEDIA : attaches
-    USERS ||--o{ MEDIA : uploads
+    USER ||--o| PROFILE : has
+    USER ||--o{ LIKE : "likes (likerId)"
+    USER ||--o{ LIKE : "liked (likedUserId)"
+    USER ||--o{ MESSAGE : sends
 
-    USERS { uuid id PK string email string status datetime created_at }
-    PROFILES { uuid user_id PK string display_name string about string avatar_media_id datetime updated_at }
-    CONNECTIONS { uuid id PK uuid requester_id uuid recipient_id string status datetime created_at datetime updated_at }
-    CONVERSATIONS { uuid id string kind datetime created_at datetime updated_at }
-    CONVERSATION_MEMBERS { uuid conversation_id PK uuid user_id PK datetime last_read_at }
-    MESSAGES { uuid id PK uuid conversation_id uuid author_id string body datetime created_at datetime deleted_at }
-    NOTIFICATIONS { uuid id PK uuid user_id string type uuid actor_id uuid resource_id datetime read_at datetime created_at }
-    MEDIA { uuid id PK uuid owner_id string storage_key string mime_type int byte_size string status }
+    USER { ObjectId _id string fullName string email string password string role bool isEmailVerified string googleId }
+    PROFILE { ObjectId userId string fullName int age string gender string location string occupation string about string[] interests string profilePicture bool isComplete }
+    LIKE { ObjectId likerId ObjectId likedUserId date createdAt }
+    MESSAGE { ObjectId _id string matchId ObjectId senderId string text ObjectId[] readBy date createdAt }
 ```
 
-### Important constraints
+Key points:
 
-- `users.email` is unique and normalized to lowercase.
-- A connection stores the two user IDs in a canonical order, with a unique index on that pair.
-- A direct conversation has a unique membership pair so repeated create calls return the existing conversation.
-- `conversation_members` is the authorization source for messages.
-- Message bodies are bounded in size and attachments are referenced by `media.id`.
-- Notification creation is idempotent by event ID and notification type where duplicate delivery is possible.
-- All foreign keys use restrictive deletion by default; account deletion is an explicit workflow.
+- **No stored match or conversation documents.** A match is derived: A and B are matched when both a `Like(A→B)` and a `Like(B→A)` exist. A conversation id is derived too: the two user ids sorted and joined as `"<idLow>_<idHigh>"`, so both participants compute the same id.
+- `Like` has a unique index on `(likerId, likedUserId)` (duplicate likes are treated as a no-op) plus an index on `likedUserId` for "who liked me".
+- `Message.matchId` holds that derived conversation id and is indexed with `createdAt`.
+- **Unread tracking:** `Message.readBy` lists the users who have read a message. A conversation's unread count is the number of messages *not* sent by you whose `readBy` does not include you.
+- `User.password` is optional — Google-only accounts have none. `googleId` links a Google identity.
+- `Profile.userId` is unique. `isComplete` is recomputed on read from the required fields (including occupation and photo).
 
-## 7. Consistency and Events
+## 5. Authentication and authorization
 
-User-facing mutations that change relationship state or message state are database transactions. For reliable asynchronous work, write an `outbox_events` row in the same transaction, then let the worker publish and mark it processed.
+- **Sessions are JWTs** sent as `Authorization: Bearer <token>`. `authMiddleware` returns `401` for a missing token and `403` for an invalid/expired one. The token is signed with `JWT_SECRET_KEY` and expires per `JWT_EXPIRES_IN` (default `7d`). There are no refresh tokens or cookies.
+- **Passwords** are hashed with bcrypt (12 rounds). Login returns a generic "Invalid email or password" for unknown users, Google-only accounts, and wrong passwords.
+- **Email verification:** registration issues a 6-digit code (10-minute expiry) and blocks login until verified. Password reset uses the same code mechanism; the forgot-password response does not reveal whether the email exists.
+- **Google sign-in:** the frontend sends a Google ID token; the API verifies it against `GOOGLE_CLIENT_ID`, then finds the user by `googleId`, links an existing account with the same email, or creates a new verified account, and returns Connectify's own JWT.
+- **Messaging authorization:** every conversation read/write and every socket join goes through `assertParticipant`, which requires that the caller is one of the two users in the conversation **and** that the two currently like each other. Un-liking removes message access.
+- **Sockets** authenticate at connection time from the JWT in the handshake; a connection with no valid token is disconnected immediately.
 
-Initial events:
+## 6. Real-time architecture
 
-- `connection.requested`
-- `connection.accepted`
-- `connection.removed`
-- `message.created`
-- `media.uploaded`
-- `user.deleted`
+### 6.1 Rooms
 
-The outbox worker must retry with exponential backoff, preserve event IDs, and move repeatedly failing events to a dead-letter table. Consumers must be idempotent because delivery is at-least-once.
+On connect a socket joins a **personal room named after its user id**. It also
+joins a **conversation room** (the derived `idLow_idHigh` id) when a chat window
+is opened via `join_conversation`.
 
-For realtime messaging, start with ordinary HTTP reads and writes. Add WebSocket or server-sent events only after the message endpoint is stable; realtime delivery is a presentation concern backed by the same persisted message and outbox event.
+- Conversation rooms carry chat traffic for whoever has that chat open.
+- Personal rooms reach a user wherever they are in the app. Anything that must
+  be seen outside an open chat (notifications, typing in the list, unread
+  badges) is pushed to the recipient's personal room.
 
-## 8. Security and Privacy
+### 6.2 Events
 
-- Verify access tokens before route handlers and reject missing or expired credentials with `401`.
-- Enforce resource ownership or membership in the application service, not only in the client.
-- Validate all request bodies, query parameters, and uploaded media metadata at the boundary.
-- Hash passwords with Argon2id if credentials are local; never store raw passwords or provider secrets in the database.
-- Apply per-IP and per-user rate limits to authentication, search, connection requests, messages, and upload URL creation.
-- Use generic login errors to avoid account enumeration and add email verification before high-volume actions.
-- Store only required personal data, support account export/deletion workflows, and avoid logging message bodies or tokens.
-- Use parameterized queries, secure headers, CORS allowlists, and TLS in every non-local environment.
+Client → server:
 
-## 9. Operational Requirements
+| Event | Payload | Effect |
+| --- | --- | --- |
+| `join_conversation` / `leave_conversation` | conversation id | Join/leave a conversation room (join is authorized) |
+| `send_message` | `{ conversationId, content }` | Persists the message and broadcasts it |
+| `typing_start` / `typing_stop` | `{ conversationId }` | Relays typing state |
+| `get_online_users` | — | Asks for a fresh list of online user ids |
 
-### Configuration
+Server → client:
 
-Fail fast at startup for required production settings: `DATABASE_URL`, authentication secrets/provider configuration, storage credentials, and queue configuration. Keep `.env` loading local-only; production values come from the deployment secret manager.
+| Event | Sent to | Meaning |
+| --- | --- | --- |
+| `receive_message` | conversation room | A message in an open conversation |
+| `new_message_notification` | recipient's personal room | New message (sender name, text) — drives toasts, unread badges, the bell |
+| `user_typing` / `user_stop_typing` | conversation room **and** recipient's personal room | Typing state |
+| `online_users`, `user_online`, `user_offline` | requester / everyone | Presence |
+| `new_match` | the person who liked first | Their like was reciprocated |
+| `new_like` | the liked person | Someone liked them (not yet mutual) |
+| `conversation_joined`, `join_conversation_error`, `send_message_error` | requester | Acknowledgements/errors |
 
-### Health checks
+Presence is an in-memory map of `userId -> socket ids`. A user is online while
+they have at least one socket. Because a snapshot is only pushed at connect
+time, clients call `get_online_users` when a chat opens.
 
-- `GET /health/live`: process is running; no dependency checks.
-- `GET /health/ready`: database, cache, queue, and storage dependencies are usable.
+### 6.3 The internal bridge
 
-The existing `/health` endpoint should remain as a compatibility alias while these checks are introduced.
+Likes are created through the REST API, but the socket server owns the `io`
+instance. So when a like or match happens, `likes.service.ts` calls the socket
+server over HTTP:
 
-### Implemented API foundation
+```text
+POST {SOCKET_INTERNAL_URL}/internal/notify
+x-internal-secret: {INTERNAL_SOCKET_SECRET}
+{ "recipientId": "...", "event": "new_match" | "new_like", "payload": { ... } }
+```
 
-- `GET /health` returns a compatibility health response.
-- `GET /v1/health/live` confirms the process is live.
-- `GET /v1/health/ready` exposes readiness checks; dependency entries remain
-  `not-configured` until database, cache, and queue adapters are added.
-- Every request receives an `x-request-id` response header; callers may supply
-  one through the same request header for end-to-end tracing.
-- API errors have a stable JSON envelope, including a machine-readable code and
-  request ID.
-- The app enables secure HTTP headers, explicit CORS origins, a 1 MB JSON body
-  limit, and startup-time environment validation.
+The socket server rejects requests with a wrong secret (`401`) and only emits
+whitelisted event names. The call is best-effort — a failure is logged but never
+fails the like request itself.
 
-### Logging and metrics
+## 7. Security and privacy
 
-Emit JSON logs with `requestId`, route, status, duration, and user ID where available. Never log authorization headers, passwords, signed URLs, or message content. Track request latency/error rate, database pool saturation, queue lag, failed jobs, login failures, and unread-notification query latency.
+Implemented:
 
-## 10. Delivery Plan
+- `helmet` secure headers, an explicit CORS origin allowlist (`CORS_ORIGIN`), gzip compression, and an 8 MB JSON body limit (for profile data).
+- An in-memory per-IP rate limiter (120 requests/minute, reads `x-forwarded-for`).
+- Zod validation at the boundary; a stable error envelope with a request id (`x-request-id`).
+- Uploads restricted to JPEG/PNG at 5 MB.
+- Sensitive debug logging removed: verification codes, reset tokens, message text, and who-liked-whom data are **not** logged.
+- The internal notify endpoint requires a shared secret and a fixed event whitelist.
 
-1. Add configuration, app composition, request IDs, error handling, validation, and database migrations.
-2. Implement users/profiles and authentication, then protect `/v1/me`.
-3. Implement connections with transaction and uniqueness tests.
-4. Implement conversations/messages with membership authorization and cursor pagination.
-5. Add outbox events, notifications, and a worker.
-6. Add signed media uploads and validation.
-7. Add realtime delivery only when the client workflow requires it.
+Gaps to be aware of: the in-memory rate limiter is per-process (not shared across
+instances), there are no refresh/revocable sessions, and secrets fall back to a
+development default for `INTERNAL_SOCKET_SECRET` if unset — always set it in
+production.
 
-Each module should ship with unit tests for domain rules, integration tests against PostgreSQL for constraints/transactions, and API tests for authorization and error contracts.
+## 8. Operations
 
-## 11. Decisions To Confirm From Figma
+- **Configuration** is validated at startup by `config/env.ts` (zod); the process exits if `MONGODB_URI` or `JWT_SECRET_KEY` is missing. See the README for the full variable list.
+- **Health:** `GET /health` (compatibility), `GET /api/v1/health/live`, `GET /api/v1/health/ready`. Note `ready` currently reports `database: not-configured` regardless of the real connection.
+- **Deployment:** Render Blueprint (`render.yaml`) — `connecti-api`, `connecti-socket`, and the static frontend. Key rules: install with `--include=dev`, bind to the platform's `PORT`, cap Node's heap (`--max-old-space-size=460`), and keep `JWT_SECRET_KEY` and `INTERNAL_SOCKET_SECRET` identical across the two Node services. Details and troubleshooting are in the README.
+- **Scaling note:** presence and rooms live in one socket process. Running multiple socket instances requires the Socket.IO Redis adapter (and moving presence out of memory).
 
-Before implementation, confirm these product decisions against the design:
+## 9. Not yet implemented
 
-- Is Connecti strictly person-to-person, or does it include organizations, events, or communities?
-- Are connections mutual, follow-based, or both?
-- Can anyone message anyone, or only accepted connections?
-- Are profiles searchable publicly, privately, or only to signed-in users?
-- Which notification channels are required: in-app only, email, or push?
-- What media types and maximum sizes are shown in the UI?
-- Does the UI require presence, typing indicators, reactions, attachments, or message editing?
+Items from the original plan that do not exist yet:
 
-These answers change the domain model and should be settled before migrations become shared API contracts.
+- Notification preferences API (`/v1/preferences/*` returns `501`; the Settings toggles are stored in the browser's `localStorage`).
+- Persisted notifications — the header bell's list is in-memory in the browser and clears on reload.
+- Refresh tokens / HTTP-only cookie sessions.
+- Message attachments, message deletion, group conversations.
+- Precise "near me" — distance search uses place-level coordinates (a city or district centre from the geocoder), not a user's exact position, and only covers Nigeria. Profiles created before coordinates existed must re-save their location to appear.
+- Automated tests. CI (`.github/workflows/ci.yml`) runs `npm ci`, `npm run typecheck`, and `npm run build` on pull requests and pushes to `main`, but there are no unit or integration tests yet.
+- A worker/outbox for asynchronous jobs, Redis, and PostgreSQL (the original design; MongoDB is used instead).

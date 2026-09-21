@@ -6,8 +6,23 @@
 @theme {
   --font-fraunces: 'Fraunces', serif;
   --font-geist: 'Geist', sans-serif;
+
   --color-text-primary: #6b6178;
   --color-stroke-primary: #1c152414;
   --color-theme: #7c3aed;
   --color-theme-shade: #a172f2;
+}
+html,
+body,
+#root {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

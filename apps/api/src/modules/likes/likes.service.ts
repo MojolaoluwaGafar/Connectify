@@ -1,16 +1,179 @@
-export async function likeProfile(_profileId: string, _payload: unknown) {
+import { Like } from '../../model/likes.js';
+import { Profile } from '../../model/profile.js';
+import mongoose from 'mongoose';
+import { env } from '../../config/env.js';
+
+function formatProfile(profile: any) {
   return {
-    message: 'Likes are scheduled for the next backend milestone.',
-    status: 'not_implemented',
-    profileId: _profileId,
-    payload: _payload,
+    ...profile,
+    id: profile.userId.toString(),
+    userId: profile.userId.toString(),
+  };
+}
+
+// Best-effort push to the (separate) socket process so the recipient learns
+// about likes/matches immediately instead of waiting for their next fetch.
+// The REST flow above already succeeded either way — this must never fail
+// the like request itself.
+async function pushSocketEvent(
+  recipientId: string,
+  event: 'new_match' | 'new_like',
+  payload: unknown,
+) {
+  try {
+    await fetch(`${env.socketInternalUrl}/internal/notify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': env.INTERNAL_SOCKET_SECRET,
+      },
+      body: JSON.stringify({ recipientId, event, payload }),
+    });
+  } catch (error) {
+    console.error(`Failed to push realtime ${event} notification:`, error);
   }
 }
 
-export async function unlikeProfile(_profileId: string) {
-  return {
-    message: 'Removing likes is scheduled for the next backend milestone.',
-    status: 'not_implemented',
-    profileId: _profileId,
-  }
+async function notifyMatch(recipientId: string, likerId: string) {
+  const likerProfile = await Profile.findOne({ userId: likerId }).lean();
+  if (!likerProfile) return;
+
+  await pushSocketEvent(recipientId, 'new_match', {
+    profile: formatProfile(likerProfile),
+  });
 }
+
+async function notifyLike(recipientId: string, likerId: string) {
+  const likerProfile = await Profile.findOne({ userId: likerId }).lean();
+  if (!likerProfile) return;
+
+  await pushSocketEvent(recipientId, 'new_like', {
+    profile: formatProfile(likerProfile),
+  });
+}
+
+export async function likeProfile(likerId: string, likedUserId: string) {
+  // I (by I, i mean Chidera ) removed the payload validation for now if any error occurs later add in the payload thank you
+
+  // temporal: testing for matches
+  const existingLike = await Like.findOne({
+    likerId: likedUserId,
+    likedUserId: likerId,
+  });
+  const matched = !!existingLike;
+  // console.log('EXISTING LIKES', existingLike);
+
+  try {
+    const like = new Like({ likerId, likedUserId });
+    await like.save();
+  } catch (error: any) {
+    // Duplicate key = this exact like already exists — treat as a no-op
+    // success rather than an error. This can legitimately happen from a
+    // double-click, a retried request, or (as here) frontend/DB state
+    // having drifted apart after an earlier failed unlike.
+    if (error?.code !== 11000) {
+      throw error;
+    }
+  }
+
+  if (matched) {
+    // likedUserId liked us first and is waiting — they get the realtime
+    // push. likerId (us) already learns about the match from this
+    // request's own response, so no need to notify ourselves too.
+    void notifyMatch(likedUserId, likerId);
+  } else {
+    // Not mutual (yet) — still let the recipient know someone liked them,
+    // for the notification bell. Doesn't imply a match.
+    void notifyLike(likedUserId, likerId);
+  }
+
+  return {
+    message: 'Profile liked successfully.',
+    status: 'success',
+    likerId,
+    likedUserId,
+    matched,
+  };
+}
+
+export async function unlikeProfile(likerId: string, likedUserId: string) {
+  await Like.deleteOne({ likerId: likerId, likedUserId: likedUserId });
+  return {
+    message: 'Profile unliked successfully.',
+    status: 'success',
+    likerId: likerId,
+    likedUserId: likedUserId,
+  };
+}
+
+export async function likedByMe(likerId: string) {
+  const likes = await Like.find({
+    likerId: new mongoose.Types.ObjectId(likerId),
+  });
+
+  // console.log('LIKES FOUND:', likes);
+  // console.log('LIKER ID:', likerId);
+
+  const likedUserIds = likes.map((like) => like.likedUserId);
+
+  // console.log('LIKED USER IDS:', likedUserIds);
+
+  const profiles = await Profile.find({
+    userId: { $in: likedUserIds },
+  });
+
+  return profiles.map((profile) => ({
+    ...profile.toObject(),
+    id: profile.userId.toString(),
+    userId: profile.userId.toString(),
+  }));
+}
+
+export const whoLikedMe = async (userId: string) => {
+  const likes = await Like.find({
+    likedUserId: new mongoose.Types.ObjectId(userId),
+  });
+  // console.log('WHO LIKED ME LIKES', likes);
+
+  const likerIds = likes.map((like) => like.likerId);
+  // console.log('WHO LIKED ME LIKER IDS:', likerIds);
+
+  const profiles = await Profile.find({ userId: { $in: likerIds } });
+  // console.log('WHO LIKED ME PROFILES:', profiles);
+
+  return profiles.map((profile) => ({
+    ...profile.toObject(),
+    id: profile.userId.toString(),
+    userId: profile.userId.toString(),
+  }));
+};
+
+export const getMatches = async (userId: string) => {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  // Find everyone I liked
+  const myLikes = await Like.find({
+    likerId: userObjectId,
+  });
+
+  const likedUserIds = myLikes.map((like) => like.likedUserId);
+
+  // Find the people who also liked me
+  const mutualLikes = await Like.find({
+    likerId: { $in: likedUserIds },
+    likedUserId: userObjectId,
+  });
+
+  const matchedUserIds = mutualLikes.map((like) => like.likerId);
+
+  // Get their profiles
+  const profiles = await Profile.find({
+    userId: { $in: matchedUserIds },
+  });
+
+  return profiles.map((profile) => ({
+    ...profile.toObject(),
+    id: profile.userId.toString(),
+    userId: profile.userId.toString(),
+  }));
+};

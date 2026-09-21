@@ -1,11 +1,14 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Camera } from 'lucide-react';
 import Avatar from './Avatar';
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg']);
+
 interface PhotoUploaderProps {
-  profilePicture: string | null;
+  profilePicture: string | File | null;
   name: string;
-  onChange: (dataUrl: string) => void;
+  onChange: (file: File) => void;
 }
 
 export default function PhotoUploader({
@@ -14,23 +17,36 @@ export default function PhotoUploader({
   onChange,
 }: PhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!(profilePicture instanceof File)) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(profilePicture);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [profilePicture]);
 
   function handleFile(file?: File) {
     if (!file) return;
+    if (!ACCEPTED_TYPES.has(file.type) || file.size > MAX_FILE_SIZE) {
+      return;
+    }
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      onChange(reader.result as string);
-    };
-
-    reader.readAsDataURL(file);
+    onChange(file);
   }
 
   return (
     <div className="flex flex-col items-center rounded-2xl border border-stroke-primary bg-white p-6 text-center">
       <div className="relative">
-        <Avatar src={profilePicture} name={name || 'Your name'} size={104} />
+        <Avatar
+          src={previewUrl ?? (typeof profilePicture === 'string' ? profilePicture : null)}
+          name={name || 'Your name'}
+          size={104}
+        />
 
         <button
           onClick={() => inputRef.current?.click()}

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface profile extends Document {
   userId: mongoose.Types.ObjectId;
@@ -11,19 +11,38 @@ export interface profile extends Document {
   interests: string[];
   profilePicture: string | null;
   locationCoords?: {
-    type: "Point";
+    type: 'Point';
     coordinates: [number, number];
   };
+  isComplete:boolean
 }
 
+const LocationCoordsSchema = new Schema(
+  {
+    type: { type: String, enum: ['Point'], required: true },
+    coordinates: {
+      type: [Number],
+      required: true,
+      validate: {
+        validator: (value: number[]) =>
+          value.length === 2 &&
+          Math.abs(value[0] as number) <= 180 &&
+          Math.abs(value[1] as number) <= 90,
+        message: 'Location coordinates must be [longitude, latitude]',
+      },
+    },
+  },
+  { _id: false },
+);
+
 const ProfileSchema: Schema = new Schema({
-    userId: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
     required: true,
     unique: true,
   },
-  
+
   fullName: {
     type: String,
     required: true,
@@ -41,18 +60,13 @@ const ProfileSchema: Schema = new Schema({
     trim: true,
   },
 
+  // GeoJSON point ([longitude, latitude]) for the near-me tab. Hidden from
+  // queries by default so other users' coordinates can't leak through the many
+  // places that spread whole profile documents into API responses — opt in
+  // with .select('+locationCoords') where it's genuinely needed.
   locationCoords: {
-    type: {
-      type: String,
-      enum: ["Point"],
-    },
-    coordinates: {
-      type: [Number],
-      validate: {
-        validator: (value: number[]) => value.length === 2,
-        message: "Location coordinates must contain longitude and latitude",
-      },
-    },
+    type: LocationCoordsSchema,
+    select: false,
   },
 
   occupation: {
@@ -64,7 +78,7 @@ const ProfileSchema: Schema = new Schema({
   gender: {
     type: String,
     required: true,
-    enum: ["male", "female", "non-binary", "prefer not to say"],
+    enum: ['male', 'female', 'non-binary', 'prefer-not-to-say'],
   },
 
   interests: {
@@ -82,9 +96,13 @@ const ProfileSchema: Schema = new Schema({
     type: String,
     default: null,
   },
+  isComplete:{
+    type: Boolean,
+    default: false
+
+  }
 });
 
-ProfileSchema.index({ locationCoords: "2dsphere" });
+ProfileSchema.index({ locationCoords: '2dsphere' });
 
-
-export const Profile = mongoose.model<profile>("Profile", ProfileSchema)
+export const Profile = mongoose.model<profile>('Profile', ProfileSchema);

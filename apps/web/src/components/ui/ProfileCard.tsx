@@ -19,22 +19,22 @@ export default function ProfileCard({
   const navigate = useNavigate();
 
   return (
-    <div className="group overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+    <div className="group flex h-[420px] flex-col overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* Profile image */}
       <button
         onClick={() => navigate(`/profile/${profile.id}`)}
-        className="block w-full text-left"
+        className="block w-full shrink-0 text-left"
         aria-label={`View ${profile.fullName}'s profile`}
       >
         <div
-          className={`relative w-full overflow-hidden bg-theme-shade/20 ${
+          className={`relative w-full h-62 overflow-hidden bg-theme-shade/20 ${
             variant === 'compact' ? 'aspect-4/5' : 'aspect-4/5'
           }`}
         >
           <img
-            src={profile.profilePicture ?? ''}
+            src={profile.profilePicture || '/profile-picture.png'}
             alt={profile.fullName}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={`w-full h-full object-cover ${profile.profilePicture ? '' : 'size-32 w-auto h-auto object-contain'}`}
             loading="lazy"
           />
 
@@ -49,17 +49,17 @@ export default function ProfileCard({
       </button>
 
       {/* Profile information */}
-      <div className="p-4">
+      <div className="flex flex-1 flex-col overflow-hidden p-4">
         <button
           onClick={() => navigate(`/profile/${profile.id}`)}
           className="text-left"
         >
-          <p className="font-semibold">
+          <p className="font-semibold truncate">
             {profile.fullName}
             {profile.age ? `, ${profile.age}` : ''}
           </p>
 
-          <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-500">
+          <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-500 truncate">
             <MapPin size={12} />
             {profile.location}
           </p>
@@ -71,7 +71,7 @@ export default function ProfileCard({
         </p>
 
         {/* Buttons */}
-        <div className="mt-4 flex gap-2">
+        <div className="mt-auto flex gap-2 pt-2">
           <Button
             variant="outline"
             size="sm"

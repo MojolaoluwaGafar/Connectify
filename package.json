@@ -9,24 +9,23 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev -w @connecti/api\" \"npm run dev -w @connecti/web\"",
-    "build": "npm run build --workspaces --if-present",
+    "dev": "concurrently \"npm run dev -w @connecti/api\" \"npm run dev:socket -w @connecti/api\" \"npm run dev -w @connecti/web\"",
+    "build": "npm run build -w @connecti/shared && npm run build -w @connecti/api && npm run build -w @connecti/web",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build -w @connecti/shared && npm run typecheck --workspaces --if-present",
     "dev:api": "npm run dev -w @connecti/api",
+    "dev:socket": "npm run dev:socket -w @connecti/api",
     "dev:web": "npm run dev -w @connecti/web"
   },
   "devDependencies": {
-    "concurrently": "^9.2.0"
+    "@types/google.accounts": "^0.0.18",
+    "concurrently": "^9.2.0",
+    "eslint": "10.9.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.68.0"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@hookform/resolvers": "^5.9.1",
-    "react-hook-form": "^7.87.0",
-    "react-router-dom": "^7.18.3",
-    "react-spinners": "^0.17.0"
-  }
+  "license": "ISC"
 }

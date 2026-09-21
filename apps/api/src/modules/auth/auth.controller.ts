@@ -69,4 +69,34 @@ export const authController = {
       requestId: request.requestId,
     });
   },
+
+  changePassword: async (request: Request, response: Response) => {
+    const result = await authService.changePassword(
+      request.user,
+      request.body,
+    );
+
+    response.status(200).json({
+      message: result.message,
+      requestId: request.requestId,
+    });
+  },
+
+  deleteAccount: async (request: Request, response: Response) => {
+    const result = await authService.deleteAccount(request.user);
+
+    response.status(200).json({
+      message: result.message,
+      requestId: request.requestId,
+    });
+  },
+
+  googleLogin: async (request: Request, response: Response) =>{
+      const result = await authService.googleLogin(request.body);
+      response.status(200).json({
+      message: "Login successful",
+      data: result,
+    
+    });
+  }
 };

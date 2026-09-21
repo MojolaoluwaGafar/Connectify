@@ -1,8 +1,9 @@
 import http from 'node:http'
-import JWT from 'jsonwebtoken'
+import { connectDatabase } from './config/database.js'
 import { Server, type Socket } from 'socket.io'
 
 import { env } from './config/env.js'
+import { verifyAuthToken } from './core/auth/token.js'
 import { registerChatHandlers } from './sockets/chatSocket.js'
 
 const server = http.createServer()
@@ -15,7 +16,63 @@ export const io = new Server(server, {
   },
 })
 
-const onlineUsers = new Map<number, Set<string>>()
+const onlineUsers = new Map<string, Set<string>>()
+
+// Internal-only bridge: the REST API runs as a separate process (server.ts)
+// and has no direct reference to this `io` instance, so it reaches it over
+// HTTP to push events like "new_match" in realtime. Guarded by a shared
+// secret since this endpoint isn't meant to be reachable by end clients.
+function readJsonBody(request: http.IncomingMessage): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let body = ''
+    request.on('data', (chunk) => {
+      body += chunk
+    })
+    request.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {})
+      } catch (error) {
+        reject(error)
+      }
+    })
+    request.on('error', reject)
+  })
+}
+
+// Whitelisted rather than a free-form event name, so this endpoint can't be
+// used to make a socket emit anything arbitrary even if the shared secret
+// were ever compromised.
+const ALLOWED_INTERNAL_EVENTS = new Set(['new_match', 'new_like'])
+
+server.on('request', (request, response) => {
+  if (request.method !== 'POST' || request.url !== '/internal/notify') {
+    return
+  }
+
+  if (request.headers['x-internal-secret'] !== env.INTERNAL_SOCKET_SECRET) {
+    response.writeHead(401).end()
+    return
+  }
+
+  readJsonBody(request)
+    .then(({ recipientId, event, payload }) => {
+      if (
+        !recipientId ||
+        typeof event !== 'string' ||
+        !ALLOWED_INTERNAL_EVENTS.has(event)
+      ) {
+        response.writeHead(400).end()
+        return
+      }
+
+      io.to(recipientId).emit(event, payload)
+      response.writeHead(200, { 'Content-Type': 'application/json' })
+      response.end(JSON.stringify({ ok: true }))
+    })
+    .catch(() => {
+      response.writeHead(400).end()
+    })
+})
 
 const getTokenFromSocket = (socket: Socket) => {
   const authToken = socket.handshake.auth?.token
@@ -39,16 +96,7 @@ const getUserIdFromSocket = (socket: Socket) => {
    return null
   }
 
-  try {
-   const decoded = JWT.verify(token, env.JWT_SECRET_KEY) as {
-     userId?: string | number
-   }
-
-   const userId = Number(decoded.userId)
-   return Number.isFinite(userId) ? userId : null
-  } catch {
-   return null
-  }
+  return verifyAuthToken(token)?.id ?? null
 }
 
 io.on('connection', (socket: Socket) => {
@@ -59,6 +107,13 @@ io.on('connection', (socket: Socket) => {
    return
   }
 
+  socket.data.userId = userId
+
+  // A personal room reachable by userId — lets us push events (new
+  // matches, message notifications) straight to a user regardless of
+  // which conversation, if any, they currently have open.
+  socket.join(userId)
+
   if (!onlineUsers.has(userId)) {
    onlineUsers.set(userId, new Set())
    io.emit('user_online', userId)
@@ -66,6 +121,13 @@ io.on('connection', (socket: Socket) => {
 
   onlineUsers.get(userId)?.add(socket.id)
   socket.emit('online_users', Array.from(onlineUsers.keys()))
+
+  // Components that mount well after this initial connection (e.g. a
+  // ChatWindow opened later in the session) missed the emit above, so
+  // they can ask for a fresh snapshot on demand instead of relying on it.
+  socket.on('get_online_users', () => {
+    socket.emit('online_users', Array.from(onlineUsers.keys()))
+  })
 
   registerChatHandlers(socket, io)
 
@@ -82,14 +144,31 @@ io.on('connection', (socket: Socket) => {
   })
 })
 
-export const startSocketServer = (port = env.SOCKET_PORT) => {
+// Render (and most PaaS hosts) assign this service its own port at deploy
+// time via the platform-injected PORT env var, which the process must bind
+// to directly — it won't necessarily match SOCKET_PORT. Locally, `npm run
+// dev:socket` sets PORT=3002 itself (see package.json) so this and the
+// main API server never fight over the same port despite sharing one .env.
+export const startSocketServer = (
+  port = process.env.PORT ? Number(process.env.PORT) : env.SOCKET_PORT,
+) => {
   return server.listen(port, () => {
    console.log(`Socket server running on port ${port}`)
   })
 }
 
-if (process.argv[1]?.endsWith('chatServer.ts') || process.argv[1]?.endsWith('chatServer.js')) {
-  startSocketServer()
+if (
+  process.argv[1]?.endsWith('chatServer.ts') ||
+  process.argv[1]?.endsWith('chatServer.js')
+) {
+  connectDatabase()
+    .then(() => {
+      startSocketServer()
+    })
+    .catch((error) => {
+      console.error('Failed to start chat server:', error)
+      process.exit(1)
+    })
 }
 
 export { server, onlineUsers }

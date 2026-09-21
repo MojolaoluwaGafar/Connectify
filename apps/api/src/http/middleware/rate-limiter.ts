@@ -5,6 +5,10 @@ interface RateLimitOptions {
   windowMs?: number
   maxRequests?: number
   message?: string
+  // Buckets are shared across every limiter instance, keyed by IP. Give a
+  // route-specific limiter its own scope so its (stricter) count doesn't mix
+  // with the app-wide limiter's count for the same IP.
+  scope?: string
 }
 
 interface Bucket {
@@ -13,6 +17,19 @@ interface Bucket {
 }
 
 const buckets = new Map<string, Bucket>()
+
+// Buckets are only ever read/written for IPs that are still making requests,
+// so without this sweep every distinct IP that's ever hit the server stays
+// in memory forever.
+const SWEEP_INTERVAL_MS = 5 * 60_000
+setInterval(() => {
+  const now = Date.now()
+  for (const [ip, bucket] of buckets) {
+    if (bucket.resetAt <= now) {
+      buckets.delete(ip)
+    }
+  }
+}, SWEEP_INTERVAL_MS).unref()
 
 export function rateLimiter(options: RateLimitOptions = {}): RequestHandler {
   const windowMs = options.windowMs ?? 60_000
@@ -26,11 +43,12 @@ export function rateLimiter(options: RateLimitOptions = {}): RequestHandler {
         ? forwardedFor.split(',')[0]?.trim() ?? request.ip ?? 'unknown'
         : request.ip ?? 'unknown'
 
+    const bucketKey = options.scope ? `${options.scope}:${ipValue}` : ipValue
     const now = Date.now()
-    const existing = buckets.get(ipValue)
+    const existing = buckets.get(bucketKey)
 
     if (!existing || existing.resetAt <= now) {
-      buckets.set(ipValue, { count: 1, resetAt: now + windowMs })
+      buckets.set(bucketKey, { count: 1, resetAt: now + windowMs })
       next()
       return
     }

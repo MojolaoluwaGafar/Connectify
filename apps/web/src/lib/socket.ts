@@ -3,25 +3,34 @@ import { io } from 'socket.io-client'
 import { getAuthToken } from '../utils/authToken'
 
 const socketUrl =
-  import.meta.env.VITE_SOCKET_URL ??
-  import.meta.env.VITE_WS_URL ??
-  'http://localhost:3002'
+  import.meta.env.VITE_SOCKET_URL
 
 export const socket = io(socketUrl, {
   autoConnect: false,
-  withCredentials: true,
   transports: ['websocket'],
   reconnectionAttempts: 5,
 })
 
-export const connectSocket = (userId?: string | number) => {
+socket.on('connect', () => {
+  console.log('SOCKET CONNECTED:', socket.id);
+});
+
+socket.on('connect_error', (error) => {
+  console.error('SOCKET CONNECTION ERROR:', error.message);
+});
+
+socket.on('disconnect', (reason) => {
+  console.log('SOCKET DISCONNECTED:', reason);
+});
+
+export const connectSocket = () => {
   const token = getAuthToken()
 
-  if (!userId || !token) {
+  if (!token) {
     return
   }
 
-  socket.auth = { token, userId: Number(userId) }
+  socket.auth = { token }
 
   if (!socket.connected) {
     socket.connect()
@@ -33,3 +42,14 @@ export const disconnectSocket = () => {
     socket.disconnect()
   }
 }
+
+// Tracks whichever conversation is currently open in a mounted ChatWindow,
+// so a global "new message" notification listener can tell whether the
+// user is already looking at that conversation and skip the toast.
+let activeConversationId: string | null = null
+
+export const setActiveConversationId = (conversationId: string | null) => {
+  activeConversationId = conversationId
+}
+
+export const getActiveConversationId = () => activeConversationId
