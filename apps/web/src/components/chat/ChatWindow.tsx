@@ -37,9 +37,9 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
       setInputText("");
       return;
     }
-setIsOtherUserTyping(false);
-setIsTyping(false);
-setIsOtherUserOnline(false);
+    setIsOtherUserTyping(false);
+    setIsTyping(false);
+    setIsOtherUserOnline(false);
 
     let cancelled = false;
 
@@ -88,13 +88,13 @@ setIsOtherUserOnline(false);
           (message) => message.id === nextMessage.id,
         );
 
-          const updatedMessages = alreadyExists
-    ? current
-    : [...current, nextMessage];
+        const updatedMessages = alreadyExists
+          ? current
+          : [...current, nextMessage];
 
-  console.log("MESSAGES STATE:", updatedMessages);
+        console.log("MESSAGES STATE:", updatedMessages);
 
-  return updatedMessages;
+        return updatedMessages;
       });
     };
 
@@ -143,16 +143,16 @@ setIsOtherUserOnline(false);
       }
     };
 
-const handleConversationJoined = (payload: any) => {
-  console.log("JOINED CONVERSATION:", payload);
-};
+    const handleConversationJoined = (payload: any) => {
+      console.log("JOINED CONVERSATION:", payload);
+    };
 
-const handleJoinError = (payload: any) => {
-  console.error("JOIN CONVERSATION ERROR:", payload);
-};
+    const handleJoinError = (payload: any) => {
+      console.error("JOIN CONVERSATION ERROR:", payload);
+    };
 
-socket.on("conversation_joined", handleConversationJoined);
-socket.on("join_conversation_error", handleJoinError);
+    socket.on("conversation_joined", handleConversationJoined);
+    socket.on("join_conversation_error", handleJoinError);
     socket.on("receive_message", handleIncomingMessage);
     socket.on("user_typing", handleUserTyping);
     socket.on("user_stop_typing", handleUserStopTyping);
@@ -169,7 +169,7 @@ socket.on("join_conversation_error", handleJoinError);
 
       socket.off("online_users", handleOnlineUsers);
       socket.off("conversation_joined", handleConversationJoined);
-socket.off("join_conversation_error", handleJoinError);
+      socket.off("join_conversation_error", handleJoinError);
       socket.off("user_online", handleUserOnline);
       socket.off("user_offline", handleUserOffline);
       socket.off("receive_message", handleIncomingMessage);
@@ -235,10 +235,10 @@ socket.off("join_conversation_error", handleJoinError);
 
     setInputText("");
     console.log("SENDING MESSAGE:", {
-  connected: socket.connected,
-  matchId,
-  outboundText,
-});
+      connected: socket.connected,
+      matchId,
+      outboundText,
+    });
 
     socket.emit("send_message", {
       conversationId: matchId,
@@ -305,7 +305,7 @@ socket.off("join_conversation_error", handleJoinError);
         </div>
 
         {/* Chat Messages Feed Container */}
-        <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-3 md:bg-white lg:bg-white sm:bg-gray-50 bg-gray-50 justify-start [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none]">
+        <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-3 md:bg-white lg:bg-white sm:bg-gray-50 bg-gray-50 justify-start [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar:none] px-3">
           {/* Empty State Banner when no messages exist */}
           {messages.length === 0 ? (
             <div className="flex justify-center h-11 text-purple-600 bg-purple-100 lg:rounded-3xl md:rounded-3xl rounded-lg p-3 text-sm max-w-[90%] mx-auto w-full text-center border md:border-none lg:border-none border-solid border-gray-200">
@@ -331,13 +331,13 @@ socket.off("join_conversation_error", handleJoinError);
                   >
                     {/* Message Bubble Styling */}
                     <div
-                      className={`rounded-2xl px-4 py-2 text-sm shadow-sm ${
+                      className={`rounded-2xl px-4 py-2 text-sm shadow-sm max-w-[230px] ${
                         isUser
                           ? "bg-purple-600 text-white rounded-br-none"
                           : "bg-gray-100 text-gray-800 rounded-bl-none"
                       }`}
                     >
-                      {msg.text}
+                      <p className="w-full">{msg.text}</p>
                     </div>
                   </div>
                 );
@@ -347,12 +347,15 @@ socket.off("join_conversation_error", handleJoinError);
         </div>
 
         {/* Input Bar & Preset Quick-Reply Chips */}
-        <div className="flex flex-col p-5 gap-3 border-t border-[#1c1524]/[0.0784]">
-          {/* Quick Starter Chips */}
+        {messages.length === 0 && (
           <div className="flex flex-wrap gap-3">
+            {/* Quick Starter Chips */}
+
             <button
               type="button"
-              onClick={() => selectedUser && setInputText("Ask about music")}
+              onClick={() =>
+                selectedUser && setInputText("What's your Favorite music")
+              }
               className="border border-solid rounded-3xl py-1 px-2 border-[#1c1524]/[0.0784] text-sm max-w-34 h-8.25 hover:bg-gray-50"
             >
               Ask about music
@@ -360,7 +363,9 @@ socket.off("join_conversation_error", handleJoinError);
 
             <button
               type="button"
-              onClick={() => selectedUser && setInputText("Talk about Travel")}
+              onClick={() =>
+                selectedUser && setInputText("Do you like traveling?")
+              }
               className="border border-solid rounded-3xl py-1 px-2 border-[#1c1524]/[0.0784] text-[13px] max-w-34 max-h-8.25 hover:bg-gray-50"
             >
               Talk about Travel
@@ -382,35 +387,34 @@ socket.off("join_conversation_error", handleJoinError);
               Say Simple Hello
             </button>
           </div>
+        )}
+        {/* Text Input Form */}
+        <form className="flex gap-3 p-2" onSubmit={handleFormSubmit}>
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => handleInputChange(e.target.value)}
+            disabled={!selectedUser}
+            placeholder={
+              selectedUser
+                ? `Write a genuine message to ${selectedUser.fullName.split(" ")[0]}`
+                : "Select a Profile"
+            }
+            className="w-full border-solid rounded-3xl border border-[#1c1524]/[0.0784] px-4 focus:outline-purple-600 disabled:bg-gray-50 disabled:cursor-not-allowed text-sm"
+          />
 
-          {/* Text Input Form */}
-          <form className="flex gap-3" onSubmit={handleFormSubmit}>
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => handleInputChange(e.target.value)}
-              disabled={!selectedUser}
-              placeholder={
-                selectedUser
-                  ? `Write a genuine message to ${selectedUser.fullName.split(" ")[0]}`
-                  : "Select a Profile"
-              }
-              className="w-full border-solid rounded-3xl border border-[#1c1524]/[0.0784] px-4 focus:outline-purple-600 disabled:bg-gray-50 disabled:cursor-not-allowed text-sm"
+          {/* Send Button */}
+          <button
+            type="submit"
+            disabled={!selectedUser || !inputText.trim()}
+            className="bg-purple-600 w-14 h-10 lg:rounded-2xl md:rounded-2xl rounded-[50%] flex items-center justify-center hover:cursor-pointer transition-colors disabled:cursor-not-allowed disabled:bg-purple-500"
+          >
+            <FontAwesomeIcon
+              icon={faPaperPlane}
+              className="text-white text-center w-5 h-5"
             />
-
-            {/* Send Button */}
-            <button
-              type="submit"
-              disabled={!selectedUser || !inputText.trim()}
-              className="bg-purple-600 w-14 h-10 lg:rounded-2xl md:rounded-2xl rounded-[50%] flex items-center justify-center hover:cursor-pointer transition-colors disabled:cursor-not-allowed disabled:bg-purple-500"
-            >
-              <FontAwesomeIcon
-                icon={faPaperPlane}
-                className="text-white text-center w-5 h-5"
-              />
-            </button>
-          </form>
-        </div>
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -16,7 +16,7 @@ const MessagesPage = () => {
       console.log(user);
 
       try {
-        const data = await getConversations(user.id);
+        const data = await getConversations();
 
         console.log('CONVERSATIONS DATA', data);
 

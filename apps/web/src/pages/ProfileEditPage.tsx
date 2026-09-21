@@ -160,7 +160,7 @@ export default function ProfileEditPage() {
     setIsSaving(true);
 
     try {
-      const response = await createProfile({
+      await createProfile({
         fullName: fullName.trim(),
         age: Number(age),
         gender,
@@ -170,8 +170,6 @@ export default function ProfileEditPage() {
         about: about.trim(),
         profilePicture,
       });
-
-      console.log('Profile saved:', Response);
 
       await refreshProfile();
 

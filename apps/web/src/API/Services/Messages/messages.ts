@@ -32,7 +32,7 @@ export async function canMessage(
   _targetId: string,
 ): Promise<boolean> {
   // The API does not currently expose a can-message endpoint.
-  return false;
+  return true;
 }
 
 export async function getConversations(
