@@ -207,7 +207,7 @@ export default function App() {
             </Routes>
             </Suspense>
 
-            <ToastContainer  position='top-center' autoClose={3000} hideProgressBar={false}
+            <ToastContainer  position='top-center' autoClose={3000} hideProgressBar={true}
             newestOnTop={false} closeOnClick pauseOnHover draggable transition={Bounce} />
           </Providers>
         </AuthProvider>

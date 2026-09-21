@@ -60,7 +60,7 @@ export default function PhotoUploader({
 
       <p className="mt-3 text-sm font-medium text-ink-900">Profile photo</p>
 
-      <p className="text-xs text-ink-500">JPG or PNG, max 5MB</p>
+      <p className="text-xs text-ink-500">JPG or PNG</p>
 
       <button
         type="button"

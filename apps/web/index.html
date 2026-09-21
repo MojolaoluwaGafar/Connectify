@@ -3,8 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>connectify</title>
+    <!-- maximum-scale=1 + user-scalable=no stop the native double-tap-to-zoom
+         gesture, which was firing when tapping outside a focused input to
+         dismiss the keyboard (the keyboard-close layout shift between the
+         two taps gets read as a double-tap), leaving the whole page zoomed
+         in until the user manually pinched back out. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Connectify</title>
   </head>
   <body>
     <div id="root"></div>
