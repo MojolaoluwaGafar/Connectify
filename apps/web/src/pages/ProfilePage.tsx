@@ -9,7 +9,6 @@ import {
   MessageCircle,
 } from 'lucide-react';
 
-import type { DiscoverProfile } from '../types/index';
 import {
   getDiscoverProfiles,
   getProfileById,
