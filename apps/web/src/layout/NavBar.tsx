@@ -141,7 +141,7 @@ export default function Navbar({
     // "relative" here lets the mobile dropdown below position itself
     // relative to this header instead of the whole page
     <header className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           to={isLoggedIn ? "/home" : "/"}

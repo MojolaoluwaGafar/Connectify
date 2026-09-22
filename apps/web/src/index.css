@@ -19,6 +19,17 @@ body,
   -ms-overflow-style: none;
 }
 
+/* Safety net: one overlooked fixed-width element (a popup, a horizontal
+   list, a long unbroken word) is enough to make the whole page pan
+   sideways on mobile instead of staying put. Clipping it here is a better
+   default than a shifting layout — individual overflow causes should still
+   be fixed at the source where found, this just stops new ones from
+   reaching the user as a scrolling page. */
+html,
+body {
+  overflow-x: hidden;
+}
+
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
 #root::-webkit-scrollbar {

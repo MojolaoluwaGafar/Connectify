@@ -50,10 +50,12 @@ const ChatWindow = ({
   const [isTyping, setIsTyping] = useState(false);
   const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
   // The message whose chevron dropdown is open, and whether it should open
-  // upward (when there's no room left below it in the scrolling feed).
+  // upward/leftward when there's no room in the scrolling feed for the
+  // default direction.
   const [openMenu, setOpenMenu] = useState<{
     id: string;
     openUp: boolean;
+    openLeft: boolean;
   } | null>(null);
   const [messagePendingDelete, setMessagePendingDelete] = useState<{
     message: Message;
@@ -370,7 +372,14 @@ const ChatWindow = ({
     const trigger = event.currentTarget.getBoundingClientRect();
     const openUp = feed ? feed.bottom - trigger.bottom < 140 : false;
 
-    setOpenMenu({ id: messageId, openUp });
+    // Menu is 176px (w-44) wide. Anchoring purely by sender direction
+    // breaks down for a long received bubble, whose trigger can sit near
+    // the feed's own right edge — opening rightward from there would push
+    // the menu (and the whole page, since nothing clips it) past the
+    // viewport. Decide the side from actual room in the feed instead.
+    const openLeft = feed ? feed.right - trigger.right < 176 : false;
+
+    setOpenMenu({ id: messageId, openUp, openLeft });
   };
 
   const handleConfirmDeleteMessage = async () => {
@@ -555,7 +564,7 @@ const ChatWindow = ({
                               <div
                                 role="menu"
                                 className={`absolute z-20 w-44 rounded-lg border border-gray-100 bg-white py-1 text-left shadow-lg ${
-                                  isUser ? "right-0" : "left-0"
+                                  openMenu.openLeft ? "right-0" : "left-0"
                                 } ${
                                   openMenu.openUp
                                     ? "bottom-full mb-1"
