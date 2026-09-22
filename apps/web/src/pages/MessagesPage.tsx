@@ -4,14 +4,19 @@ import ConversationList from '../components/chat/ConversationalList';
 import ChatWindow from '../components/chat/ChatWindow';
 import { useAuth } from '../context/authContext/useAuth';
 import { getConversations } from '../API/Services/Messages/messages';
+import type { Message } from '../types';
 
 const MessagesPage = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
-  // Bumped when the open chat deletes a message/conversation so the list
-  // (last-message preview, unread count) refetches.
-  const [listVersion, setListVersion] = useState(0);
+  // Set fresh each time the open chat deletes one of its own messages, so
+  // the list can patch that one row directly instead of refetching.
+  const [messageDeletedPatch, setMessageDeletedPatch] = useState<{
+    matchId: string;
+    lastMessage: Message | null;
+    unreadCount: number;
+  } | null>(null);
   useEffect(() => {
     async function loadConversations() {
       if (!user) return;
@@ -58,6 +63,14 @@ const MessagesPage = () => {
     );
   };
 
+  const handleMessageDeleted = (
+    matchId: string,
+    lastMessage: Message | null,
+    unreadCount: number,
+  ) => {
+    setMessageDeletedPatch({ matchId, lastMessage, unreadCount });
+  };
+
   return (
     <div className="md:w-11/12 w-full lg:w-11/12 container mx-auto md:my-10 mt-0 lg:my-10 lg:flex">
       <div className="lg:flex mx-auto lg:w-304">
@@ -66,8 +79,8 @@ const MessagesPage = () => {
         >
           <ConversationList
             onSelectConversation={handleSelectConversation}
-            refreshKey={listVersion}
             onConversationDeleted={handleConversationDeleted}
+            messageDeletedPatch={messageDeletedPatch}
           />
         </div>
 
@@ -79,7 +92,7 @@ const MessagesPage = () => {
           <ChatWindow
             conversation={selectedConversation}
             onBack={goBack}
-            onConversationsChanged={() => setListVersion((v) => v + 1)}
+            onMessageDeleted={handleMessageDeleted}
           />
         </div>
       </div>

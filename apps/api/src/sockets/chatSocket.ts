@@ -6,6 +6,7 @@ import {
   parseConversationId,
   sendMessageService,
 } from '../modules/conversations/conversations.service.js';
+import { createNotification } from '../modules/notifications/notifications.service.js';
 import { Profile } from '../model/profile.js';
 type ConversationEvent = {
   conversationId: string;
@@ -13,6 +14,26 @@ type ConversationEvent = {
 
 const normalizeConversationId = (conversationId: string | number) =>
   String(conversationId);
+
+function truncate(text: string, max = 60) {
+  return text.length > max ? `${text.slice(0, max).trim()}…` : text;
+}
+
+// True if any of userId's own sockets are currently in this room — used to
+// tell whether they already have this exact chat open right now, so a
+// message notification for it would just be noise.
+function isUserInRoom(io: Server, roomId: string, userId: string): boolean {
+  const room = io.sockets.adapter.rooms.get(roomId);
+  if (!room) return false;
+
+  for (const socketId of room) {
+    if (io.sockets.sockets.get(socketId)?.data.userId === userId) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 export function registerChatHandlers(socket: Socket, io: Server) {
 socket.on(
@@ -152,13 +173,36 @@ socket.on(
       // are) can surface a notification even when that room isn't joined.
       if (recipientId) {
         const senderProfile = await Profile.findOne({ userId }).lean();
+        const senderName = senderProfile?.fullName ?? 'Someone';
 
         io.to(recipientId).emit('new_message_notification', {
           conversationId,
           senderId: userId,
-          senderName: senderProfile?.fullName ?? 'Someone',
+          senderName,
           text: message.text,
         });
+
+        // Already has this exact chat open — they're seeing the message
+        // live, so a bell notification for it would just be noise.
+        //
+        // The message itself was already delivered above (io.to(...).emit),
+        // so a failure here must never surface as a "message failed to
+        // send" error to the sender — it's just the bell notification that
+        // didn't get persisted.
+        if (!isUserInRoom(io, conversationId, recipientId)) {
+          try {
+            await createNotification({
+              recipientId,
+              type: 'message',
+              text: `${senderName}: ${truncate(message.text)}`,
+              navigateTo: '/messages',
+              conversationId,
+              relatedUserId: userId,
+            });
+          } catch (error) {
+            console.error('Failed to persist message notification:', error);
+          }
+        }
       }
     } catch (error) {
       socket.emit('send_message_error', {

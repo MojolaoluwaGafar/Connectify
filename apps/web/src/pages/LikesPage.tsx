@@ -73,7 +73,13 @@ const LikesPage = () => {
     loading: isYouLikedLoading,
   } = useApiQuery(fetchLikedByMe, 'Could not load your likes.', {
     enabled: Boolean(user),
-    cacheKey: user ? `you-liked:${user.id}` : null,
+    // likedIds.size in the key, not just user.id — invalidateQuery('you-liked:…')
+    // in LikesProvider only clears the module-level cache, it doesn't make an
+    // already-mounted useApiQuery refetch. Without this, liking/unliking someone
+    // while this page is open left the "You Liked" tab stale until a remount:
+    // the derived `youLiked` list below could only ever shrink (drop entries no
+    // longer in likedIds), never grow with something just liked.
+    cacheKey: user ? `you-liked:${user.id}:${likedIds.size}` : null,
     staleTime: 30_000,
   });
 
@@ -169,11 +175,15 @@ const LikesPage = () => {
               </div>
 
               <h2 className="text-xl font-semibold text-[#1C1524] font-fraunces tracking-normal leading-[100%]">
-                You haven't liked anyone yet
+                {tab === 'liked-you'
+                  ? 'No likes yet'
+                  : "You haven't liked anyone yet"}
               </h2>
 
               <p className="mt-4 max-w-md text-sm text-[#655E75] font-geist tracking-normal leading-[100%]">
-                Head to Discover and like a few profiles that catch your eye.
+                {tab === 'liked-you'
+                  ? 'Complete your profile and stay active — people who like you will show up here.'
+                  : 'Head to Discover and like a few profiles that catch your eye.'}
               </p>
               <button
                 className="border border-[#655e7579] px-5 py-2 font-geist rounded-xl text-sm text-black font-semibold hover:bg-gray-100 mt-7"

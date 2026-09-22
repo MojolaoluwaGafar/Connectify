@@ -17,18 +17,23 @@ import { themedToast } from "../../utils/ToastFeedback";
 // TypeScript interface for component props
 interface ConversationListProps {
   onSelectConversation: (conversation: any) => void;
-  // Bumped by the parent whenever the open chat changed something the list
-  // shows (a deleted message) — triggers a refetch.
-  refreshKey?: number;
   // Called after a conversation is deleted from here, so the parent can
   // close it if it's the one currently open in the chat window.
   onConversationDeleted?: (matchId: string) => void;
+  // A fresh object each time the open chat deletes one of its own messages
+  // — exactly what that conversation's row should now show, so it can be
+  // patched directly instead of refetching the whole list.
+  messageDeletedPatch?: {
+    matchId: string;
+    lastMessage: { text: string; sentAt: string; senderId?: string; status?: string } | null;
+    unreadCount: number;
+  } | null;
 }
 
 const ConversationList = ({
   onSelectConversation,
-  refreshKey = 0,
   onConversationDeleted,
+  messageDeletedPatch,
 }: ConversationListProps) => {
   // Extract currently logged-in user from context
   const { user } = useAuth();
@@ -50,6 +55,41 @@ const ConversationList = ({
   } | null>(null);
   const [isDeletingConversation, setIsDeletingConversation] = useState(false);
 
+  // Shared by the socket-driven update (the other participant deleting a
+  // message) and the prop-driven one (this user deleting their own message
+  // via the currently-open ChatWindow) — same shape, same patch.
+  function applyMessageDeletedPatch(
+    matchId: string,
+    lastMessage: unknown,
+    unreadCount?: number,
+  ) {
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation.matchId === matchId
+          ? {
+              ...conversation,
+              lastMessage: lastMessage ?? null,
+              unreadCount: unreadCount ?? conversation.unreadCount,
+            }
+          : conversation,
+      ),
+    );
+  }
+
+  // Patches in the deleting user's own conversation row the moment they
+  // delete a message from the open ChatWindow — no refetch needed, the
+  // server already computed exactly what this row should show now.
+  useEffect(() => {
+    if (!messageDeletedPatch) return;
+
+    applyMessageDeletedPatch(
+      messageDeletedPatch.matchId,
+      messageDeletedPatch.lastMessage,
+      messageDeletedPatch.unreadCount,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messageDeletedPatch]);
+
   // Effect hook: Triggers on mount or whenever the active user updates
   useEffect(() => {
     async function loadConversations() {
@@ -63,7 +103,24 @@ const ConversationList = ({
       try {
         // Retrieve conversation threads for active user ID from mock API
         const data = await getConversations();
-        setConversations(Array.isArray(data) ? data : []);
+        const items = Array.isArray(data) ? data : [];
+
+        // The conversation the user currently has open always reads as 0
+        // unread, full stop — it can't be "unread" while they're looking
+        // at it. Without this, a fetch landing between opening a chat and
+        // its mark-read REST call finishing (e.g. triggered by an unrelated
+        // update elsewhere) could overwrite the optimistic 0 set on click
+        // with a still-stale server count.
+        const activeId = getActiveConversationId();
+        setConversations(
+          activeId
+            ? items.map((conversation) =>
+                conversation.matchId === activeId
+                  ? { ...conversation, unreadCount: 0 }
+                  : conversation,
+              )
+            : items,
+        );
       } catch (error) {
         console.error("Failed to load conversations:", error);
       } finally {
@@ -73,7 +130,7 @@ const ConversationList = ({
     }
 
     loadConversations();
-  }, [user, refreshKey]);
+  }, [user]);
 
   // Keeps each row's preview in sync with new messages as they arrive —
   // without this, a conversation's preview only updates on a full reload.
@@ -190,16 +247,10 @@ const ConversationList = ({
     const handleMessageDeleted = (payload: any) => {
       if (!payload?.conversationId) return;
 
-      setConversations((prev) =>
-        prev.map((conversation) =>
-          conversation.matchId === payload.conversationId
-            ? {
-                ...conversation,
-                lastMessage: payload.lastMessage ?? null,
-                unreadCount: payload.unreadCount ?? conversation.unreadCount,
-              }
-            : conversation,
-        ),
+      applyMessageDeletedPatch(
+        payload.conversationId,
+        payload.lastMessage,
+        payload.unreadCount,
       );
     };
 

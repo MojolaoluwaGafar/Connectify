@@ -54,11 +54,13 @@ export default function NotificationBell() {
   }, [open]);
 
   function handleToggle() {
-    setOpen((current) => {
-      const next = !current;
-      if (next) markAllRead();
-      return next;
-    });
+    // markAllRead has side effects (state + a network call) and updater
+    // functions are expected to be pure — StrictMode double-invokes them in
+    // dev, which would fire the request twice. Decide the next state first,
+    // then act on it, instead of doing the side effect inside the updater.
+    const next = !open;
+    setOpen(next);
+    if (next) markAllRead();
   }
 
   function handleSelect(notification: AppNotification) {

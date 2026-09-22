@@ -16,7 +16,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { ProfileCardSkeletonGrid } from '../components/ui/ProfileCardSkeleton';
 
-const PAGESIZE = 8;
+const PAGESIZE = 9;
 
 const DiscoveryPage = () => {
   const { user, profile } = useAuth();
@@ -79,11 +79,11 @@ const DiscoveryPage = () => {
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGESIZE);
 
+  // Occupation is optional (the edit form says so), so it isn't part of
+  // this — isComplete/profilePicture already reflect what's actually
+  // required to like people.
   const showCompleteProfileCard =
-    !profile ||
-    !profile.isComplete ||
-    !profile.profilePicture ||
-    !profile.occupation?.trim();
+    !profile || !profile.isComplete || !profile.profilePicture;
 
   return (
     <div className="md:w-11/12 w-full lg:w-11/12 container mx-auto md:my-10 mt-0 lg:my-10 lg:flex">
@@ -116,7 +116,14 @@ const DiscoveryPage = () => {
 
               <input
                 value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
+                onChange={(e) => {
+                  // Same reset the tab/gender filters already do — without
+                  // it, searching while on page 2+ keeps requesting that
+                  // stale page, which can come back empty (wrongly showing
+                  // "no profiles found") even though matches exist on page 1.
+                  setSearchValue(e.target.value);
+                  setPage(1);
+                }}
                 type="text"
                 placeholder="Search by name or interests..."
                 className="w-full text-sm outline-none focus:outline focus:ring-0"

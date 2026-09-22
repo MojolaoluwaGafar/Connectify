@@ -32,6 +32,7 @@ interface FieldErrors {
   location?: string;
   about?: string;
   interest?: string;
+  photo?: string;
 }
 
 export default function ProfileEditPage() {
@@ -181,6 +182,14 @@ export default function ProfileEditPage() {
 
     if (interests.length === 0) {
       next.interest = 'Pick at least one interest.';
+    }
+
+    // The backend only counts a profile as "complete" (required to like
+    // people) once it has a photo — validating it here means "saved
+    // successfully" always actually means complete, not a half-finished
+    // profile that then silently blocks liking.
+    if (photos.length === 0) {
+      next.photo = 'Add a profile photo.';
     }
 
     setFieldErrors(next);

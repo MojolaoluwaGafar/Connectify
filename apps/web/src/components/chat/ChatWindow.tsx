@@ -24,15 +24,21 @@ import {
 interface ChatWindowProps {
   conversation: any;
   onBack: () => void;
-  // Called after this window changes something the conversation list shows
-  // (last message / unread count), so the list can refresh itself.
-  onConversationsChanged?: () => void;
+  // Called right after this window deletes one of its own messages, with
+  // exactly what the list's row for this conversation should now show —
+  // the server already computes this for the REST response, so the list
+  // can patch just that row instead of refetching everything.
+  onMessageDeleted?: (
+    matchId: string,
+    lastMessage: Message | null,
+    unreadCount: number,
+  ) => void;
 }
 
 const ChatWindow = ({
   conversation,
   onBack,
-  onConversationsChanged,
+  onMessageDeleted,
 }: ChatWindowProps) => {
   // Extract authenticated user details from Auth Context
   const { user } = useAuth();
@@ -88,6 +94,14 @@ const ChatWindow = ({
 
     let cancelled = false;
 
+    // If a message gets deleted (by either side) while the getMessages()
+    // request below is still in flight, the socket event can arrive and
+    // find nothing to filter yet — then the slower GET resolves with that
+    // now-deleted message still in its response and writes it straight
+    // into state, resurrecting it. Track ids deleted during this fetch so
+    // the merge can drop them even if they show up in `data`.
+    const deletedWhileLoading = new Set<string>();
+
     async function loadMessages() {
       try {
         const data = await getMessages(matchId);
@@ -98,7 +112,9 @@ const ChatWindow = ({
           setMessages((current) => {
             const known = new Set(data.map((message: Message) => message.id));
             return [
-              ...data,
+              ...data.filter(
+                (message: Message) => !deletedWhileLoading.has(message.id),
+              ),
               ...current.filter((message) => !known.has(message.id)),
             ];
           });
@@ -126,6 +142,18 @@ const ChatWindow = ({
       if (conversationId !== matchId) {
         return;
       }
+
+      // The mount-time calls above only cover whatever was unread at open
+      // time — without repeating them per message, a 2nd/3rd message
+      // arriving while this window stays open would sit unread server-side
+      // even though the user is actively looking at it: the sender's tick
+      // would stay stuck on "delivered" instead of turning blue, and (in a
+      // multi-tab session) another tab could show a bell notification for a
+      // conversation that's already open elsewhere. Harmless no-op for
+      // messages the current user sent themselves — the backend query
+      // already excludes the sender.
+      markConversationRead(matchId).catch(() => {});
+      markConversationNotificationsRead(matchId);
 
       const nextMessage = {
         id:
@@ -203,6 +231,8 @@ const ChatWindow = ({
       if (payload?.conversationId !== matchId) {
         return;
       }
+
+      deletedWhileLoading.add(payload.messageId);
 
       setMessages((current) =>
         current.filter((message) => message.id !== payload.messageId),
@@ -389,13 +419,17 @@ const ChatWindow = ({
     setIsDeletingMessage(true);
 
     try {
-      await deleteMessage(matchId, target.message.id, target.scope);
+      const { lastMessage, unreadCount } = await deleteMessage(
+        matchId,
+        target.message.id,
+        target.scope,
+      );
 
       setMessages((current) =>
         current.filter((message) => message.id !== target.message.id),
       );
       setMessagePendingDelete(null);
-      onConversationsChanged?.();
+      onMessageDeleted?.(matchId, lastMessage, unreadCount);
     } catch (error) {
       console.error("Failed to delete message:", error);
       themedToast.error("Could not delete this message. Please try again.");

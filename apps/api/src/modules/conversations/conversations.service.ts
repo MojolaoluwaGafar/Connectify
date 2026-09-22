@@ -221,6 +221,11 @@ export async function markRead(conversationId: string, userId: string) {
       matchId: conversationId,
       senderId: { $ne: toObjectId(userId) },
       readBy: { $ne: toObjectId(userId) },
+      // A message this user already hid via "delete for me" shouldn't be
+      // marked read on their behalf — they can no longer see it, so the
+      // sender's tick would falsely show blue for a message never actually
+      // viewed post-hide.
+      deletedFor: { $ne: toObjectId(userId) },
     },
     { $addToSet: { readBy: toObjectId(userId) } },
   );

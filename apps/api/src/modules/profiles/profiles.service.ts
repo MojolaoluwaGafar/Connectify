@@ -57,18 +57,6 @@ export async function createProfile(userId: string, data: ProfileInput) {
   return formatProfile(updatedProfile.toObject());
 }
 
-export const isComplete = (profileData: profile) => {
-  const hasRequiredFields =
-    profileData.fullName.trim() !== '' &&
-    profileData.age >= 18 &&
-    profileData.location.trim() !== '' &&
-    profileData.gender.trim() !== '' &&
-    profileData.interests.length > 0 &&
-    profileData.about.trim() !== '';
-
-  return hasRequiredFields;
-};
-
 export async function listProfiles(
   query: Record<string, unknown>,
   currentUserId?: string,
@@ -314,6 +302,9 @@ export async function getCurrentProfile(userId: string | undefined) {
   return getProfileById(userId, userId);
 }
 
+// occupation is deliberately not required here — the edit form labels it
+// "(optional)", so gating completeness on it would silently contradict
+// what the form itself tells the user.
 export function isProfileComplete(item: Record<string, any>): boolean {
   const interests = item.interests ?? [];
 
@@ -332,8 +323,6 @@ export function isProfileComplete(item: Record<string, any>): boolean {
     item.about.trim().length >= 10 &&
     Array.isArray(interests) &&
     interests.length > 0 &&
-    typeof item.occupation === 'string' &&
-    item.occupation.trim().length > 0 &&
     typeof item.profilePicture === 'string' &&
     item.profilePicture.trim().length > 0,
   );

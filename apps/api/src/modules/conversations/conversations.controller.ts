@@ -85,7 +85,10 @@ export const conversationsController = {
       return response.status(401).json({ message: 'Authentication required' });
     }
 
-    const scope = request.query.scope ?? 'everyone';
+    // Defaults to the safer, reversible-for-the-other-side option — a
+    // caller that forgets to pass scope shouldn't silently get the
+    // irreversible "delete for everyone" behavior.
+    const scope = request.query.scope ?? 'me';
 
     if (scope !== 'me' && scope !== 'everyone') {
       return response.status(400).json({

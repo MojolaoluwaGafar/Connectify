@@ -12,6 +12,39 @@ function parseJson(value: string): unknown {
   }
 }
 
+// Rebuilds the gallery in its real order from the client's photoOrder
+// markers ("existing:<i>" / "new:<j>") — concatenating existingPhotos then
+// uploadedUrls would silently put the wrong photo first (and therefore make
+// it the profile picture) whenever an existing photo and a new upload are
+// interleaved in the gallery. Falls back to the old concatenation if an
+// older client doesn't send photoOrder.
+function orderPhotos(
+  existingPhotos: string[],
+  uploadedUrls: string[],
+  photoOrder: unknown,
+): string[] {
+  if (!Array.isArray(photoOrder) || photoOrder.length === 0) {
+    return [...existingPhotos, ...uploadedUrls];
+  }
+
+  const ordered: string[] = [];
+
+  for (const token of photoOrder) {
+    if (typeof token !== 'string') continue;
+
+    const [kind, indexPart] = token.split(':');
+    const index = Number(indexPart);
+
+    if (kind === 'existing' && existingPhotos[index] !== undefined) {
+      ordered.push(existingPhotos[index]);
+    } else if (kind === 'new' && uploadedUrls[index] !== undefined) {
+      ordered.push(uploadedUrls[index]);
+    }
+  }
+
+  return ordered;
+}
+
 export const profilesController = {
   create: async (request: Request, response: Response, next: NextFunction) => {
     if (!request.user) {
@@ -36,10 +69,16 @@ export const profilesController = {
         uploadedFiles.map((file) => uploadProfilePicture(file)),
       );
 
-      const photos = [...existingPhotos, ...uploadedUrls].slice(
-        0,
-        MAX_PHOTOS,
-      );
+      const photoOrder =
+        typeof request.body.photoOrder === 'string'
+          ? parseJson(request.body.photoOrder)
+          : undefined;
+
+      const photos = orderPhotos(
+        existingPhotos as string[],
+        uploadedUrls,
+        photoOrder,
+      ).slice(0, MAX_PHOTOS);
 
       const data = profileInputSchema.parse({
         ...request.body,

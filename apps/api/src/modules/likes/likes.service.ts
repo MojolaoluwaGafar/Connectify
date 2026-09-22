@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { pushSocketEvent } from '../../core/realtime/pushSocketEvent.js';
 import { AppError } from '../../core/errors/app-error.js';
 import { isProfileComplete } from '../profiles/profiles.service.js';
+import { createNotification } from '../notifications/notifications.service.js';
 
 function formatProfile(profile: any) {
   return {
@@ -20,6 +21,17 @@ async function notifyMatch(recipientId: string, likerId: string) {
   await pushSocketEvent(recipientId, 'new_match', {
     profile: formatProfile(likerProfile),
   });
+
+  // Persisted so the bell still shows this after the recipient was offline
+  // for it — the socket push above only reaches them if they're online now.
+  await createNotification({
+    recipientId,
+    type: 'match',
+    text: `You matched with ${likerProfile.fullName}!`,
+    navigateTo: '/messages',
+    profilePicture: likerProfile.profilePicture,
+    relatedUserId: likerId,
+  });
 }
 
 async function notifyLike(recipientId: string, likerId: string) {
@@ -29,10 +41,27 @@ async function notifyLike(recipientId: string, likerId: string) {
   await pushSocketEvent(recipientId, 'new_like', {
     profile: formatProfile(likerProfile),
   });
+
+  await createNotification({
+    recipientId,
+    type: 'like',
+    text: `${likerProfile.fullName} liked your profile`,
+    navigateTo: '/likes',
+    profilePicture: likerProfile.profilePicture,
+    relatedUserId: likerId,
+  });
 }
 
 export async function likeProfile(likerId: string, likedUserId: string) {
   // I (by I, i mean Chidera ) removed the payload validation for now if any error occurs later add in the payload thank you
+
+  if (likerId === likedUserId) {
+    throw new AppError(
+      400,
+      'CANNOT_LIKE_SELF',
+      'You cannot like your own profile.',
+    );
+  }
 
   // Liking is what puts someone in front of other people, so it requires a
   // finished profile of your own. Browsing stays open to everyone.
@@ -67,15 +96,22 @@ export async function likeProfile(likerId: string, likedUserId: string) {
     }
   }
 
+  // Fire-and-forget, but caught: an uncaught rejection here would hit the
+  // process-wide `unhandledRejection` handler and take the whole API down
+  // for every user, not just fail this one like.
   if (matched) {
     // likedUserId liked us first and is waiting — they get the realtime
     // push. likerId (us) already learns about the match from this
     // request's own response, so no need to notify ourselves too.
-    void notifyMatch(likedUserId, likerId);
+    notifyMatch(likedUserId, likerId).catch((error) => {
+      console.error('Failed to notify match:', error);
+    });
   } else {
     // Not mutual (yet) — still let the recipient know someone liked them,
     // for the notification bell. Doesn't imply a match.
-    void notifyLike(likedUserId, likerId);
+    notifyLike(likedUserId, likerId).catch((error) => {
+      console.error('Failed to notify like:', error);
+    });
   }
 
   return {
@@ -98,8 +134,11 @@ export async function unlikeProfile(likerId: string, likedUserId: string) {
 }
 
 export async function likedByMe(likerId: string) {
+  // Excludes any stray self-like from before this was blocked at creation
+  // — defense in depth, not just a rely-on-the-guard-above assumption.
   const likes = await Like.find({
     likerId: new mongoose.Types.ObjectId(likerId),
+    likedUserId: { $ne: new mongoose.Types.ObjectId(likerId) },
   });
 
   // console.log('LIKES FOUND:', likes);
@@ -123,6 +162,7 @@ export async function likedByMe(likerId: string) {
 export const whoLikedMe = async (userId: string) => {
   const likes = await Like.find({
     likedUserId: new mongoose.Types.ObjectId(userId),
+    likerId: { $ne: new mongoose.Types.ObjectId(userId) },
   });
   // console.log('WHO LIKED ME LIKES', likes);
 
@@ -151,7 +191,7 @@ export const getMatches = async (userId: string) => {
 
   // Find the people who also liked me
   const mutualLikes = await Like.find({
-    likerId: { $in: likedUserIds },
+    likerId: { $in: likedUserIds, $ne: userObjectId },
     likedUserId: userObjectId,
   });
 

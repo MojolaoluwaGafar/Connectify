@@ -9,12 +9,14 @@ interface PhotoUploaderProps {
   profilePicture: string | File | null;
   name: string;
   onChange: (file: File) => void;
+  error?: string;
 }
 
 export default function PhotoUploader({
   profilePicture,
   name,
   onChange,
+  error,
 }: PhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -40,7 +42,11 @@ export default function PhotoUploader({
   }
 
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-stroke-primary bg-white p-6 text-center">
+    <div
+      className={`flex flex-col items-center rounded-2xl border bg-white p-6 text-center ${
+        error ? 'border-red-400' : 'border-stroke-primary'
+      }`}
+    >
       <div className="relative">
         <Avatar
           src={previewUrl ?? (typeof profilePicture === 'string' ? profilePicture : null)}
@@ -50,7 +56,7 @@ export default function PhotoUploader({
 
         <button
           onClick={() => inputRef.current?.click()}
-          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full  bg-theme text-white shadow-sm transition hover:bg-theme-shade/200"
+          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full  bg-theme text-white shadow-sm transition hover:bg-theme-shade"
           aria-label="Change photo"
           type="button"
         >
@@ -69,6 +75,10 @@ export default function PhotoUploader({
       >
         {profilePicture ? 'Change photo' : 'Choose photo'}
       </button>
+
+      {error && (
+        <p className="mt-2 text-xs font-medium text-red-600">{error}</p>
+      )}
 
       <input
         ref={inputRef}

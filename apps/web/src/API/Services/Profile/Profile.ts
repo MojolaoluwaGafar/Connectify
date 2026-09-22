@@ -30,15 +30,29 @@ export const ProfileServices = {
     formData.append('interests', JSON.stringify(data.interests));
 
     // Photos already hosted (kept from before) travel as URLs; anything
-    // newly picked is a File and goes up as an actual upload, in order.
-    const existingPhotos = data.photos.filter(
-      (photo): photo is string => typeof photo === 'string',
-    );
-    formData.append('existingPhotos', JSON.stringify(existingPhotos));
+    // newly picked is a File and goes up as an actual upload instead — two
+    // separate buckets on the wire. photoOrder records where each one sits
+    // in the gallery (e.g. "existing:1", "new:0") so the server can
+    // reassemble the real order instead of just concatenating existing+new,
+    // which would silently swap in the wrong photo as the main one whenever
+    // an existing photo and a new upload are interleaved.
+    const existingPhotos: string[] = [];
+    const photoOrder: string[] = [];
+    let newPhotoIndex = 0;
 
-    data.photos
-      .filter((photo): photo is File => photo instanceof File)
-      .forEach((file) => formData.append('photos', file));
+    for (const photo of data.photos) {
+      if (typeof photo === 'string') {
+        photoOrder.push(`existing:${existingPhotos.length}`);
+        existingPhotos.push(photo);
+      } else {
+        photoOrder.push(`new:${newPhotoIndex}`);
+        formData.append('photos', photo);
+        newPhotoIndex += 1;
+      }
+    }
+
+    formData.append('existingPhotos', JSON.stringify(existingPhotos));
+    formData.append('photoOrder', JSON.stringify(photoOrder));
 
     return api.post('/api/v1/profiles/createProfile', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

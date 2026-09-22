@@ -23,19 +23,29 @@ import { useAuth } from '../context/authContext/useAuth';
 import { useLikes } from '../context/likeContext/useLikes';
 import { useApiQuery } from '../hooks/useApiQuery';
 
-function sharedCount(a: DiscoverProfile, b: DiscoverProfile) {
-  const aInterests = a.interests ?? a.interest ?? [];
-  const bInterests = b.interests ?? b.interest ?? [];
+function getInterests(person: { interest?: string[]; interests?: string[] }) {
+  return person.interests ?? person.interest ?? [];
+}
 
-  return aInterests.filter((interest) => bInterests.includes(interest))
-    .length;
+// Fisher–Yates — an in-place shuffle so "People you may also like" doesn't
+// show the same top-N faces every time, only ever people who share at
+// least one interest with the logged-in user.
+function shuffle<T>(items: T[]): T[] {
+  const next = [...items];
+
+  for (let i = next.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j]!, next[i]!];
+  }
+
+  return next;
 }
 
 export default function ViewProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { user } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const { likedIds, isMatch, toggleLike } = useLikes();
 
   const { requireAuth } = useAuthGate();
@@ -59,24 +69,39 @@ export default function ViewProfilePage() {
   const userId = user?.id;
 
   const fetchSuggestions = useCallback(async () => {
-    if (!target) return [];
+    if (!target || !myProfile) return [];
 
+    const myInterests = getInterests(myProfile);
+    if (myInterests.length === 0) return [];
+
+    // A wide enough pool to actually have candidates to filter and shuffle
+    // from — picking 3 out of only 3 fetched isn't really suggesting
+    // anything. A random seed matters here too: the 'all' tab's ordering is
+    // deterministic per seed, so without one this always fetched the exact
+    // same first-50-by-default-seed profiles, and the shuffle below only
+    // ever reordered/sampled that same fixed pool for every user, every view.
     const res = await getDiscoverProfiles({
       excludeUserId: userId,
-      pageSize: 3,
+      pageSize: 50,
+      seed: Math.floor(Math.random() * 1_000_000_000),
     });
 
-    return res.items
-      .filter((person) => person.id !== target.id)
-      .sort((a, b) => sharedCount(b, target) - sharedCount(a, target))
-      .slice(0, 3);
-  }, [target, userId]);
+    const candidates = res.items.filter(
+      (person) =>
+        person.id !== target.id &&
+        getInterests(person).some((interest) =>
+          myInterests.includes(interest),
+        ),
+    );
+
+    return shuffle(candidates).slice(0, 3);
+  }, [target, userId, myProfile]);
 
   const { data: suggestionsData } = useApiQuery(
     fetchSuggestions,
     'Could not load suggestions.',
     {
-      enabled: Boolean(target),
+      enabled: Boolean(target) && Boolean(myProfile),
       cacheKey: target
         ? `suggestions:${target.id}:${userId ?? 'anon'}`
         : null,
@@ -119,6 +144,7 @@ export default function ViewProfilePage() {
 
   const isLiked = likedIds.has(target?.userId);
   const isMatchedWithTarget = isMatch(target?.userId);
+  const isOwnProfile = Boolean(user && String(target.id) === String(user.id));
 
   const photos =
     target.photos && target.photos.length > 0
@@ -259,40 +285,56 @@ export default function ViewProfilePage() {
 
           {/* Actions */}
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button
-              variant={isLiked ? 'secondary' : 'primary'}
-              icon={
-                <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
-              }
-              className={
-                isLiked
-                  ? 'bg-theme-shade/20! text-theme!'
-                  : 'bg-theme! hover:bg-theme-shade!'
-              }
-              onClick={() => requireAuth(() => toggleLike(target))}
-            >
-              {isLiked ? 'Liked' : 'Like profile'}
-            </Button>
+            {isOwnProfile ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="border-stroke-primary! text-theme! hover:bg-theme-shade/20!"
+                  onClick={() => navigate('/profile/edit')}
+                >
+                  Edit your profile
+                </Button>
 
-            {isMatchedWithTarget ? (
-              <Button
-                variant="outline"
-                icon={<MessageCircle size={16} />}
-                className="border-stroke-primary! text-theme! hover:bg-theme-shade/20!"
-                onClick={() =>
-                  navigate('/messages', {
-                    state: { selectedUser: target },
-                  })
-                }
-              >
-                Send message
-              </Button>
+                <p className="text-sm text-ink-500">This is your profile.</p>
+              </>
             ) : (
-              <p className="text-sm text-ink-500">
-                {isLiked
-                  ? "You'll be able to message once they like you back."
-                  : 'Like their profile to start a conversation.'}
-              </p>
+              <>
+                <Button
+                  variant={isLiked ? 'secondary' : 'primary'}
+                  icon={
+                    <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+                  }
+                  className={
+                    isLiked
+                      ? 'bg-theme-shade/20! text-theme!'
+                      : 'bg-theme! hover:bg-theme-shade!'
+                  }
+                  onClick={() => requireAuth(() => toggleLike(target))}
+                >
+                  {isLiked ? 'Liked' : 'Like profile'}
+                </Button>
+
+                {isMatchedWithTarget ? (
+                  <Button
+                    variant="outline"
+                    icon={<MessageCircle size={16} />}
+                    className="border-stroke-primary! text-theme! hover:bg-theme-shade/20!"
+                    onClick={() =>
+                      navigate('/messages', {
+                        state: { selectedUser: target },
+                      })
+                    }
+                  >
+                    Send message
+                  </Button>
+                ) : (
+                  <p className="text-sm text-ink-500">
+                    {isLiked
+                      ? "You'll be able to message once they like you back."
+                      : 'Like their profile to start a conversation.'}
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>

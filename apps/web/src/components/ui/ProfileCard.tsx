@@ -87,7 +87,7 @@ export default function ProfileCard({
             className={
               isLiked
                 ? 'flex-1 bg-theme-shade/20! text-theme!'
-                : 'flex-1 bg-theme! hover:bg-theme-shade/200!'
+                : 'flex-1 bg-theme! hover:bg-theme-shade!'
             }
             icon={<Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />}
             onClick={() => onLike(profile)}

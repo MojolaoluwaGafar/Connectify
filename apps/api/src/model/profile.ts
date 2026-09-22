@@ -17,7 +17,6 @@ export interface profile extends Document {
     type: 'Point';
     coordinates: [number, number];
   };
-  isComplete:boolean
 }
 
 const LocationCoordsSchema = new Schema(
@@ -104,11 +103,6 @@ const ProfileSchema: Schema = new Schema({
     type: [String],
     default: [],
   },
-  isComplete:{
-    type: Boolean,
-    default: false
-
-  }
 });
 
 ProfileSchema.index({ locationCoords: '2dsphere' });

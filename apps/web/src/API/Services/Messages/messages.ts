@@ -73,13 +73,16 @@ export async function deleteMessage(
   conversationId: string,
   messageId: string,
   scope: DeleteMessageScope,
-): Promise<{ lastMessage: Message | null }> {
+): Promise<{ lastMessage: Message | null; unreadCount: number }> {
   const { data } = await api.delete(
     `/api/v1/conversations/${conversationId}/messages/${messageId}`,
     { params: { scope } },
   );
 
-  return { lastMessage: data?.data?.lastMessage ?? null };
+  return {
+    lastMessage: data?.data?.lastMessage ?? null,
+    unreadCount: data?.data?.unreadCount ?? 0,
+  };
 }
 
 // Clears the chat history for the current user only.

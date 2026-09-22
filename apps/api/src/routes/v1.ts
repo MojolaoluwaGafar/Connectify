@@ -5,6 +5,7 @@ import { conversationsRouter } from '../modules/conversations/conversations.rout
 import { geocodeRouter } from '../modules/geocode/geocode.routes.js'
 import { healthRouter } from '../modules/health/health.routes.js'
 import { likesRouter } from '../modules/likes/likes.routes.js'
+import { notificationsRouter } from '../modules/notifications/notifications.routes.js'
 import { preferencesRouter } from '../modules/preferences/preferences.routes.js'
 import { profilesRouter } from '../modules/profiles/profiles.routes.js'
 
@@ -17,3 +18,4 @@ v1Router.use('/geocode', geocodeRouter)
 v1Router.use('/likes', likesRouter)
 v1Router.use('/conversations', conversationsRouter)
 v1Router.use('/preferences', preferencesRouter)
+v1Router.use('/notifications', notificationsRouter)
