@@ -13,8 +13,19 @@ import { themedToast } from '../../utils/ToastFeedback';
 import { socket } from '../../lib/socket';
 import { isMatchNotificationsEnabled } from '../../utils/notificationPreferences';
 
+const PROFILE_INCOMPLETE_MESSAGE =
+  'Complete your profile before liking people — you can finish it from the Profile page.';
+
+function isProfileIncompleteError(error: unknown) {
+  const code = (
+    error as { response?: { data?: { error?: { code?: string } } } }
+  )?.response?.data?.error?.code;
+
+  return code === 'PROFILE_INCOMPLETE';
+}
+
 function LikesProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   // Who liked *me*. Combined with likedIds this gives us matches without
   // a separate /matches request — a match is simply a like in both Sets.
@@ -117,6 +128,13 @@ function LikesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Unliking above stays open to everyone; only *liking* needs a finished
+    // profile. The API enforces the same rule — this just saves the round trip.
+    if (!myProfile?.isComplete) {
+      themedToast.warning(PROFILE_INCOMPLETE_MESSAGE);
+      return;
+    }
+
     try {
       const data = await likeUser(user.id, profile.userId);
       setLikedIds((prev) => new Set(prev).add(profile.id));
@@ -137,6 +155,11 @@ function LikesProvider({ children }: { children: ReactNode }) {
         themedToast.success(`You liked ${profile.fullName}.`);
       }
     } catch (error) {
+      if (isProfileIncompleteError(error)) {
+        themedToast.warning(PROFILE_INCOMPLETE_MESSAGE);
+        return;
+      }
+
       console.error('Failed to like profile:', error);
       themedToast.error('Could not like this profile. Please try again.');
     }

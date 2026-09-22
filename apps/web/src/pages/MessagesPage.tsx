@@ -9,6 +9,9 @@ const MessagesPage = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
+  // Bumped when the open chat deletes a message/conversation so the list
+  // (last-message preview, unread count) refetches.
+  const [listVersion, setListVersion] = useState(0);
   useEffect(() => {
     async function loadConversations() {
       if (!user) return;
@@ -47,13 +50,25 @@ const MessagesPage = () => {
     setSelectedConversation(null);
   };
 
+  // If the conversation just deleted from the list is the one currently
+  // open, its history is gone — close it back to the empty state.
+  const handleConversationDeleted = (matchId: string) => {
+    setSelectedConversation((current: any) =>
+      current?.matchId === matchId ? null : current,
+    );
+  };
+
   return (
     <div className="md:w-11/12 w-full lg:w-11/12 container mx-auto md:my-10 mt-0 lg:my-10 lg:flex">
       <div className="lg:flex mx-auto lg:w-304">
         <div
           className={`${selectedConversation ? 'hidden lg:block' : 'block'}`}
         >
-          <ConversationList onSelectConversation={handleSelectConversation} />
+          <ConversationList
+            onSelectConversation={handleSelectConversation}
+            refreshKey={listVersion}
+            onConversationDeleted={handleConversationDeleted}
+          />
         </div>
 
         <div
@@ -61,7 +76,11 @@ const MessagesPage = () => {
             selectedConversation ? 'block' : 'hidden lg:block'
           }`}
         >
-          <ChatWindow conversation={selectedConversation} onBack={goBack} />
+          <ChatWindow
+            conversation={selectedConversation}
+            onBack={goBack}
+            onConversationsChanged={() => setListVersion((v) => v + 1)}
+          />
         </div>
       </div>
     </div>

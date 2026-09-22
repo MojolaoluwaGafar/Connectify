@@ -1,22 +1,35 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
-import { Check, CheckCheck } from "lucide-react";
+import { Check, CheckCheck, Trash2 } from "lucide-react";
 
 import { useAuth } from "../../context/authContext/useAuth";
 import {
+  deleteConversation,
   getConversations,
   markConversationRead,
 } from "../../API/Services/Messages/messages";
 import { getActiveConversationId, socket } from "../../lib/socket";
 import { formatConversationTime } from "../../utils/chatTime";
+import Modal from "../ui/Modal";
+import { themedToast } from "../../utils/ToastFeedback";
 
 // TypeScript interface for component props
 interface ConversationListProps {
   onSelectConversation: (conversation: any) => void;
+  // Bumped by the parent whenever the open chat changed something the list
+  // shows (a deleted message) — triggers a refetch.
+  refreshKey?: number;
+  // Called after a conversation is deleted from here, so the parent can
+  // close it if it's the one currently open in the chat window.
+  onConversationDeleted?: (matchId: string) => void;
 }
 
-const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
+const ConversationList = ({
+  onSelectConversation,
+  refreshKey = 0,
+  onConversationDeleted,
+}: ConversationListProps) => {
   // Extract currently logged-in user from context
   const { user } = useAuth();
 
@@ -30,6 +43,12 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
   const [typingConversationIds, setTypingConversationIds] = useState<
     Set<string>
   >(new Set());
+  // Conversation the user has asked to delete, awaiting confirmation.
+  const [conversationPendingDelete, setConversationPendingDelete] = useState<{
+    matchId: string;
+    name: string;
+  } | null>(null);
+  const [isDeletingConversation, setIsDeletingConversation] = useState(false);
 
   // Effect hook: Triggers on mount or whenever the active user updates
   useEffect(() => {
@@ -54,7 +73,7 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
     }
 
     loadConversations();
-  }, [user]);
+  }, [user, refreshKey]);
 
   // Keeps each row's preview in sync with new messages as they arrive —
   // without this, a conversation's preview only updates on a full reload.
@@ -166,6 +185,24 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
       );
     };
 
+    // The other person deleted one of their messages — the payload carries
+    // what this user should now see as the last message and unread count.
+    const handleMessageDeleted = (payload: any) => {
+      if (!payload?.conversationId) return;
+
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.matchId === payload.conversationId
+            ? {
+                ...conversation,
+                lastMessage: payload.lastMessage ?? null,
+                unreadCount: payload.unreadCount ?? conversation.unreadCount,
+              }
+            : conversation,
+        ),
+      );
+    };
+
     const handleUserTyping = (payload: any) => {
       if (!payload?.conversationId) return;
 
@@ -192,6 +229,7 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
     socket.on("new_message_notification", handleNewMessageNotification);
     socket.on("messages_delivered", handleMessagesDelivered);
     socket.on("messages_read", handleMessagesRead);
+    socket.on("message_deleted", handleMessageDeleted);
     socket.on("user_typing", handleUserTyping);
     socket.on("user_stop_typing", handleUserStopTyping);
 
@@ -200,10 +238,39 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
       socket.off("new_message_notification", handleNewMessageNotification);
       socket.off("messages_delivered", handleMessagesDelivered);
       socket.off("messages_read", handleMessagesRead);
+      socket.off("message_deleted", handleMessageDeleted);
       socket.off("user_typing", handleUserTyping);
       socket.off("user_stop_typing", handleUserStopTyping);
     };
   }, [user]);
+
+  const handleConfirmDeleteConversation = async () => {
+    const target = conversationPendingDelete;
+    if (!target) return;
+
+    setIsDeletingConversation(true);
+
+    try {
+      await deleteConversation(target.matchId);
+
+      // The match stays — only its history is cleared, so the row remains
+      // and just goes back to looking like a fresh, unmessaged match.
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.matchId === target.matchId
+            ? { ...conversation, lastMessage: null, unreadCount: 0 }
+            : conversation,
+        ),
+      );
+      setConversationPendingDelete(null);
+      onConversationDeleted?.(target.matchId);
+    } catch (error) {
+      console.error("Failed to delete conversation:", error);
+      themedToast.error("Could not delete this conversation. Please try again.");
+    } finally {
+      setIsDeletingConversation(false);
+    }
+  };
 
   // Client-side search filter checking otherUser's fullName against searchQuery
   const filteredConversations = conversations.filter((conversation) =>
@@ -358,12 +425,62 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
                       </span>
                     )}
                   </div>
+
+                  {/* Delete conversation */}
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setConversationPendingDelete({
+                        matchId: conversation.matchId,
+                        name: person.fullName,
+                      });
+                    }}
+                    aria-label={`Delete conversation with ${person.fullName}`}
+                    className="shrink-0 self-center rounded-full p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               );
             })
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={conversationPendingDelete !== null}
+        onClose={() =>
+          !isDeletingConversation && setConversationPendingDelete(null)
+        }
+      >
+        <h2 className="text-lg font-semibold text-gray-900">
+          Delete this conversation?
+        </h2>
+        <p className="mt-2 text-sm text-gray-500">
+          This clears the chat history for you.{" "}
+          {conversationPendingDelete?.name.split(" ")[0] ?? "They"} will
+          still have their copy, and you'll stay matched.
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setConversationPendingDelete(null)}
+            disabled={isDeletingConversation}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmDeleteConversation}
+            disabled={isDeletingConversation}
+            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {isDeletingConversation ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

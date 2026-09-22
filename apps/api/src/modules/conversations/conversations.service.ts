@@ -118,6 +118,32 @@ export async function assertParticipant(
   return otherUserId;
 }
 
+// What `viewerId` sees for one conversation: newest message they haven't
+// deleted, and how many of the other person's messages they haven't read.
+async function getConversationSummary(
+  conversationId: string,
+  viewerId: string,
+) {
+  const viewer = toObjectId(viewerId);
+
+  const [lastMessage, unreadCount] = await Promise.all([
+    Message.findOne({ matchId: conversationId, deletedFor: { $ne: viewer } })
+      .sort({ createdAt: -1 })
+      .lean(),
+    Message.countDocuments({
+      matchId: conversationId,
+      senderId: { $ne: viewer },
+      readBy: { $ne: viewer },
+      deletedFor: { $ne: viewer },
+    }),
+  ]);
+
+  return {
+    lastMessage: lastMessage ? formatMessage(lastMessage) : null,
+    unreadCount,
+  };
+}
+
 export async function listConversations(userId: string | undefined) {
   if (!userId || !mongoose.isValidObjectId(userId)) return [];
 
@@ -128,22 +154,15 @@ export async function listConversations(userId: string | undefined) {
   const conversations = await Promise.all(
     matchedProfiles.map(async (profile: any) => {
       const conversationId = getConversationId(currentUserId, profile.userId);
-
-      const [lastMessage, unreadCount] = await Promise.all([
-        Message.findOne({ matchId: conversationId })
-          .sort({ createdAt: -1 })
-          .lean(),
-        Message.countDocuments({
-          matchId: conversationId,
-          senderId: { $ne: toObjectId(currentUserId) },
-          readBy: { $ne: toObjectId(currentUserId) },
-        }),
-      ]);
+      const { lastMessage, unreadCount } = await getConversationSummary(
+        conversationId,
+        currentUserId,
+      );
 
       return {
         matchId: conversationId,
         otherUser: profile,
-        lastMessage: lastMessage ? formatMessage(lastMessage) : null,
+        lastMessage,
         unreadCount,
       };
     }),
@@ -162,7 +181,10 @@ export async function listMessagesService(
 ) {
   await assertParticipant(conversationId, userId);
 
-  const messages = await Message.find({ matchId: conversationId })
+  const messages = await Message.find({
+    matchId: conversationId,
+    deletedFor: { $ne: toObjectId(userId) },
+  })
     .sort({ createdAt: 1 })
     .lean();
 
@@ -212,6 +234,91 @@ export async function markRead(conversationId: string, userId: string) {
       readerId: userId,
     });
   }
+}
+
+export type DeleteMessageScope = 'me' | 'everyone';
+
+// scope 'me' hides any message in the conversation (sent or received) from
+// the caller only. scope 'everyone' removes the message for both people and
+// is limited to the caller's own messages — deleting someone else's would
+// edit the other person's side of the conversation.
+export async function deleteMessageService(
+  conversationId: string,
+  userId: string,
+  messageId: string,
+  scope: DeleteMessageScope = 'everyone',
+) {
+  const otherUserId = await assertParticipant(conversationId, userId);
+
+  const message = mongoose.isValidObjectId(messageId)
+    ? await Message.findOne({ _id: messageId, matchId: conversationId })
+    : null;
+
+  if (!message) {
+    throw new AppError(404, 'MESSAGE_NOT_FOUND', 'Message not found');
+  }
+
+  if (scope === 'me') {
+    const updated = await Message.findByIdAndUpdate(
+      message._id,
+      { $addToSet: { deletedFor: toObjectId(userId) } },
+      { new: true },
+    );
+
+    // Once both people have hidden it nobody can see it, so drop it for good.
+    if (updated && updated.deletedFor.length >= 2) {
+      await updated.deleteOne();
+    }
+
+    const mine = await getConversationSummary(conversationId, userId);
+    return { messageId, ...mine };
+  }
+
+  if (String(message.senderId) !== userId) {
+    throw new AppError(
+      403,
+      'NOT_MESSAGE_OWNER',
+      'You can only delete your own messages',
+    );
+  }
+
+  await message.deleteOne();
+
+  const [mine, theirs] = await Promise.all([
+    getConversationSummary(conversationId, userId),
+    getConversationSummary(conversationId, otherUserId),
+  ]);
+
+  // The other person's open chat and conversation list need to drop the
+  // message too, with their own view of what the new last message is.
+  await pushSocketEvent(otherUserId, 'message_deleted', {
+    conversationId,
+    messageId,
+    lastMessage: theirs.lastMessage,
+    unreadCount: theirs.unreadCount,
+  });
+
+  return { messageId, ...mine };
+}
+
+// "Delete conversation" clears the history for the caller only — the other
+// participant keeps their copy. Messages both sides have deleted are gone
+// for good, so they're purged rather than left orphaned.
+export async function deleteConversationService(
+  conversationId: string,
+  userId: string,
+) {
+  const otherUserId = await assertParticipant(conversationId, userId);
+
+  await Message.updateMany(
+    { matchId: conversationId },
+    { $addToSet: { deletedFor: toObjectId(userId) } },
+  );
+
+  await Message.deleteMany({
+    matchId: conversationId,
+    deletedFor: { $all: [toObjectId(userId), toObjectId(otherUserId)] },
+  });
 }
 
 // Marks a single just-sent message delivered — called right after creation,

@@ -6,12 +6,12 @@ import cloudinary, {
 import type { ProfileInput } from './profiles.validation.js';
 import { orderBySeed } from './seeded-order.js';
 
+const GENDER_FILTERS = ['male', 'female', 'non-binary', 'prefer-not-to-say'];
+
 const DEFAULT_NEARBY_RADIUS_KM = 50;
 const MAX_NEARBY_RADIUS_KM = 500;
 
 export async function createProfile(userId: string, data: ProfileInput) {
-  const profilePicture = data.profilePicture;
-
   const {
     fullName,
     gender,
@@ -21,7 +21,12 @@ export async function createProfile(userId: string, data: ProfileInput) {
     age,
     location,
     locationCoords,
+    photos,
   } = data;
+
+  // The main photo is always whichever one is first in the gallery, so
+  // every consumer that only knows about `profilePicture` keeps working.
+  const profilePicture = photos[0] ?? null;
 
   const updatedProfile = await Profile.findOneAndUpdate(
     { userId: new mongoose.Types.ObjectId(userId) },
@@ -36,6 +41,7 @@ export async function createProfile(userId: string, data: ProfileInput) {
       location,
       locationCoords,
       profilePicture,
+      photos,
     },
     {
       new: true,
@@ -80,7 +86,16 @@ export async function listProfiles(
   const excludeUserId =
     typeof query.excludeUserId === 'string' ? query.excludeUserId : '';
 
+  const gender =
+    typeof query.gender === 'string' && GENDER_FILTERS.includes(query.gender)
+      ? query.gender
+      : '';
+
   const baseFilter: Record<string, unknown> = {};
+
+  if (gender) {
+    baseFilter.gender = gender;
+  }
 
   if (excludeUserId && mongoose.isValidObjectId(excludeUserId)) {
     baseFilter.userId = {

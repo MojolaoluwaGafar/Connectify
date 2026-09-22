@@ -80,6 +80,53 @@ export const conversationsController = {
     }
   },
 
+  deleteMessage: async (request: Request, response: Response) => {
+    if (!request.user) {
+      return response.status(401).json({ message: 'Authentication required' });
+    }
+
+    const scope = request.query.scope ?? 'everyone';
+
+    if (scope !== 'me' && scope !== 'everyone') {
+      return response.status(400).json({
+        error: {
+          code: 'INVALID_SCOPE',
+          message: "scope must be 'me' or 'everyone'",
+          requestId: request.requestId,
+          details: {},
+        },
+      });
+    }
+
+    try {
+      const result = await conversationsService.deleteMessageService(
+        paramId(request, 'conversationId'),
+        request.user.id,
+        paramId(request, 'messageId'),
+        scope,
+      );
+      response.status(200).json({ data: result });
+    } catch (error) {
+      handleError(error, request, response);
+    }
+  },
+
+  deleteConversation: async (request: Request, response: Response) => {
+    if (!request.user) {
+      return response.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+      await conversationsService.deleteConversationService(
+        paramId(request, 'conversationId'),
+        request.user.id,
+      );
+      response.status(200).json({ data: { success: true } });
+    } catch (error) {
+      handleError(error, request, response);
+    }
+  },
+
   markRead: async (request: Request, response: Response) => {
     if (!request.user) {
       return response.status(401).json({ message: 'Authentication required' });

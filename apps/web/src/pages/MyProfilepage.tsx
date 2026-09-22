@@ -30,7 +30,9 @@ export default function MyProfilePage() {
     matches: 0,
   });
 
-  const [imageOpen, setImageOpen] = useState(false);
+  // Whichever photo (main or from the gallery) is currently shown
+  // full-screen — null when the lightbox is closed.
+  const [viewedPhoto, setViewedPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -56,6 +58,10 @@ export default function MyProfilePage() {
   // ProtectedRoutes already redirects here only once a profile exists; this
   // is just a defensive fallback in case that state changes mid-render.
   if (!profile) return <Navigate to="/profile/edit" replace />;
+
+  // photos[0] is the main photo, already shown as the avatar above —
+  // everything after that is the "more photos" gallery.
+  const extraPhotos = (profile.photos ?? []).slice(1);
 
   const statCards = [
     {
@@ -88,7 +94,9 @@ export default function MyProfilePage() {
             <div className="-mt-12 flex items-end justify-between">
               <button
                 type="button"
-                onClick={() => setImageOpen(true)}
+                onClick={() =>
+                  profile.profilePicture && setViewedPhoto(profile.profilePicture)
+                }
                 className="cursor-pointer rounded-full border-4 border-white"
               >
                 <Avatar
@@ -146,6 +154,31 @@ export default function MyProfilePage() {
                 </p>
               </div>
             )}
+
+            {extraPhotos.length > 0 && (
+              <div className="mt-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-theme">
+                  Photos
+                </p>
+
+                <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
+                  {extraPhotos.map((photo, index) => (
+                    <button
+                      key={photo}
+                      type="button"
+                      onClick={() => setViewedPhoto(photo)}
+                      className="aspect-square overflow-hidden rounded-xl bg-gray-100 transition hover:opacity-90"
+                    >
+                      <img
+                        src={photo}
+                        alt={`${profile.fullName} photo ${index + 2}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -189,23 +222,23 @@ export default function MyProfilePage() {
         </div>
       </div>
 
-      {/* Full screen profile picture */}
-      {imageOpen && profile.profilePicture && (
+      {/* Full screen photo viewer */}
+      {viewedPhoto && (
         <div
-          onClick={() => setImageOpen(false)}
+          onClick={() => setViewedPhoto(null)}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
         >
           <button
             type="button"
-            onClick={() => setImageOpen(false)}
+            onClick={() => setViewedPhoto(null)}
             className="absolute right-5 top-5 rounded-full bg-white p-2 text-gray-800 shadow-lg hover:bg-gray-100"
-            aria-label="Close profile picture"
+            aria-label="Close photo"
           >
             <X size={24} />
           </button>
 
           <img
-            src={profile.profilePicture}
+            src={viewedPhoto}
             alt={profile.fullName}
             onClick={(event) => event.stopPropagation()}
             className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain"

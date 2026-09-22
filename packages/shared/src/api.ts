@@ -31,6 +31,9 @@ export const ProfileSchema = z.object({
   interest: z.array(z.string()),
   interests: z.array(z.string()).default([]),
   profilePicture: z.string().nullable(),
+  // Full gallery, main photo first (photos[0] === profilePicture). Optional
+  // so older cached responses without it still validate.
+  photos: z.array(z.string()).optional().default([]),
   isComplete: z.boolean(),
 });
 

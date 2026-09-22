@@ -10,6 +10,9 @@ export interface profile extends Document {
   about: string;
   interests: string[];
   profilePicture: string | null;
+  // Full gallery, main photo first — photos[0] is kept in sync with
+  // profilePicture so every existing single-photo consumer keeps working.
+  photos: string[];
   locationCoords?: {
     type: 'Point';
     coordinates: [number, number];
@@ -95,6 +98,11 @@ const ProfileSchema: Schema = new Schema({
   profilePicture: {
     type: String,
     default: null,
+  },
+
+  photos: {
+    type: [String],
+    default: [],
   },
   isComplete:{
     type: Boolean,

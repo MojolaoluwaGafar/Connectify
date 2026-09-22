@@ -47,6 +47,7 @@ const ALLOWED_INTERNAL_EVENTS = new Set([
   'new_match',
   'new_like',
   'messages_read',
+  'message_deleted',
 ])
 
 server.on('request', (request, response) => {

@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { profilesController } from './profiles.controller.js';
 import { authMiddleware } from '../../core/middleware/auth.js';
+import { MAX_PHOTOS } from './profiles.validation.js';
 
 export const profilesRouter = Router();
 
@@ -20,6 +21,6 @@ profilesRouter.get('/:profileId', authMiddleware, profilesController.getById)
 profilesRouter.post(
 	'/createProfile',
 	authMiddleware,
-	profileImageUpload.single('profilePicture'),
+	profileImageUpload.array('photos', MAX_PHOTOS),
 	profilesController.create,
 )

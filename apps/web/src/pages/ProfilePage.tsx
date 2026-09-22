@@ -1,6 +1,13 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Heart, MessageCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  MapPin,
+  MessageCircle,
+} from 'lucide-react';
 
 import type { DiscoverProfile } from '../types/index';
 import {
@@ -32,6 +39,8 @@ export default function ViewProfilePage() {
   const { likedIds, isMatch, toggleLike } = useLikes();
 
   const { requireAuth } = useAuthGate();
+
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
   // --- Target profile ---
   const fetchProfile = useCallback(() => getProfileById(id!), [id]);
@@ -77,6 +86,12 @@ export default function ViewProfilePage() {
 
   const suggestions = suggestionsData ?? [];
 
+  // A different profile can be viewed without remounting this component
+  // (same route, new :id), so the gallery index needs its own reset.
+  useEffect(() => {
+    setActivePhotoIndex(0);
+  }, [target?.id]);
+
   if (isProfileLoading && !target) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
@@ -105,6 +120,11 @@ export default function ViewProfilePage() {
   const isLiked = likedIds.has(target?.userId);
   const isMatchedWithTarget = isMatch(target?.userId);
 
+  const photos =
+    target.photos && target.photos.length > 0
+      ? target.photos
+      : [target.profilePicture ?? '/profile-picture.png'];
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
       {/* Back button */}
@@ -118,13 +138,68 @@ export default function ViewProfilePage() {
 
       {/* Main profile */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        {/* Profile image */}
-        <div className="overflow-hidden rounded-3xl border border-stroke-primary shadow-sm bg-gray-100">
-          <img
-            src={target.profilePicture ?? '/profile-picture.png'}
-            alt={target.fullName}
-            className="aspect-4/5 w-full object-cover"
-          />
+        {/* Profile photos */}
+        <div className="flex gap-3">
+          {photos.length > 1 && (
+            <div className="flex w-16 shrink-0 flex-col gap-2 overflow-y-auto sm:w-20">
+              {photos.map((photo, index) => (
+                <button
+                  key={photo}
+                  type="button"
+                  onClick={() => setActivePhotoIndex(index)}
+                  aria-label={`Show photo ${index + 1}`}
+                  aria-current={index === activePhotoIndex}
+                  className={`aspect-square shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                    index === activePhotoIndex
+                      ? 'border-theme'
+                      : 'border-transparent hover:border-stroke-primary'
+                  }`}
+                >
+                  <img
+                    src={photo}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="relative aspect-4/5 flex-1 overflow-hidden rounded-3xl border border-stroke-primary shadow-sm bg-gray-100">
+            <img
+              src={photos[activePhotoIndex]}
+              alt={`${target.fullName} photo ${activePhotoIndex + 1}`}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+
+            {photos.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActivePhotoIndex(
+                      (index) => (index - 1 + photos.length) % photos.length,
+                    )
+                  }
+                  aria-label="Previous photo"
+                  className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-black/40 text-white transition hover:bg-black/60"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActivePhotoIndex((index) => (index + 1) % photos.length)
+                  }
+                  aria-label="Next photo"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-black/40 text-white transition hover:bg-black/60"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Profile information */}

@@ -23,3 +23,13 @@ conversationsRouter.post(
   '/:conversationId/read',
   conversationsController.markRead,
 );
+
+conversationsRouter.delete(
+  '/:conversationId/messages/:messageId',
+  conversationsController.deleteMessage,
+);
+
+conversationsRouter.delete(
+  '/:conversationId',
+  conversationsController.deleteConversation,
+);

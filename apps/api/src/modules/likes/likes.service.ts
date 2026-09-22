@@ -2,6 +2,8 @@ import { Like } from '../../model/likes.js';
 import { Profile } from '../../model/profile.js';
 import mongoose from 'mongoose';
 import { pushSocketEvent } from '../../core/realtime/pushSocketEvent.js';
+import { AppError } from '../../core/errors/app-error.js';
+import { isProfileComplete } from '../profiles/profiles.service.js';
 
 function formatProfile(profile: any) {
   return {
@@ -31,6 +33,18 @@ async function notifyLike(recipientId: string, likerId: string) {
 
 export async function likeProfile(likerId: string, likedUserId: string) {
   // I (by I, i mean Chidera ) removed the payload validation for now if any error occurs later add in the payload thank you
+
+  // Liking is what puts someone in front of other people, so it requires a
+  // finished profile of your own. Browsing stays open to everyone.
+  const likerProfile = await Profile.findOne({ userId: likerId }).lean();
+
+  if (!likerProfile || !isProfileComplete(likerProfile)) {
+    throw new AppError(
+      403,
+      'PROFILE_INCOMPLETE',
+      'Complete your profile before liking other people.',
+    );
+  }
 
   // temporal: testing for matches
   const existingLike = await Like.findOne({

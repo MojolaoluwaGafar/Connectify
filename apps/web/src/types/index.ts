@@ -40,6 +40,8 @@ export interface Profile {
   interest?: string[];
   interests?: string[];
   profilePicture: string | null;
+  // Full gallery, main photo first (photos[0] === profilePicture).
+  photos?: string[];
 }
 export interface ICreateProfile {
   fullName: string;
@@ -50,7 +52,9 @@ export interface ICreateProfile {
   occupation: string;
   about: string;
   interests: string[];
-  profilePicture: string | File | null;
+  // Already-hosted URLs mixed with newly-picked files, in gallery order —
+  // the first entry becomes the profile's main photo.
+  photos: (string | File)[];
 }
 
 export interface DiscoverProfile extends Profile {

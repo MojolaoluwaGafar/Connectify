@@ -1,7 +1,10 @@
 import { useCallback, useState } from 'react';
 import { getDiscoverProfiles } from '../API/Services/Profile/Profile';
 import { ProfileCard } from '../components/ProfileCard';
-import FilterProfiles from '../components/FilterProfiles';
+import FilterProfiles, {
+  type DiscoverTab,
+  type GenderFilter,
+} from '../components/FilterProfiles';
 import EmptyProfile from '../components/EmptyProfile';
 import type { DiscoverProfile } from '../types';
 import Pagination from '../components/Pagination';
@@ -18,7 +21,8 @@ const PAGESIZE = 8;
 const DiscoveryPage = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'all' | 'new' | 'near-me'>('all');
+  const [tab, setTab] = useState<DiscoverTab>('all');
+  const [gender, setGender] = useState<GenderFilter>('all');
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
   const [discoveryError, setDiscoveryError] = useState('');
@@ -36,12 +40,13 @@ const DiscoveryPage = () => {
       getDiscoverProfiles({
         search: searchValue,
         tab,
+        gender: gender === 'all' ? undefined : gender,
         page,
         pageSize: PAGESIZE,
         excludeUserId: user?.id,
         seed,
       }),
-    [searchValue, tab, page, user?.id, seed],
+    [searchValue, tab, gender, page, user?.id, seed],
   );
 
   // One cache entry per distinct combination of filters — switching back
@@ -49,7 +54,7 @@ const DiscoveryPage = () => {
   // instantly instead of refetching and flashing a spinner.
   // Near-me results depend on the viewer's own saved location, so it's part
   // of the key — otherwise changing it would keep serving the old tab's cache.
-  const cacheKey = `discover:${tab}:${page}:${searchValue}:${seed}:${user?.id ?? 'anon'}:${profile?.location ?? ''}`;
+  const cacheKey = `discover:${tab}:${gender}:${page}:${searchValue}:${seed}:${user?.id ?? 'anon'}:${profile?.location ?? ''}`;
 
   const {
     data,
@@ -98,6 +103,8 @@ const DiscoveryPage = () => {
               className="lg:hidden"
               setTab={setTab}
               tab={tab}
+              setGender={setGender}
+              gender={gender}
               setPage={setPage}
             />
 
@@ -138,6 +145,8 @@ const DiscoveryPage = () => {
               className="hidden lg:flex"
               setTab={setTab}
               tab={tab}
+              setGender={setGender}
+              gender={gender}
               setPage={setPage}
             />
 

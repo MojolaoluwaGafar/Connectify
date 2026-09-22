@@ -1,13 +1,12 @@
 import { z } from 'zod';
 
 const MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024;
-const profilePictureSchema = z
-  .string()
-  .nullable()
-  .refine(
-    (value) => value === null || z.string().url().safeParse(value).success,
-    'Profile picture must be a valid hosted URL.',
-  );
+const MAX_PHOTOS = 6;
+
+const photosSchema = z
+  .array(z.string().url())
+  .max(MAX_PHOTOS, `You can have at most ${MAX_PHOTOS} photos.`)
+  .default([]);
 
 // GeoJSON point — coordinates are [longitude, latitude], in that order.
 const locationCoordsSchema = z.object({
@@ -27,9 +26,9 @@ export const profileInputSchema = z.object({
   occupation: z.string().trim(),
   about: z.string().trim().min(10),
   interests: z.array(z.string()).min(1),
-  profilePicture: profilePictureSchema,
+  photos: photosSchema,
 });
 
 export type ProfileInput = z.infer<typeof profileInputSchema>;
 
-export { MAX_PROFILE_IMAGE_BYTES };
+export { MAX_PROFILE_IMAGE_BYTES, MAX_PHOTOS };

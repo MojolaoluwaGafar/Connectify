@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import * as profilesService from './profiles.service.js';
-import { profileInputSchema } from './profiles.validation.js';
+import { MAX_PHOTOS, profileInputSchema } from './profiles.validation.js';
 import { uploadProfilePicture } from './profiles.service.js';
 
 function parseJson(value: string): unknown {
@@ -21,6 +21,26 @@ export const profilesController = {
     }
     const userId = request.user.id;
     try {
+      // Already-hosted photos the client is keeping, in order — separate
+      // from newly-picked files, which arrive as multipart uploads instead.
+      const existingPhotos =
+        typeof request.body.existingPhotos === 'string'
+          ? ((parseJson(request.body.existingPhotos) as unknown[]) ?? [])
+          : [];
+
+      const uploadedFiles = Array.isArray(request.files)
+        ? (request.files as Express.Multer.File[])
+        : [];
+
+      const uploadedUrls = await Promise.all(
+        uploadedFiles.map((file) => uploadProfilePicture(file)),
+      );
+
+      const photos = [...existingPhotos, ...uploadedUrls].slice(
+        0,
+        MAX_PHOTOS,
+      );
+
       const data = profileInputSchema.parse({
         ...request.body,
         age: Number(request.body.age),
@@ -28,23 +48,19 @@ export const profilesController = {
           typeof request.body.interests === 'string'
             ? JSON.parse(request.body.interests)
             : request.body.interests,
-        profilePicture: request.body.profilePicture
-          ? request.body.profilePicture
-          : null,
         // Multipart bodies only carry strings; a malformed value becomes
         // undefined so validation answers with a 400 rather than a crash.
         locationCoords:
           typeof request.body.locationCoords === 'string'
             ? parseJson(request.body.locationCoords)
             : request.body.locationCoords,
+        photos,
       });
-      const profilePicture = request.file
-        ? await uploadProfilePicture(request.file)
-        : data.profilePicture;
-      const createdProfile = await profilesService.createProfile(userId, {
-        ...data,
-        profilePicture,
-      });
+
+      const createdProfile = await profilesService.createProfile(
+        userId,
+        data,
+      );
       response.status(201).json({
         success: true,
         message: 'Profile Created',

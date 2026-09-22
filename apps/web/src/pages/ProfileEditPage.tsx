@@ -10,6 +10,7 @@ import { createProfile } from '../API/Services/Profile/Profile';
 import { useAuth } from '../context/authContext/useAuth';
 import type { Gender, LocationCoords } from '../types';
 import PhotoUploader from '../components/ui/PhotoUploader';
+import MorePhotosSection from '../components/ui/MorePhotosSection';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import LocationAutocomplete from '../components/ui/LocationAutocomplete';
@@ -20,6 +21,9 @@ import Button from '../components/ui/Button';
 
 import ProfilePreviewModal from '../components/profilePreviewModal';
 import { themedToast } from '../utils/ToastFeedback';
+
+// Matches the backend's cap (apps/api/src/modules/profiles/profiles.validation.ts).
+const MAX_PHOTOS = 6;
 
 interface FieldErrors {
   fullName?: string;
@@ -53,7 +57,15 @@ export default function ProfileEditPage() {
   const [occupation, setOccupation] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
   const [about, setBio] = useState('');
-  const [profilePicture, setPhotoUrl] = useState<string | File | null>(null);
+  // photos[0] is the main profile photo (its own uploader below); anything
+  // after that is shown in the "More photos" row.
+  const [photos, setPhotos] = useState<(string | File)[]>([]);
+  // Preview for just the main photo, for the ProfilePreviewModal — separate
+  // from the uploader's own internal preview so the two don't need to
+  // share state.
+  const [mainPhotoPreview, setMainPhotoPreview] = useState<string | null>(
+    null,
+  );
 
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -76,11 +88,35 @@ export default function ProfileEditPage() {
       );
 
       setBio(profile.about ?? '');
-      setPhotoUrl(profile.profilePicture ?? null);
+      setPhotos(
+        profile.photos && profile.photos.length > 0
+          ? profile.photos
+          : profile.profilePicture
+            ? [profile.profilePicture]
+            : [],
+      );
     } else if (user) {
       setFullName(user.fullName ?? '');
     }
   }, [profile, user]);
+
+  useEffect(() => {
+    const main = photos[0];
+
+    if (!main) {
+      setMainPhotoPreview(null);
+      return;
+    }
+
+    if (typeof main === 'string') {
+      setMainPhotoPreview(main);
+      return;
+    }
+
+    const url = URL.createObjectURL(main);
+    setMainPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photos]);
 
   function toggleInterest(label: string) {
     setInterests((prev) =>
@@ -88,6 +124,25 @@ export default function ProfileEditPage() {
         ? prev.filter((interest) => interest !== label)
         : [...prev, label],
     );
+  }
+
+  const mainPhoto = photos[0] ?? null;
+  const extraPhotos = photos.slice(1);
+
+  function handleMainPhotoChange(file: File) {
+    setPhotos((prev) => {
+      const next = [...prev];
+      next[0] = file;
+      return next;
+    });
+  }
+
+  function handleAddExtraPhoto(file: File) {
+    setPhotos((prev) => (prev.length >= MAX_PHOTOS ? prev : [...prev, file]));
+  }
+
+  function handleRemoveExtraPhoto(extraIndex: number) {
+    setPhotos((prev) => prev.filter((_, i) => i !== extraIndex + 1));
   }
 
   function validate(): boolean {
@@ -164,7 +219,7 @@ export default function ProfileEditPage() {
         occupation: occupation.trim(),
         interests,
         about: about.trim(),
-        profilePicture,
+        photos,
       });
 
 
@@ -204,9 +259,9 @@ export default function ProfileEditPage() {
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
         <PhotoUploader
-          profilePicture={profilePicture}
+          profilePicture={mainPhoto}
           name={fullName}
-          onChange={setPhotoUrl}
+          onChange={handleMainPhotoChange}
         />
 
         <div className="space-y-6">
@@ -300,6 +355,13 @@ export default function ProfileEditPage() {
             )}
           </Section>
 
+          <MorePhotosSection
+            photos={extraPhotos}
+            onAdd={handleAddExtraPhoto}
+            onRemove={handleRemoveExtraPhoto}
+            canAddMore={photos.length < MAX_PHOTOS}
+          />
+
           <Section title="About you">
             <TextArea
               placeholder="Write a short about yourself (at least 10 characters)"
@@ -374,9 +436,7 @@ export default function ProfileEditPage() {
         occupation={occupation}
         interests={interests}
         about={about}
-        profilePicture={
-          typeof profilePicture === 'string' ? profilePicture : null
-        }
+        profilePicture={mainPhotoPreview}
       />
     </div>
   );

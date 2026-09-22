@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaperPlane, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { ChevronDown, Trash2 } from "lucide-react";
 
 import { useAuth } from "../../context/authContext/useAuth";
 import { useNotifications } from "../../context/notificationsContext/useNotifications";
 import { socket, setActiveConversationId } from "../../lib/socket";
 import {
+  deleteMessage,
   getMessages,
   markConversationRead,
+  type DeleteMessageScope,
 } from "../../API/Services/Messages/messages";
+import Modal from "../ui/Modal";
+import { themedToast } from "../../utils/ToastFeedback";
 import type { Message } from "../../types";
 import {
   formatDayLabel,
@@ -19,9 +24,16 @@ import {
 interface ChatWindowProps {
   conversation: any;
   onBack: () => void;
+  // Called after this window changes something the conversation list shows
+  // (last message / unread count), so the list can refresh itself.
+  onConversationsChanged?: () => void;
 }
 
-const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
+const ChatWindow = ({
+  conversation,
+  onBack,
+  onConversationsChanged,
+}: ChatWindowProps) => {
   // Extract authenticated user details from Auth Context
   const { user } = useAuth();
   const { markConversationNotificationsRead } = useNotifications();
@@ -37,6 +49,17 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isOtherUserOnline, setIsOtherUserOnline] = useState(false);
+  // The message whose chevron dropdown is open, and whether it should open
+  // upward (when there's no room left below it in the scrolling feed).
+  const [openMenu, setOpenMenu] = useState<{
+    id: string;
+    openUp: boolean;
+  } | null>(null);
+  const [messagePendingDelete, setMessagePendingDelete] = useState<{
+    message: Message;
+    scope: DeleteMessageScope;
+  } | null>(null);
+  const [isDeletingMessage, setIsDeletingMessage] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -173,6 +196,17 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
       }
     };
 
+    // The other person deleted one of their own messages.
+    const handleMessageDeleted = (payload: any) => {
+      if (payload?.conversationId !== matchId) {
+        return;
+      }
+
+      setMessages((current) =>
+        current.filter((message) => message.id !== payload.messageId),
+      );
+    };
+
     const handleConversationJoined = (payload: any) => {
       console.log("JOINED CONVERSATION:", payload);
     };
@@ -184,6 +218,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     socket.on("conversation_joined", handleConversationJoined);
     socket.on("join_conversation_error", handleJoinError);
     socket.on("receive_message", handleIncomingMessage);
+    socket.on("message_deleted", handleMessageDeleted);
     socket.on("user_typing", handleUserTyping);
     socket.on("user_stop_typing", handleUserStopTyping);
     socket.on("online_users", handleOnlineUsers);
@@ -210,6 +245,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
       socket.off("user_online", handleUserOnline);
       socket.off("user_offline", handleUserOffline);
       socket.off("receive_message", handleIncomingMessage);
+      socket.off("message_deleted", handleMessageDeleted);
       socket.off("user_typing", handleUserTyping);
       socket.off("user_stop_typing", handleUserStopTyping);
       socket.off("send_message_error", handleSendMessageError);
@@ -295,6 +331,70 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     });
   };
 
+  // Dismiss the message dropdown on an outside click or Escape.
+  useEffect(() => {
+    if (!openMenu) return;
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (!(event.target as HTMLElement).closest("[data-message-menu]")) {
+        setOpenMenu(null);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenMenu(null);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenu]);
+
+  const toggleMessageMenu = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    messageId: string,
+  ) => {
+    if (openMenu?.id === messageId) {
+      setOpenMenu(null);
+      return;
+    }
+
+    // Menu is roughly 90px tall for one item, 130px for two — flip it above
+    // the message when the feed doesn't have that much room below.
+    const feed = messagesContainerRef.current?.getBoundingClientRect();
+    const trigger = event.currentTarget.getBoundingClientRect();
+    const openUp = feed ? feed.bottom - trigger.bottom < 140 : false;
+
+    setOpenMenu({ id: messageId, openUp });
+  };
+
+  const handleConfirmDeleteMessage = async () => {
+    const target = messagePendingDelete;
+    if (!target || !matchId) return;
+
+    setIsDeletingMessage(true);
+
+    try {
+      await deleteMessage(matchId, target.message.id, target.scope);
+
+      setMessages((current) =>
+        current.filter((message) => message.id !== target.message.id),
+      );
+      setMessagePendingDelete(null);
+      onConversationsChanged?.();
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      themedToast.error("Could not delete this message. Please try again.");
+    } finally {
+      setIsDeletingMessage(false);
+    }
+  };
+
   // Split the flat message list into runs that share a local calendar day,
   // so each run can be introduced by its own Today / Yesterday / date divider.
   const messageGroups: { dayKey: string; label: string; items: Message[] }[] =
@@ -370,16 +470,18 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
             </div>
           </div>
 
-          {/* Active/Offline badge — shown at every size; below lg the
-              avatar's presence dot backs it up */}
-          <div
-            className={`shrink-0 rounded-md py-0.5 px-2 text-[11px] ${
-              isOtherUserOnline
-                ? "bg-purple-50 text-purple-600"
-                : "bg-gray-100 text-gray-500"
-            }`}
-          >
-            {isOtherUserOnline ? "Active" : "Offline"}
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Active/Offline badge — shown at every size; below lg the
+                avatar's presence dot backs it up */}
+            <div
+              className={`rounded-md py-0.5 px-2 text-[11px] ${
+                isOtherUserOnline
+                  ? "bg-purple-50 text-purple-600"
+                  : "bg-gray-100 text-gray-500"
+              }`}
+            >
+              {isOtherUserOnline ? "Active" : "Offline"}
+            </div>
           </div>
         </div>
 
@@ -420,17 +522,91 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
                         }`}
                       >
                         <div
-                          className={`max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[60%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words [overflow-wrap:anywhere] ${
+                          className={`group relative max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[60%] rounded-2xl py-2 pl-4 pr-7 text-sm shadow-sm break-words [overflow-wrap:anywhere] ${
                             isUser
                               ? "bg-purple-600 text-white rounded-br-none"
                               : "bg-gray-100 text-gray-800 rounded-bl-none"
                           }`}
                         >
+                          {/* Chevron + dropdown, WhatsApp style — pinned to
+                              the bubble's top-right corner. */}
+                          <span
+                            data-message-menu
+                            className="absolute right-3 top-1 inline-flex"
+                          >
+                            <button
+                              type="button"
+                              onClick={(event) =>
+                                toggleMessageMenu(event, msg.id)
+                              }
+                              aria-label="Message options"
+                              aria-haspopup="menu"
+                              aria-expanded={openMenu?.id === msg.id}
+                              className={`-m-1 rounded-full p-1 transition-colors ${
+                                isUser
+                                  ? "text-purple-200 hover:text-white"
+                                  : "text-gray-400 hover:text-gray-600"
+                              }`}
+                            >
+                              <ChevronDown size={14} />
+                            </button>
+
+                            {openMenu?.id === msg.id && (
+                              <div
+                                role="menu"
+                                className={`absolute z-20 w-44 rounded-lg border border-gray-100 bg-white py-1 text-left shadow-lg ${
+                                  isUser ? "right-0" : "left-0"
+                                } ${
+                                  openMenu.openUp
+                                    ? "bottom-full mb-1"
+                                    : "top-full mt-1"
+                                }`}
+                              >
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setOpenMenu(null);
+                                    setMessagePendingDelete({
+                                      message: msg,
+                                      scope: "me",
+                                    });
+                                  }}
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                  <Trash2 size={14} />
+                                  Delete for me
+                                </button>
+
+                                {/* Only your own messages can be removed
+                                    for the other person too. */}
+                                {isUser && (
+                                  <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                      setOpenMenu(null);
+                                      setMessagePendingDelete({
+                                        message: msg,
+                                        scope: "everyone",
+                                      });
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                                  >
+                                    <Trash2 size={14} />
+                                    Delete for everyone
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </span>
+
                           <p className="whitespace-pre-wrap break-words">
                             {msg.text}
                           </p>
+
                           <p
-                            className={`mt-1 text-[10px] leading-none text-right ${
+                            className={`mt-1 text-right text-[10px] leading-none ${
                               isUser ? "text-purple-200" : "text-gray-400"
                             }`}
                           >
@@ -516,6 +692,44 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
           </button>
         </form>
       </div>
+
+      <Modal
+        isOpen={messagePendingDelete !== null}
+        onClose={() => !isDeletingMessage && setMessagePendingDelete(null)}
+      >
+        <h2 className="text-lg font-semibold text-gray-900">
+          {messagePendingDelete?.scope === "everyone"
+            ? "Delete for everyone?"
+            : "Delete for you?"}
+        </h2>
+        <p className="mt-2 text-sm text-gray-500">
+          {messagePendingDelete?.scope === "everyone"
+            ? `This message will be removed for you and ${
+                selectedUser?.fullName?.split(" ")[0] ?? "them"
+              }. This can't be undone.`
+            : `This message will be removed from your chat only. ${
+                selectedUser?.fullName?.split(" ")[0] ?? "They"
+              } will still see it if it's in their chat.`}
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setMessagePendingDelete(null)}
+            disabled={isDeletingMessage}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmDeleteMessage}
+            disabled={isDeletingMessage}
+            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {isDeletingMessage ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

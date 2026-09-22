@@ -6,6 +6,9 @@ export interface message extends Document {
   text: string;
   readBy: mongoose.Types.ObjectId[];
   deliveredAt: Date | null;
+  // Users who deleted the conversation for themselves — the message stays
+  // visible to everyone not listed here.
+  deletedFor: mongoose.Types.ObjectId[];
   createdAt: Date;
 }
 
@@ -33,6 +36,10 @@ const MessageSchema: Schema = new Schema(
     deliveredAt: {
       type: Date,
       default: null,
+    },
+    deletedFor: {
+      type: [mongoose.Schema.Types.ObjectId],
+      default: [],
     },
   },
   { timestamps: { createdAt: true, updatedAt: false } },

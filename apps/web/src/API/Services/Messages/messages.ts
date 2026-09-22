@@ -1,4 +1,4 @@
-import type { Conversation } from '../../../types';
+import type { Conversation, Message } from '../../../types';
 import api from '../../api';
 
 function extractConversations(data: unknown): Conversation[] {
@@ -65,10 +65,33 @@ export async function markConversationRead(conversationId: string) {
   await api.post(`/api/v1/conversations/${conversationId}/read`);
 }
 
+export type DeleteMessageScope = 'me' | 'everyone';
+
+// 'me' hides the message from this user only (works on received messages
+// too); 'everyone' removes your own message for both people.
+export async function deleteMessage(
+  conversationId: string,
+  messageId: string,
+  scope: DeleteMessageScope,
+): Promise<{ lastMessage: Message | null }> {
+  const { data } = await api.delete(
+    `/api/v1/conversations/${conversationId}/messages/${messageId}`,
+    { params: { scope } },
+  );
+
+  return { lastMessage: data?.data?.lastMessage ?? null };
+}
+
+// Clears the chat history for the current user only.
+export async function deleteConversation(conversationId: string) {
+  await api.delete(`/api/v1/conversations/${conversationId}`);
+}
+
 export const MessagesService = {
   canMessage,
   getMessages,
   getConversations,
   markConversationRead,
-
+  deleteMessage,
+  deleteConversation,
 };

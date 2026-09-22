@@ -4,7 +4,8 @@ export type InternalSocketEvent =
   | 'new_match'
   | 'new_like'
   | 'messages_read'
-  | 'messages_delivered';
+  | 'messages_delivered'
+  | 'message_deleted';
 
 // Best-effort push to the (separate) socket process so the recipient learns
 // about the change immediately instead of waiting for their next fetch. The

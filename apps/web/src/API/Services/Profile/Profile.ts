@@ -5,6 +5,7 @@ import type { DiscoverProfile, ICreateProfile, Profile } from '../../../types';
 export interface ProfileListFilters {
   search?: string;
   tab?: 'all' | 'new' | 'near-me';
+  gender?: 'male' | 'female' | 'non-binary';
   page?: number;
   pageSize?: number;
   excludeUserId?: string;
@@ -28,11 +29,16 @@ export const ProfileServices = {
     formData.append('about', data.about);
     formData.append('interests', JSON.stringify(data.interests));
 
-    if (data.profilePicture instanceof File) {
-      formData.append('profilePicture', data.profilePicture);
-    } else if (data.profilePicture) {
-      formData.append('profilePicture', data.profilePicture);
-    }
+    // Photos already hosted (kept from before) travel as URLs; anything
+    // newly picked is a File and goes up as an actual upload, in order.
+    const existingPhotos = data.photos.filter(
+      (photo): photo is string => typeof photo === 'string',
+    );
+    formData.append('existingPhotos', JSON.stringify(existingPhotos));
+
+    data.photos
+      .filter((photo): photo is File => photo instanceof File)
+      .forEach((file) => formData.append('photos', file));
 
     return api.post('/api/v1/profiles/createProfile', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
