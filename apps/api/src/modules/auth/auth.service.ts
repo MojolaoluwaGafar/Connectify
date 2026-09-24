@@ -14,6 +14,7 @@ import { User } from '../../model/User.js'
 import { Profile } from '../../model/profile.js'
 import { Like } from '../../model/likes.js'
 import { Message } from '../../model/messages.js'
+import { Notification } from '../../model/notification.js'
 import jwt from 'jsonwebtoken'
 import { env } from '../../config/env.js'
 import type { JWTPayload } from '../../types/payload.js'
@@ -415,6 +416,13 @@ export async function deleteAccount(currentUser: JWTPayload | undefined) {
     Like.deleteMany({ $or: [{ likerId: userId }, { likedUserId: userId }] }),
     Message.deleteMany({
       matchId: { $regex: `(^|_)${String(userId)}(_|$)` },
+    }),
+    Notification.deleteMany({
+      $or: [
+        { userId },
+        { relatedUserId: String(userId) },
+        { conversationId: { $regex: `(^|_)${String(userId)}(_|$)` } },
+      ],
     }),
   ]);
 

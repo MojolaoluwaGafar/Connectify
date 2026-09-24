@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { profile, Profile } from '../../model/profile.js';
+import { User } from '../../model/User.js';
 import cloudinary, {
   profileMediaUploadOptions,
 } from '../../config/Cloudinary.js';
@@ -10,6 +11,21 @@ const GENDER_FILTERS = ['male', 'female', 'non-binary', 'prefer-not-to-say'];
 
 const DEFAULT_NEARBY_RADIUS_KM = 50;
 const MAX_NEARBY_RADIUS_KM = 500;
+
+// Drops profiles whose owning User document is gone (e.g. a user removed by
+// hand in the database), which would otherwise linger as ghost cards.
+const ONLY_PROFILES_WITH_USER = [
+  {
+    $lookup: {
+      from: User.collection.name,
+      localField: 'userId',
+      foreignField: '_id',
+      as: '_owner',
+    },
+  },
+  { $match: { '_owner.0': { $exists: true } } },
+  { $project: { _owner: 0 } },
+];
 
 export async function createProfile(userId: string, data: ProfileInput) {
   const {
@@ -151,7 +167,11 @@ export async function listProfiles(
     // load — gives a different order, which is the "random" part.
     const seed = Number(query.seed) || 0;
 
-    const matchingIds = await Profile.find(baseFilter).select('_id').lean();
+    const matchingIds = await Profile.aggregate<{ _id: unknown }>([
+      { $match: baseFilter },
+      ...ONLY_PROFILES_WITH_USER,
+      { $project: { _id: 1 } },
+    ]);
     const shuffledIds = orderBySeed(
       matchingIds.map((doc) => String(doc._id)),
       seed,
@@ -171,17 +191,27 @@ export async function listProfiles(
   // "new" tab: newest first. Profiles have no createdAt field, but an
   // ObjectId's leading bytes are its creation time, so sorting by _id is
   // newest-to-oldest (and unique, so paging never repeats or skips).
-  const profileQuery = Profile.find(baseFilter)
-    .sort({ _id: -1 })
-    .skip(skip)
-    .limit(pageSize);
-
-  const [items, total] = await Promise.all([
-    profileQuery.lean(),
-    Profile.countDocuments(baseFilter),
+  const [result] = await Profile.aggregate<{
+    items: Array<Record<string, any>>;
+    total: Array<{ count: number }>;
+  }>([
+    { $match: baseFilter },
+    ...ONLY_PROFILES_WITH_USER,
+    { $sort: { _id: -1 } },
+    {
+      $facet: {
+        items: [{ $skip: skip }, { $limit: pageSize }],
+        total: [{ $count: 'count' }],
+      },
+    },
   ]);
 
-  return formatDiscoveryResult(items, total, page, pageSize);
+  return formatDiscoveryResult(
+    result?.items ?? [],
+    result?.total[0]?.count ?? 0,
+    page,
+    pageSize,
+  );
 }
 
 // Nearest first, within radiusKm of the caller's own coordinates. $geoNear must
@@ -210,6 +240,7 @@ async function listNearbyProfiles(
         query: filter,
       },
     },
+    ...ONLY_PROFILES_WITH_USER,
     { $sort: { distanceMeters: 1, _id: 1 } },
     {
       $facet: {
