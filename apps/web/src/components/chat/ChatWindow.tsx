@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaperPlane, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { ChevronDown, Trash2 } from "lucide-react";
@@ -484,7 +485,15 @@ const ChatWindow = ({
 
             {/* Recipient Photo (with a presence dot below lg, where the
                 Active/Offline badge is hidden to keep the header minimal) */}
-            <div className="relative shrink-0">
+            <Link
+              to={selectedUser ? `/profile/${selectedUser.id}` : "#"}
+              className={`relative shrink-0 ${
+                selectedUser ? "" : "pointer-events-none"
+              }`}
+              aria-label={
+                selectedUser ? `View ${selectedUser.fullName}'s profile` : undefined
+              }
+            >
               <img
                 src={selectedUser?.profilePicture}
                 alt={selectedUser?.fullName}
@@ -497,10 +506,15 @@ const ChatWindow = ({
                   }`}
                 />
               )}
-            </div>
+            </Link>
 
             {/* Recipient Details */}
-            <div className="flex flex-col min-w-0">
+            <Link
+              to={selectedUser ? `/profile/${selectedUser.id}` : "#"}
+              className={`flex flex-col min-w-0 transition-opacity ${
+                selectedUser ? "hover:opacity-80" : "pointer-events-none"
+              }`}
+            >
               <p className="font-semibold text-[15px] font-[Geist] truncate">
                 {selectedUser?.fullName || "Select a Profile"}
               </p>
@@ -510,7 +524,7 @@ const ChatWindow = ({
                   ? "Typing..."
                   : selectedUser?.location || "No active location"}
               </p>
-            </div>
+            </Link>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
